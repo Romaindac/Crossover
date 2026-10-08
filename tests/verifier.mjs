@@ -12,6 +12,7 @@ import { etageTour } from "../js/donnees/tour.js";
 import { TAMPONS } from "../js/donnees/tampons.js";
 import { LIENS } from "../js/donnees/liens.js";
 import { catalogueSql, toutSql } from "../js/outils/catalogue-sql.mjs";
+import { ICONE_DE_OBJET, TYPES_ICONES } from "../js/ui/icones-objets.js";
 import { readFileSync } from "node:fs";
 import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../js/moteur/boosters.js";
@@ -67,6 +68,7 @@ verifier([1, 2, 3, 4, 5].every((g) => { const c = ouvrirBoosterDepart(creerHasar
 // Chaque perso peut sortir d'un booster : son edition a des cases qui tirent sa rarete
 const raretesTirables = new Set(CASES_BOOSTER.flatMap((c) => Object.keys(c)));
 verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 160 persos peuvent sortir d'un booster");
+verifier(OBJETS.every((o) => TYPES_ICONES.includes(ICONE_DE_OBJET[o.id])), "chaque objet a son icone");
 verifier(readFileSync(new URL("../supabase/catalogue.sql", import.meta.url), "utf8") === catalogueSql(), "supabase/catalogue.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf8") === toutSql(), "supabase/a-coller.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 
