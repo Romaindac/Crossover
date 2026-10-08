@@ -1,0 +1,310 @@
+/* ==========================================================
+   OUTILS : la page "laboratoire du moteur"
+   ========================================================== */
+
+.labo {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Empeche les tableaux larges d'elargir toute la page */
+.labo > *,
+.reglages > * {
+  min-width: 0;
+}
+
+.labo__entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+}
+
+.labo__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.labo__intro {
+  color: var(--encre-douce);
+  margin-top: 0.4rem;
+  max-width: 52ch;
+}
+
+.labo__retour {
+  color: var(--encre);
+  font-weight: 700;
+}
+
+.panneau {
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.panneau h2 {
+  font-weight: 800;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Reglages ---------- */
+
+.reglages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.5rem 2rem;
+}
+
+.ligne-equipe {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.ligne-equipe__nom {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--encre-douce);
+}
+
+.champ {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+select,
+input[type="number"] {
+  font: inherit;
+  font-weight: 400;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  min-width: 0;
+}
+
+.graine {
+  display: flex;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.graine .champ {
+  flex: 1;
+}
+
+.aide {
+  color: var(--encre-douce);
+  font-size: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.bonus-serie {
+  margin-top: 0.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.erreur {
+  color: #b3261e;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.bouton--petit {
+  font-size: 1rem;
+  padding: 0.45em 1.2em 0.5em;
+  background: var(--papier);
+  color: var(--encre);
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.bouton--obi {
+  font-size: 1.05rem;
+  padding: 0.5em 1.4em 0.55em;
+  background: var(--obi);
+  color: var(--encre);
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.bouton--petit:hover,
+.bouton--obi:hover {
+  transform: translate(-2px, -2px);
+}
+
+.bouton--petit:active,
+.bouton--obi:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--encre);
+}
+
+.bouton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Resultats ---------- */
+
+.panneau .resultat-titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.1;
+  margin-bottom: 0;
+}
+
+.resultat-titre--victoire {
+  text-shadow: 0.06em 0.06em 0 var(--obi);
+}
+
+.resultat-titre--defaite {
+  text-shadow: 0.06em 0.06em 0 var(--rose);
+}
+
+.resultat-detail {
+  color: var(--encre-douce);
+  margin: 0.3rem 0 1.25rem;
+}
+
+.chiffres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.chiffre__valeur {
+  font-weight: 800;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.chiffre__nom {
+  color: var(--encre-douce);
+  font-size: 0.9rem;
+}
+
+.defile {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #d9d9e3;
+  white-space: nowrap;
+}
+
+th {
+  font-weight: 800;
+  border-bottom: 2px solid var(--encre);
+}
+
+td.nombre,
+th.nombre {
+  text-align: right;
+}
+
+tr.ko td {
+  color: var(--encre-douce);
+}
+
+.etiquette {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  border: 2px solid var(--encre);
+}
+
+.etiquette--fort {
+  background: var(--rose);
+}
+
+.etiquette--faible {
+  background: var(--ciel);
+}
+
+/* ---------- Journal ---------- */
+
+.journal__options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0.75rem;
+  font-weight: 700;
+}
+
+.journal {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  max-height: 32rem;
+  overflow-y: auto;
+  border: 2px solid var(--encre);
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.journal li {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 0.75rem;
+  padding: 0.2rem 0;
+}
+
+.journal__temps {
+  color: var(--encre-douce);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.journal li.fort {
+  font-weight: 700;
+}
+
+.journal li.ultime {
+  background: color-mix(in srgb, var(--obi) 45%, transparent);
+  border-radius: 6px;
+}
+
+.nom--a {
+  color: var(--encre);
+  font-weight: 800;
+}
+
+.nom--b {
+  color: #b0305a;
+  font-weight: 800;
+}
+
+.progression {
+  font-weight: 700;
+}

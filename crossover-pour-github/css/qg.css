@@ -1,0 +1,817 @@
+/* ==========================================================
+   LE QG : une planche de manga, une case par partie du jeu
+   ========================================================== */
+
+.qg {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+/* La planche : des cases de tailles differentes, comme une page de manga */
+.planche {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  grid-template-areas:
+    "combat combat combat combat combat combat combat combat equipe equipe equipe equipe"
+    "combat combat combat combat combat combat combat combat exped exped exped exped"
+    "missions missions missions missions missions missions tirages tirages tirages collec collec collec"
+    "bientot bientot bientot bientot bientot bientot bientot bientot stats stats stats stats";
+  gap: 1rem;
+}
+
+.case {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 1.1rem 1.25rem 1.25rem;
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 6px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.case__titre {
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.case__entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.case__surtitre {
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--encre-douce);
+}
+
+.case__aide {
+  font-size: 0.88rem;
+  color: var(--encre-douce);
+}
+
+.case__chiffre {
+  font-family: var(--police-titre);
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.case__chiffre span {
+  font-family: var(--police-texte);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--encre-douce);
+}
+
+.case__boutons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.case__message {
+  min-height: 1.3em;
+  font-weight: 800;
+  color: var(--vert);
+}
+
+.case .bouton-texte,
+.case .bouton--obi-petit {
+  justify-self: start;
+}
+
+/* ---------- Case du prochain combat : le decor en fond ---------- */
+
+.case--combat {
+  grid-area: combat;
+  min-height: 22rem;
+  padding: 0;
+  align-content: stretch;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.case--combat .decor {
+  z-index: 0;
+}
+
+.case--combat__contenu {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  gap: 0.55rem;
+  max-width: 30rem;
+  padding: 1.5rem 1.75rem;
+  /* un voile de papier a gauche pour que le texte reste lisible sur le decor */
+  background: linear-gradient(90deg, color-mix(in srgb, var(--papier) 94%, transparent) 60%, transparent);
+}
+
+.case--combat__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  line-height: 1.1;
+  text-shadow: 0.05em 0.05em 0 var(--obi);
+}
+
+.case--combat__niveau {
+  font-weight: 800;
+}
+
+.case--combat__chances {
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}
+
+.case--combat__chances .chances {
+  margin: 0 0.3rem 0 0;
+}
+
+.mini-equipe {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.mini-equipe__perso {
+  width: 3rem;
+  overflow: hidden;
+  border: 2px solid var(--encre);
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.mini-equipe__perso .portrait {
+  aspect-ratio: 1;
+}
+
+.mini-equipe__perso .portrait__initiales {
+  font-size: 0.9rem;
+}
+
+/* ---------- Ton equipe ---------- */
+
+.case--equipe {
+  grid-area: equipe;
+}
+
+.qg-equipe {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.qg-equipe__perso {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.qg-equipe__perso .portrait {
+  border-bottom: 3px solid var(--aff);
+}
+
+.qg-equipe__perso .portrait__initiales {
+  font-size: 1rem;
+}
+
+.qg-equipe__perso--vide {
+  aspect-ratio: 3 / 4;
+  border-style: dashed;
+}
+
+.qg-equipe__niveau {
+  position: absolute;
+  right: 0.15rem;
+  bottom: 0.25rem;
+  min-width: 1.3rem;
+  padding: 0 0.25rem;
+  font-weight: 800;
+  font-size: 0.7rem;
+  text-align: center;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+/* ---------- Expedition ---------- */
+
+.case--expedition {
+  grid-area: exped;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--ciel) 55%, transparent) 0 1.6px, transparent 2px) 0 0 / 10px 10px,
+    var(--papier);
+}
+
+#expedition {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.expedition__gains {
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.expedition__gains strong {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.3rem;
+}
+
+/* ---------- Missions du jour ---------- */
+
+.case--missions {
+  grid-area: missions;
+}
+
+.missions {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.mission__texte {
+  display: grid;
+  flex: 1;
+  gap: 0.25rem;
+  font-weight: 700;
+}
+
+.mission--faite .mission__texte {
+  opacity: 0.55;
+}
+
+.mission__bouton {
+  min-width: 4.2rem;
+}
+
+.mission__etat {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--vert);
+}
+
+.missions__bonus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.7rem;
+  border-top: 2px dashed #c9cad6;
+}
+
+/* ---------- Tirages et collection ---------- */
+
+.case--tirages {
+  grid-area: tirages;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--rose) 60%, transparent) 0 1.6px, transparent 2px) 0 0 / 10px 10px,
+    var(--papier);
+}
+
+.case--collection {
+  grid-area: collec;
+}
+
+.qg-derniers {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.qg-derniers__perso {
+  width: 2.6rem;
+  overflow: hidden;
+  border: 2px solid var(--encre);
+  border-radius: 6px;
+}
+
+.qg-derniers__perso .portrait__initiales {
+  font-size: 0.8rem;
+}
+
+/* ---------- Statistiques ---------- */
+
+.case--stats {
+  grid-area: stats;
+}
+
+.qg-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.qg-stats dt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.qg-stats dd {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.5rem;
+}
+
+/* ---------- Bientot : les modes a venir ---------- */
+
+.case--bientot {
+  grid-area: bientot;
+  background: repeating-linear-gradient(135deg, transparent 0 10px, color-mix(in srgb, var(--encre) 5%, transparent) 10px 12px), var(--papier);
+}
+
+.bientot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bientot li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--papier);
+  border: 2px dashed var(--encre-douce);
+  border-radius: 8px;
+}
+
+.bientot span {
+  font-size: 0.85rem;
+  color: var(--encre-douce);
+}
+
+.bientot em {
+  justify-self: start;
+  padding: 0 0.45rem;
+  font-style: normal;
+  font-weight: 800;
+  font-size: 0.72rem;
+  background: var(--ciel);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+/* ---------- Tablette et telephone : une colonne ---------- */
+
+@media (max-width: 60rem) {
+  .planche {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "combat combat"
+      "exped missions"
+      "equipe missions"
+      "tirages collec"
+      "stats stats"
+      "bientot bientot";
+  }
+}
+
+@media (max-width: 38rem) {
+  .qg {
+    padding: 1rem 0.75rem 6rem;
+  }
+
+  .planche {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "combat" "exped" "missions" "equipe" "tirages" "collec" "stats" "bientot";
+  }
+
+  .case--combat__contenu {
+    max-width: none;
+    background: color-mix(in srgb, var(--papier) 88%, transparent);
+  }
+
+  .bientot {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Boutons un peu plus compacts dans les cases */
+.case__boutons .bouton {
+  font-size: 1.15rem;
+  padding: 0.5em 1.6em 0.55em;
+}
+
+/* ---------- Le perso en vedette : la grande illustration du QG ---------- */
+
+.case--vedette {
+  grid-area: vedette;
+  min-height: 30rem;
+  padding: 0;
+  overflow: hidden;
+  border-width: 3px;
+  box-shadow: 6px 6px 0 var(--encre);
+}
+
+.vedette__image {
+  position: absolute;
+  inset: 0;
+}
+
+.vedette__image .portrait {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.vedette__image .portrait img {
+  object-position: var(--cadrage, 50% 20%);
+  filter: saturate(1.05) contrast(1.05);
+}
+
+.vedette__image .portrait__initiales {
+  font-size: 5rem;
+}
+
+/* Trame qui assombrit le bas de l'illustration, pour la lisibilite */
+.vedette__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 50%, rgba(23, 25, 45, 0.55) 72%, rgba(23, 25, 45, 0.92));
+}
+
+/* Le nom ecrit a la verticale, comme sur la tranche d'un tome */
+.vedette__nom {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  writing-mode: vertical-rl;
+  padding: 1rem 0.55rem;
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.12em;
+  color: var(--papier);
+  background: var(--encre);
+}
+
+.vedette__pied {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0 1rem 1rem;
+  color: var(--papier);
+}
+
+.vedette__pied .obi-rarete {
+  position: static;
+  justify-self: start;
+  padding: 0.1rem 0.7rem;
+  border: 2px solid var(--encre);
+  font-size: 0.8rem;
+}
+
+.vedette__infos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.8rem;
+  font-weight: 700;
+}
+
+.vedette__infos .etoile {
+  width: 0.9rem;
+  height: 0.9rem;
+  stroke: var(--papier);
+}
+
+.vedette__changer {
+  justify-self: start;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--papier);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.fiche__vedette {
+  align-self: center;
+  font-weight: 800;
+  color: var(--encre-douce);
+}
+
+/* Nouvelle planche avec la vedette a gauche */
+.planche {
+  grid-template-areas:
+    "vedette vedette vedette vedette combat combat combat combat combat combat combat combat"
+    "vedette vedette vedette vedette exped exped exped exped equipe equipe equipe equipe"
+    "missions missions missions missions missions missions tirages tirages tirages collec collec collec"
+    "bientot bientot bientot bientot bientot bientot bientot bientot stats stats stats stats";
+}
+
+.case--combat {
+  min-height: 17rem;
+}
+
+@media (max-width: 60rem) {
+  .planche {
+    grid-template-areas:
+      "combat combat"
+      "vedette exped"
+      "vedette equipe"
+      "missions missions"
+      "tirages collec"
+      "stats stats"
+      "bientot bientot";
+  }
+}
+
+@media (max-width: 38rem) {
+  .planche {
+    grid-template-areas: "combat" "vedette" "exped" "missions" "equipe" "tirages" "collec" "stats" "bientot";
+  }
+
+  .case--vedette {
+    min-height: 24rem;
+  }
+}
+
+/* Encart du prochain combat : un cartouche net pose sur le decor */
+.case--combat {
+  display: flex;
+  align-items: center;
+}
+
+.case--combat__contenu {
+  margin: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 3px;
+}
+
+/* Resume de l'equipe */
+.qg-resume {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1.5rem;
+  margin: 0.3rem 0 0;
+}
+
+.qg-resume div {
+  display: contents;
+}
+
+.qg-resume dt {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.qg-resume dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.qg-resume__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.qg-resume__roles span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 38rem) {
+  .case--combat__contenu {
+    margin: 0.75rem;
+    padding: 1rem;
+    background: var(--papier);
+  }
+}
+
+/* ---------- Crossover Hebdo : la couverture du magazine ---------- */
+
+.case--hebdo {
+  grid-area: bientot;
+  grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+  gap: 1.1rem;
+}
+
+.hebdo__couverture {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  min-height: 15rem;
+  padding: 0.7rem;
+  overflow: hidden;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 60%, rgba(239, 189, 43, 0.25) 0deg 1deg, transparent 1deg 7deg),
+    #c4372b;
+  border: 3px solid var(--encre);
+  border-radius: 3px;
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.hebdo__magazine {
+  font-family: var(--police-titre);
+  font-size: 1.15rem;
+  line-height: 1;
+  text-shadow: 0.06em 0.06em 0 var(--encre);
+}
+
+.hebdo__numero {
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.hebdo__persos {
+  display: flex;
+  justify-content: center;
+}
+
+.hebdo__perso {
+  width: 3.6rem;
+  margin: 0 -0.4rem;
+  overflow: hidden;
+  border: 2px solid var(--encre);
+  border-radius: 3px;
+  rotate: -4deg;
+}
+
+.hebdo__perso:nth-child(2) { rotate: 3deg; translate: 0 -0.4rem; }
+
+.hebdo__perso .portrait {
+  aspect-ratio: 3 / 4;
+}
+
+.hebdo__obi {
+  margin: 0 -0.7rem -0.7rem;
+  padding: 0.35rem 0.6rem;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: var(--encre);
+  background: var(--obi);
+  border-top: 2px solid var(--encre);
+}
+
+.hebdo__contenu {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+}
+
+@media (max-width: 38rem) {
+  .case--hebdo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Cadres de la vedette (cosmetiques) ---------- */
+.cadre--argent  { border-color: #9aa3ad; box-shadow: 0 0 0 3px #d5dbe0, 6px 6px 0 var(--encre); }
+.cadre--bronze  { border-color: #8a5a2b; box-shadow: 0 0 0 3px #c9935a, 6px 6px 0 var(--encre); }
+.cadre--or      { border-color: #b78a12; box-shadow: 0 0 0 3px #e9b526, 6px 6px 0 var(--encre); }
+.cadre--platine { border-color: #6b8ea8; box-shadow: 0 0 0 3px #bfe0f2, 0 0 18px #bfe0f2, 6px 6px 0 var(--encre); }
+.cadre--diamant { border-color: #2f8fb8; box-shadow: 0 0 0 3px #8fe3ff, 0 0 26px #8fe3ff, 6px 6px 0 var(--encre); }
+.cadre--legende { border-color: var(--sceau); animation: cadre-legende 3s linear infinite; }
+[class*="cadre--deluxe"] { border-color: #b78a12; box-shadow: 0 0 0 3px var(--sceau), 6px 6px 0 var(--encre); }
+
+@keyframes cadre-legende {
+  0%, 100% { box-shadow: 0 0 0 3px #e9b526, 0 0 22px #e9b526, 6px 6px 0 var(--encre); }
+  50%      { box-shadow: 0 0 0 3px var(--sceau), 0 0 30px var(--sceau), 6px 6px 0 var(--encre); }
+}
+
+.qg-saison {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 2px dashed color-mix(in srgb, var(--encre) 25%, transparent);
+}
+
+.qg-saison .bouton {
+  justify-self: start;
+}
+
+.zone-carte--deluxe[aria-selected="true"] {
+  box-shadow: 4px 4px 0 var(--sceau);
+}
+
+/* ---------- Quoi de neuf ---------- */
+.quoi-de-neuf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  color: var(--papier);
+  background: var(--encre);
+  border-left: 8px solid var(--obi);
+  border-radius: 3px;
+}
+
+.quoi-de-neuf:empty {
+  display: none;
+}
+
+.quoi-de-neuf__titre {
+  font-family: var(--police-mincho);
+  font-weight: 800;
+}
+
+.quoi-de-neuf ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quoi-de-neuf__lien {
+  padding: 0.2rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--encre);
+  background: var(--obi);
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Expeditions ciblees ---------- */
+.expeditions-ciblees {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 2px dashed color-mix(in srgb, var(--encre) 25%, transparent);
+}
+
+.expedition-ciblee {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.expedition-ciblee select {
+  font: inherit;
+  padding: 0.2rem 0.3rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 3px;
+}
+
+/* ---------- Equipes enregistrees ---------- */
+.equipes-enregistrees {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.4rem;
+}
+
+.equipe-enregistree {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.bouton-texte--discret {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--encre-douce);
+}

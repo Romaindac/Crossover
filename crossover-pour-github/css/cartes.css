@@ -1,0 +1,199 @@
+/* ==========================================================
+   CARTES ET PORTRAITS
+   Le meme cadre pour tous les persos.
+   ========================================================== */
+
+/* Le portrait : initiales en fond, image par-dessus */
+.portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--aff) 13%, var(--papier));
+}
+
+.portrait__initiales {
+  font-family: var(--police-titre);
+  font-size: 1.9rem;
+  color: var(--aff);
+}
+
+.portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--cadrage, 50% 18%);
+  filter: saturate(0.92) contrast(1.04);
+}
+
+/* Les Pokemon sont dessines en entier sur fond transparent */
+.portrait--pokemon img {
+  object-fit: contain;
+  object-position: center;
+  padding: 6%;
+  filter: none;
+}
+
+/* ---------- Carte dans la grille ---------- */
+
+.carte {
+  position: relative;
+  display: grid;
+  padding: 0;
+  text-align: left;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out;
+}
+
+.carte .portrait {
+  border-bottom: 4px solid var(--aff);
+}
+
+.carte:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.carte:focus-visible {
+  outline-offset: 3px;
+}
+
+.carte__role {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  color: var(--encre);
+}
+
+.icone-role {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.carte__infos {
+  display: grid;
+  padding: 0.35rem 0.55rem 0.5rem;
+  line-height: 1.25;
+}
+
+.carte__nom {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.carte__meta {
+  font-size: 0.8rem;
+  color: var(--encre-douce);
+}
+
+/* Perso deja dans l'equipe */
+.carte--prise .portrait {
+  opacity: 0.45;
+}
+
+.carte__bandeau {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 42%;
+  padding: 0.2rem 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  background: var(--obi);
+  border-block: 2px solid var(--encre);
+}
+
+/* ---------- Rarete : l'obi du tome ---------- */
+
+.carte__visuel {
+  position: relative;
+  display: block;
+}
+
+.obi-rarete {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.1rem 0.4rem;
+  font-weight: 800;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--encre);
+  border-top: 2px solid var(--encre);
+  background: var(--couleur-rarete);
+}
+
+.obi-rarete--commun     { --couleur-rarete: #cdcbc3; }
+.obi-rarete--peu_commun { --couleur-rarete: #a8cdb1; }
+.obi-rarete--rare       { --couleur-rarete: #a7c2e2; }
+.obi-rarete--epique     { --couleur-rarete: #c4b2e6; }
+.obi-rarete--legendaire {
+  --couleur-rarete: linear-gradient(100deg, #e9b526 0%, #f8e6a6 45%, #e9b526 60%, #d29b12 100%);
+}
+
+/* La carte garde la couleur de l'affinite sur le badge du role */
+.carte__role {
+  background: color-mix(in srgb, var(--aff) 30%, var(--papier));
+}
+
+.carte .portrait {
+  border-bottom: 0;
+}
+
+.carte__ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.1rem 0.3rem;
+}
+
+.carte__ligne .carte__meta {
+  white-space: nowrap;
+}
+
+/* Etoiles */
+.etoiles {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.etoile {
+  width: 0.72rem;
+  height: 0.72rem;
+  fill: #d9d9e3;
+  stroke: var(--encre);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.etoile--pleine {
+  fill: var(--obi);
+}
+
+/* Portrait de la Rature (dessin original en SVG) */
+.portrait--rature svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

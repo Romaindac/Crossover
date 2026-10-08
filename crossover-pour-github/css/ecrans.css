@@ -1,0 +1,1388 @@
+/* ==========================================================
+   ECRANS : la mise en page de chaque ecran du jeu
+   ========================================================== */
+
+/* ---------- Accueil : la couverture d'un tome ---------- */
+
+.accueil {
+  position: relative;
+  min-height: 88vh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Trames de points, comme sur une page couleur imprimee */
+.accueil__trame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-size: 12px 12px;
+}
+
+.accueil__trame--rose {
+  background-image: radial-gradient(circle, var(--rose) 0 2.4px, transparent 2.8px);
+  -webkit-mask-image: radial-gradient(ellipse at 92% 8%, #000 0 10%, transparent 55%);
+  mask-image: radial-gradient(ellipse at 92% 8%, #000 0 10%, transparent 55%);
+}
+
+.accueil__trame--ciel {
+  background-image: radial-gradient(circle, var(--ciel) 0 2px, transparent 2.4px);
+  background-size: 10px 10px;
+  -webkit-mask-image: radial-gradient(ellipse at 6% 92%, #000 0 8%, transparent 45%);
+  mask-image: radial-gradient(ellipse at 6% 92%, #000 0 8%, transparent 45%);
+}
+
+/* Texte vertical sur le cote, comme la tranche d'un livre */
+.accueil__tranche {
+  position: absolute;
+  top: 2rem;
+  left: 1.5rem;
+  writing-mode: vertical-rl;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.1em;
+  color: var(--encre-douce);
+}
+
+.accueil__couverture {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem 2.5rem;
+}
+
+/* Illustration de couverture : les persos en eventail derriere le logo */
+.vitrine {
+  order: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+  pointer-events: none;
+}
+
+.vitrine__carte {
+  width: min(9.5rem, 16vw);
+  margin: 0 calc(min(9.5rem, 16vw) * -0.1);
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 var(--encre);
+  transform-origin: 50% 120%;
+  rotate: var(--angle);
+  translate: 0 var(--bas, 0);
+  animation: vitrine-arrivee 600ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  animation-delay: calc(200ms + var(--i) * 70ms);
+}
+
+.vitrine__carte .portrait {
+  aspect-ratio: 3 / 4;
+}
+
+@keyframes vitrine-arrivee {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.accueil__impact {
+  position: relative;
+  z-index: 1;
+}
+
+/* Le logo : contour d'encre et ombre rose decalee */
+.accueil__impact {
+  animation: logo-impact 520ms cubic-bezier(0.2, 0.9, 0.3, 1.3) 120ms both;
+}
+
+.accueil__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(3rem, 13vw, 8.5rem);
+  line-height: 1;
+  color: var(--papier);
+  transform: rotate(-4deg) skewX(-6deg);
+  text-shadow:
+    0.035em 0 0 var(--encre),
+    -0.035em 0 0 var(--encre),
+    0 0.035em 0 var(--encre),
+    0 -0.035em 0 var(--encre),
+    0.025em 0.025em 0 var(--encre),
+    -0.025em 0.025em 0 var(--encre),
+    0.025em -0.025em 0 var(--encre),
+    -0.025em -0.025em 0 var(--encre),
+    0.09em 0.09em 0 var(--rose);
+}
+
+/* Le bandeau jaune (obi) qui entoure les tomes au Japon */
+.obi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem 3rem;
+  padding: 1.5rem;
+  background: var(--obi);
+  border-block: 3px solid var(--encre);
+  animation: obi-entree 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 350ms both;
+}
+
+.obi__texte {
+  max-width: 32ch;
+}
+
+.obi__accroche {
+  font-weight: 800;
+  font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+  line-height: 1.25;
+}
+
+.obi__detail {
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.obi__action {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.obi__message {
+  min-height: 1.5em;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+@keyframes logo-impact {
+  0%   { opacity: 0; transform: scale(1.3); }
+  60%  { opacity: 1; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes obi-entree {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+/* ---------- Encadre des outils de test ---------- */
+
+.outils {
+  max-width: 56rem;
+  margin: 3rem auto 2rem;
+  padding: 1.5rem;
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.outils h2 {
+  font-weight: 800;
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+
+.outils p {
+  color: var(--encre-douce);
+  max-width: 40ch;
+}
+
+.bouton--secondaire {
+  display: inline-block;
+  font-size: 1.125rem;
+  padding: 0.5em 1.5em 0.55em;
+  background: var(--obi);
+  color: var(--encre);
+  text-decoration: none;
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.bouton--secondaire:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--encre);
+}
+
+.bouton--secondaire:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--encre);
+}
+
+/* ---------- Ligne de statut ---------- */
+
+.statut {
+  padding: 0 1.5rem 2.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--encre-douce);
+  text-align: center;
+}
+
+.statut__voyant {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.5em;
+  vertical-align: 0.05em;
+  border-radius: 50%;
+  background: var(--vert);
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 40rem) {
+  .accueil__tranche {
+    display: none;
+  }
+
+  .obi {
+    text-align: center;
+  }
+
+  .outils {
+    margin-inline: 1rem;
+  }
+}
+
+/* ==========================================================
+   ECRAN D'EQUIPE
+   ========================================================== */
+
+.equipe {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.75rem;
+}
+
+.equipe > * {
+  min-width: 0;
+}
+
+.equipe h2 {
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.equipe__entete {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.lien-retour,
+.bouton-texte {
+  justify-self: start;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.equipe__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.1;
+  text-shadow: 0.06em 0.06em 0 var(--rose);
+}
+
+.equipe__chargement {
+  min-height: 1.5em;
+  color: var(--encre-douce);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* ---------- Formation et detail ---------- */
+
+.equipe__haut {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.formation,
+.detail,
+.adversaire {
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+  padding: 1.25rem;
+}
+
+.formation__titre-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.formation__outils {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.ligne {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.ligne + .ligne {
+  border-top: 2px dashed #c9cad6;
+}
+
+.ligne__nom {
+  font-weight: 800;
+  color: var(--encre-douce);
+}
+
+.ligne__places {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 7.5rem));
+  gap: 0.75rem;
+}
+
+.place {
+  position: relative;
+  display: grid;
+  padding: 0;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+
+.place .portrait {
+  border-bottom: 4px solid var(--aff);
+}
+
+.place--vide {
+  aspect-ratio: 3 / 4.4;
+  place-items: center;
+  border-style: dashed;
+  border-color: var(--encre-douce);
+  color: var(--encre-douce);
+}
+
+.place--choisie {
+  outline: 4px solid var(--obi);
+  outline-offset: 2px;
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.place__infos {
+  display: grid;
+  padding: 0.3rem 0.5rem 0.45rem;
+  line-height: 1.25;
+}
+
+.place__perso {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.place__nom {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.formation__message {
+  min-height: 1.5em;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+.formation__bonus {
+  color: var(--encre-douce);
+}
+
+.formation__bonus strong {
+  color: var(--encre);
+}
+
+/* Detail du perso */
+
+.detail__haut {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.detail__haut .portrait {
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+}
+
+.detail__serie {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}
+
+.detail .detail__nom {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.detail__role,
+.detail__affinite {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.pastille {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--aff);
+  border: 2px solid var(--encre);
+}
+
+.detail__aide {
+  font-size: 0.88rem;
+  color: var(--encre-douce);
+  margin-top: 0.2rem;
+}
+
+.detail__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.6rem 0;
+  border-block: 2px solid var(--encre);
+  text-align: center;
+}
+
+.detail__stats dt {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.detail__stats dd {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail__competence {
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  margin-top: 0.6rem;
+  background: color-mix(in srgb, var(--ciel) 22%, var(--papier));
+}
+
+.detail__competence--ultime {
+  background: color-mix(in srgb, var(--obi) 35%, var(--papier));
+}
+
+.detail__type {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--encre-douce);
+}
+
+.detail__titre-comp {
+  font-weight: 800;
+}
+
+/* ---------- Grille de selection ---------- */
+
+.selection__entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filtre {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.filtre[aria-pressed="true"] {
+  background: var(--encre);
+  color: var(--papier);
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.9rem;
+}
+
+/* ---------- Adversaire ---------- */
+
+.paliers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.palier {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.palier[aria-checked="true"] {
+  background: var(--obi);
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.palier__numero {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--encre-douce);
+}
+
+.palier[aria-checked="true"] .palier__numero {
+  color: var(--encre);
+}
+
+.palier__nom {
+  font-weight: 800;
+}
+
+.palier__equipe {
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.adversaire__action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bouton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- Resultat du combat ---------- */
+
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 28, 51, 0.55);
+}
+
+.resultat {
+  width: min(28rem, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--encre);
+}
+
+.resultat .resultat__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 2.6rem;
+  line-height: 1.1;
+}
+
+.resultat__titre--victoire {
+  text-shadow: 0.06em 0.06em 0 var(--obi);
+}
+
+.resultat__titre--defaite {
+  text-shadow: 0.06em 0.06em 0 var(--rose);
+}
+
+.resultat__detail {
+  color: var(--encre-douce);
+  margin: 0.4rem 0 1rem;
+}
+
+.resultat__liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resultat__liste li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #d9d9e3;
+  font-weight: 700;
+}
+
+.resultat__liste li.ko {
+  color: var(--encre-douce);
+}
+
+.resultat__note {
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+  margin: 1rem 0 1.25rem;
+}
+
+.resultat__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.bouton--clair {
+  background: var(--papier);
+  color: var(--encre);
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+/* ---------- Ecran d'equipe sur mobile ---------- */
+
+@media (max-width: 52rem) {
+  .equipe__haut {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 34rem) {
+  .ligne {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .ligne__places {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grille {
+    grid-template-columns: repeat(auto-fill, minmax(6.2rem, 1fr));
+    gap: 0.6rem;
+  }
+
+  .adversaire__action .bouton {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   CHOIX DU PREMIER HEROS
+   ========================================================== */
+
+.debut {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.debut__titre {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  line-height: 1.1;
+  text-shadow: 0.06em 0.06em 0 var(--rose);
+}
+
+.debut__intro {
+  color: var(--encre-douce);
+  font-size: 1.1rem;
+}
+
+.heros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.heros__carte {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--encre);
+}
+
+.heros__visuel {
+  position: relative;
+}
+
+.heros__visuel .portrait {
+  aspect-ratio: 1;
+}
+
+.heros__visuel .obi-rarete {
+  font-size: 0.85rem;
+  padding: 0.2rem;
+}
+
+.heros__corps {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.heros__serie {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}
+
+.heros__nom {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+
+.heros__role {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.heros__comp {
+  font-size: 0.95rem;
+}
+
+.heros__bouton {
+  justify-self: start;
+  margin-top: 0.5rem;
+  font-size: 1.15rem;
+  box-shadow: 4px 4px 0 var(--obi);
+}
+
+.compagnons {
+  margin-top: 1.5rem;
+}
+
+.compagnons h2 {
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.compagnons__liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compagnon {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  line-height: 1.3;
+}
+
+.compagnon .portrait {
+  width: 3.4rem;
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.compagnons__cadeau {
+  margin-top: 1rem;
+  font-weight: 700;
+}
+
+/* ==========================================================
+   EQUIPE : ajouts de la V0.2
+   ========================================================== */
+
+.equipe__titre-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+}
+
+.compteur-encre {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem 0.35rem 0.7rem;
+  font-weight: 800;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+/* Une goutte d'encre dessinee en CSS */
+.compteur-encre__goutte {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: var(--encre);
+  border-radius: 0 50% 50% 50%;
+  rotate: 45deg;
+}
+
+.selection__compte {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--encre-douce);
+  margin-left: 0.4rem;
+}
+
+.selection__aide,
+.grille__vide {
+  margin-top: 0.9rem;
+  color: var(--encre-douce);
+}
+
+.detail__visuel {
+  position: relative;
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.detail__haut .detail__visuel .portrait {
+  border: 0;
+  border-radius: 0;
+}
+
+.detail__progression {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.detail__niveau {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail__niveau .etoile {
+  width: 1rem;
+  height: 1rem;
+}
+
+.barre-xp {
+  display: block;
+  height: 0.6rem;
+  overflow: hidden;
+  background: #e4e4ec;
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+.barre-xp__rempli {
+  display: block;
+  height: 100%;
+  background: var(--ciel);
+  transform-origin: left;
+  transform: scaleX(var(--xp, 0));
+}
+
+.detail__xp {
+  font-size: 0.85rem;
+  color: var(--encre-douce);
+}
+
+.palier--verrouille {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.palier__battu {
+  margin-left: 0.4rem;
+  padding: 0 0.45rem;
+  font-size: 0.7rem;
+  background: var(--vert);
+  color: var(--papier);
+  border-radius: 999px;
+}
+
+.palier__recompense {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.palier[aria-checked="true"] .palier__recompense {
+  color: var(--encre);
+}
+
+/* ==========================================================
+   BARRE DE NAVIGATION
+   ========================================================== */
+
+.navigation {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--papier);
+  border-bottom: 3px solid var(--encre);
+}
+
+.navigation__logo {
+  padding: 0;
+  font-family: var(--police-titre);
+  font-size: 1.35rem;
+  color: var(--papier);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-shadow:
+    0.05em 0 var(--encre), -0.05em 0 var(--encre), 0 0.05em var(--encre), 0 -0.05em var(--encre),
+    0.04em 0.04em var(--encre), -0.04em -0.04em var(--encre), 0.08em 0.08em 0 var(--rose);
+}
+
+.navigation__onglets {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.navigation__onglet {
+  flex-shrink: 0;
+  padding: 0.4rem 1rem;
+  font-weight: 800;
+  background: var(--papier);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.navigation__onglet:hover {
+  border-color: var(--encre);
+}
+
+.navigation__onglet[aria-current="page"] {
+  background: var(--obi);
+  border-color: var(--encre);
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.navigation__encre {
+  flex-shrink: 0;
+  padding: 0.25rem 0.8rem 0.25rem 0.6rem;
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+/* Sur telephone : les onglets passent en bas de l'ecran, a portee de pouce */
+@media (max-width: 40rem) {
+  .navigation {
+    justify-content: space-between;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .navigation__onglets {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0.45rem 0.45rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+    background: var(--papier);
+    border-top: 3px solid var(--encre);
+  }
+
+  .navigation__onglet {
+    padding: 0.5rem 0.1rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .equipe,
+  .tirages,
+  .collection,
+  .reglages-page,
+  .qg {
+    padding-bottom: 6rem;
+  }
+}
+
+/* ==========================================================
+   COLLECTION : l'etagere
+   ========================================================== */
+
+.collection {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.collection__entete {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.collection__progression {
+  display: grid;
+  gap: 0.35rem;
+  min-width: min(18rem, 100%);
+}
+
+.etagere {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.etagere__serie {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+/* Les tomes debout sur une planche */
+.etagere__rang {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 0 0.75rem 1.1rem;
+}
+
+.etagere__rang::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.8rem;
+  background: #e3bb85;
+  border: 3px solid var(--encre);
+  border-radius: 3px;
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.etagere__tome {
+  display: grid;
+  gap: 0.25rem;
+  width: 7.5rem;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.etagere__couverture {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--encre) 18%, transparent) 0 1.4px, transparent 1.8px) 0 0 / 9px 9px,
+    var(--papier);
+  border: 3px solid var(--encre);
+  border-left-width: 7px;
+  border-radius: 3px 8px 8px 3px;
+  box-shadow: 3px 3px 0 var(--encre);
+  transition: transform 120ms ease-out;
+}
+
+button.etagere__tome:hover .etagere__couverture {
+  transform: translateY(-5px) rotate(-1.5deg);
+}
+
+.etagere__couverture .portrait {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+.etagere__nom {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.etagere__info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--encre-douce);
+}
+
+/* Tome pas encore obtenu : ferme, avec juste son obi */
+.etagere__tome--manquant {
+  cursor: default;
+}
+
+.etagere__tome--manquant .etagere__nom {
+  color: var(--encre-douce);
+}
+
+.etagere__tome--manquant .tome__logo {
+  top: 38%;
+  font-size: 2.6rem;
+  rotate: 0deg;
+}
+
+.etagere .tome__obi--plein::before {
+  transform: scaleX(1);
+}
+
+.tome__obi--plein span {
+  position: relative;
+  font-weight: 800;
+  font-size: 0.72rem;
+}
+
+/* Fiche dans une fenetre */
+.fiche {
+  width: min(30rem, 100%);
+}
+
+.detail--fiche {
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 30rem) {
+  .collection {
+    grid-template-columns: 1fr;
+  }
+
+  .etagere__rang {
+    gap: 0.6rem;
+    padding-inline: 0.4rem;
+  }
+
+  .etagere__tome {
+    width: calc((100% - 1.2rem) / 3);
+  }
+}
+
+/* ==========================================================
+   REGLAGES
+   ========================================================== */
+
+.reglages-page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.carte-reglage {
+  background: var(--papier);
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+}
+
+.carte-reglage h2 {
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.carte-reglage--danger h2 {
+  color: #c8372d;
+}
+
+.reglage {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reglage__nom {
+  font-weight: 800;
+}
+
+.reglage__aide {
+  font-size: 0.92rem;
+  color: var(--encre-douce);
+}
+
+.choix-segmente--gauche {
+  justify-content: flex-start;
+}
+
+.reglage__boutons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.reglage__boutons[hidden],
+.zone-sauvegarde[hidden] {
+  display: none;
+}
+
+.zone-sauvegarde {
+  width: 100%;
+  min-height: 5.5rem;
+  padding: 0.6rem 0.75rem;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 10px;
+  resize: vertical;
+  word-break: break-all;
+}
+
+.bouton--petit-texte {
+  font-size: 1rem;
+  padding: 0.45em 1.3em 0.5em;
+}
+
+.bouton--danger {
+  background: #c8372d;
+  color: var(--papier);
+}
+
+.reglage__message {
+  min-height: 1.5em;
+  font-weight: 700;
+  color: var(--vert);
+}
+
+.reglage__message--erreur {
+  color: #c8372d;
+}
+
+/* ---------- Chances de victoire estimees ---------- */
+
+.chances {
+  justify-self: start;
+  margin-top: 0.35rem;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+.chances--facile    { background: #b6e8c8; }
+.chances--jouable   { background: var(--ciel); }
+.chances--difficile { background: #ffd6a3; }
+.chances--extreme   { background: var(--rose); }
+
+/* Pastille "tirage possible" sur l'onglet Tirages */
+.navigation__onglet {
+  position: relative;
+}
+
+.pastille-tirage {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.35rem;
+  padding: 0 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--papier);
+  background: #c8372d;
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+.pastille-tirage[hidden] {
+  display: none;
+}
+
+/* ---------- Petites corrections de mise en page ---------- */
+
+.formation__outils {
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.formation__outils .bouton-texte,
+.etagere__info,
+.carte__meta {
+  white-space: nowrap;
+}
+
+.etagere__info {
+  flex-wrap: wrap;
+  row-gap: 0.1rem;
+}
+
+.palier__nom {
+  line-height: 1.25;
+}
