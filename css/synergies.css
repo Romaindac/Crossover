@@ -417,3 +417,136 @@
     font-size: 0.9rem;
   }
 }
+
+/* Bouton du compte dans la barre */
+.navigation__compte {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem 0.25rem 0.35rem;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.navigation__compte--connecte {
+  color: var(--papier);
+  background: transparent;
+  border-color: var(--obi);
+}
+
+.navigation__compte-icone {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0.15rem;
+  background: var(--papier);
+  border-radius: 50%;
+}
+
+.navigation__compte-avatar {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  font-size: 0.8rem;
+  color: var(--encre);
+  background: var(--obi);
+  border-radius: 50%;
+}
+
+.navigation__compte-nom {
+  max-width: 7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  .navigation__compte {
+    padding: 0.2rem;
+  }
+
+  .navigation__compte-nom {
+    display: none;
+  }
+
+  .navigation__logo {
+    font-size: 1rem;
+  }
+}
+
+/* Fenetre du compte */
+.voile--compte {
+  z-index: 45;
+}
+
+.compte {
+  width: min(28rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.compte__avantages {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.7rem 0.9rem 0.7rem 1.8rem;
+  font-size: 0.88rem;
+  background: color-mix(in srgb, var(--obi) 18%, var(--papier));
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.compte__modes {
+  justify-content: stretch;
+}
+
+.compte__modes .choix-segmente__option {
+  flex: 1;
+}
+
+.compte__connecte {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+}
+
+.compte__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 50%;
+}
+
+.compte__actions {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.compte__message {
+  padding: 0.5rem 0.7rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: color-mix(in srgb, #2f9e6e 14%, var(--papier));
+  border-left: 5px solid #2f9e6e;
+}
+
+.compte__message--erreur {
+  color: #a02a22;
+  background: color-mix(in srgb, #c8372d 10%, var(--papier));
+  border-left-color: #c8372d;
+}

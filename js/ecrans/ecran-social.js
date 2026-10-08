@@ -3,10 +3,9 @@
 // ==========================================================
 
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
-import { partieBrute, remplacerPartie, resumeJoueur } from "../services/partie.js";
+import { resumeJoueur } from "../services/partie.js";
 import {
-  enLigneDisponible, connecte, pseudoConnecte, inscrire, connecter, deconnecter,
-  envoyerSauvegarde, recupererSauvegarde, publierProfil, classement, CLASSEMENTS,
+  enLigneDisponible, connecte, pseudoConnecte, classement, CLASSEMENTS,
 } from "../services/enligne.js";
 import { idsVitrine, basculerVitrine, meilleuresCartes, vitrineCompacte, lienVitrine, TAILLE_VITRINE } from "../services/vitrine.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
@@ -15,6 +14,8 @@ import { chargerPortraits } from "../services/portraits.js";
 import { htmlCarte, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { brancherChat } from "../ui/chat.js";
+import { afficherHotel } from "../ui/hotel.js";
+import { ouvrirCompte } from "../ui/compte.js";
 
 const echapper = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -37,7 +38,7 @@ export function htmlResume(r = {}) {
 }
 
 export function afficherSocial(conteneur, { naviguer, onglet = null }) {
-  let ongletSocial = onglet ?? (connecte() ? "chat" : "vitrine");
+  let ongletSocial = onglet ?? "chat";
   let arreterChat = null;
   let edition = false;
   let ongletClassement = "semaine";
@@ -49,12 +50,18 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
       <h1 class="equipe__titre">Social</h1>
       <div class="choix-segmente choix-segmente--gauche social__onglets" role="tablist" aria-label="Social">
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="chat">Chat</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="hotel">Hôtel des ventes</button>
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="classements">Classements</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="vitrine">Vitrine et compte</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="vitrine">Ma vitrine</button>
       </div>
+      <div class="social__compte" id="compte"></div>
 
       <section class="carte-reglage social__chat" data-panneau="chat" aria-label="Chat">
         <div id="chat"></div>
+      </section>
+
+      <section class="social__hotel" data-panneau="hotel" aria-label="Hôtel des ventes">
+        <div id="hotel"></div>
       </section>
 
       <section class="carte-reglage" data-panneau="vitrine" aria-labelledby="titre-vitrine">
@@ -63,10 +70,6 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
         <div id="vitrine"></div>
       </section>
 
-      <section class="carte-reglage" data-panneau="vitrine" aria-labelledby="titre-compte">
-        <h2 id="titre-compte">Compte et sauvegarde en ligne</h2>
-        <div id="compte"></div>
-      </section>
 
       <section class="carte-reglage" data-panneau="classements" aria-labelledby="titre-classement">
         <h2 id="titre-classement">Classements</h2>
@@ -101,39 +104,15 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
   }
 
   // ---------- Compte ----------
-  function rendreCompte(message = "", erreur = false) {
+  // Un bandeau compact : le compte se gere dans sa fenetre (bouton de la barre)
+  function rendreCompte() {
     const zone = $("#compte");
-    const msg = `<p class="reglage__message ${erreur ? "reglage__message--erreur" : ""}" role="status" aria-live="polite">${message}</p>`;
-    if (!enLigneDisponible()) {
-      zone.innerHTML = `
-        <p class="reglage__aide">Les comptes en ligne ne sont pas encore activés. En attendant, ta partie est gardée dans ce navigateur : pense à l'exporter dans les Réglages pour ne pas la perdre.</p>
-        <div class="reglage__boutons"><button type="button" class="bouton bouton--clair bouton--petit-texte" data-nav="reglages">Exporter ma partie</button></div>`;
-      return;
-    }
-    if (!connecte()) {
-      zone.innerHTML = `
-        <p class="reglage__aide">Crée un compte pour sauvegarder ta partie en ligne, la retrouver sur un autre appareil et apparaître au classement. Juste un pseudo et un mot de passe, pas de mail.</p>
-        <form class="form-compte" id="form-compte">
-          <label class="champ-social">Pseudo<input type="text" name="pseudo" autocomplete="username" maxlength="20" required></label>
-          <label class="champ-social">Mot de passe<input type="password" name="mdp" autocomplete="current-password" minlength="6" required></label>
-          <div class="reglage__boutons">
-            <button type="submit" class="bouton bouton--obi-petit" data-mode="inscrire">Créer mon compte</button>
-            <button type="submit" class="bouton bouton--clair bouton--petit-texte" data-mode="connecter">J'ai déjà un compte</button>
-          </div>
-        </form>
-        <p class="reglage__aide">Garde bien ton mot de passe : on ne peut pas le récupérer.</p>
-        ${msg}`;
-      return;
-    }
-    const derniere = lire("derniere-synchro", null);
-    zone.innerHTML = `
-      <p class="reglage__aide">Connecté en tant que <strong>${echapper(pseudoConnecte())}</strong>. Ta partie part en ligne toute seule toutes les 5 minutes${derniere ? ` (dernière fois : ${new Date(derniere).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})` : ""}.</p>
-      <div class="reglage__boutons">
-        <button type="button" class="bouton bouton--obi-petit" data-action="sauver-ligne">Sauvegarder maintenant</button>
-        <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="recuperer">Récupérer ma partie en ligne</button>
-        <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="deconnecter">Se déconnecter</button>
-      </div>
-      ${msg}`;
+    if (!enLigneDisponible()) { zone.innerHTML = ""; return; }
+    zone.innerHTML = connecte()
+      ? `<p class="social__compte-texte">Connecté en tant que <strong>${echapper(pseudoConnecte())}</strong> · partie sauvegardée en ligne toutes les 5 minutes.</p>
+         <button type="button" class="bouton-texte" data-action="ouvrir-compte">Mon compte</button>`
+      : `<p class="social__compte-texte"><strong>Pas encore de compte ?</strong> Crée-le en 10 secondes pour le chat, l'hôtel des ventes, les classements et la sauvegarde en ligne.</p>
+         <button type="button" class="bouton bouton--obi-petit" data-action="ouvrir-compte">Créer mon compte</button>`;
   }
 
   // ---------- Classements ----------
@@ -186,39 +165,6 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     $("#voile-social .resultat__actions .bouton").focus();
   }
 
-  // Envoie la partie et le profil public
-  async function synchroniser() {
-    await envoyerSauvegarde(partieBrute());
-    await publierProfil(resumeJoueur(), vitrineCompacte());
-    ecrire("derniere-synchro", Date.now());
-  }
-
-  conteneur.addEventListener("submit", async (e) => {
-    if (e.target.id !== "form-compte") return;
-    e.preventDefault();
-    const donnees = new FormData(e.target);
-    const pseudo = String(donnees.get("pseudo")).trim();
-    const mdp = String(donnees.get("mdp"));
-    const mode = e.submitter?.dataset.mode ?? "connecter";
-    e.target.querySelectorAll("button").forEach((b) => { b.disabled = true; });
-    try {
-      if (mode === "inscrire") {
-        await inscrire(pseudo, mdp);
-        await synchroniser();
-        rendreCompte("Compte créé et partie sauvegardée en ligne !");
-      } else {
-        await connecter(pseudo, mdp);
-        const enLigne = await recupererSauvegarde();
-        rendreCompte(enLigne ? "Connecté ! Ta partie en ligne est disponible : clique sur « Récupérer » pour la charger ici." : "Connecté !");
-      }
-      rendreVitrine();
-      chargerClassement();
-    } catch (err) {
-      rendreCompte(err.message, true);
-    }
-  });
-
-  let confirmerRecup = false;
   conteneur.addEventListener("input", (e) => {
     if (e.target.id === "pseudo-lien") ecrire("pseudo", e.target.value.trim().slice(0, 20));
   });
@@ -247,29 +193,7 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     if (action === "onglet-classement") { ongletClassement = cible.dataset.cle; chargerClassement(); }
     if (action === "voir-joueur" && Array.isArray(joueurs)) ouvrirJoueur(joueurs[Number(cible.dataset.index)]);
 
-    if (action === "sauver-ligne") {
-      cible.disabled = true;
-      try { await synchroniser(); rendreCompte("Partie sauvegardée en ligne !"); chargerClassement(); }
-      catch (err) { rendreCompte(err.message, true); }
-    }
-    if (action === "recuperer") {
-      if (!confirmerRecup) {
-        confirmerRecup = true;
-        cible.textContent = "Remplacer ma partie ici ? Clique encore";
-        cible.classList.add("bouton--danger");
-        return;
-      }
-      confirmerRecup = false;
-      try {
-        const enLigne = await recupererSauvegarde();
-        if (!enLigne) return rendreCompte("Aucune partie en ligne pour ce compte.", true);
-        if (!remplacerPartie(enLigne.donnees)) return rendreCompte("La partie en ligne est abîmée.", true);
-        majNavigation();
-        rendreVitrine();
-        rendreCompte(`Partie du ${new Date(enLigne.maj).toLocaleString("fr-FR")} récupérée !`);
-      } catch (err) { rendreCompte(err.message, true); }
-    }
-    if (action === "deconnecter") { deconnecter(); rendreCompte("Déconnecté. Ta partie reste dans ce navigateur."); rendreClassement(); rendreVitrine(); }
+    if (action === "ouvrir-compte") ouvrirCompte();
   });
 
   // ---------- Onglets et chat ----------
@@ -278,13 +202,13 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     arreterChat = null;
     const zone = $("#chat");
     if (!enLigneDisponible()) {
-      zone.innerHTML = '<p class="reglage__aide">Le chat s\'ouvrira avec les comptes en ligne. En attendant, partage ta vitrine à tes potes depuis l\'onglet « Vitrine et compte ».</p>';
+      zone.innerHTML = '<p class="reglage__aide">Le chat s\'ouvrira avec les comptes en ligne. En attendant, partage ta vitrine à tes potes depuis l\'onglet « Ma vitrine ».</p>';
       return;
     }
     if (!connecte()) {
       zone.innerHTML = `
         <p class="reglage__aide">Le chat réunit tous les joueurs : canaux Général, Entraide et Échanges, et messages privés. Il faut un compte (juste un pseudo et un mot de passe).</p>
-        <div class="reglage__boutons"><button type="button" class="bouton bouton--obi-petit" data-action="onglet-social" data-onglet="vitrine">Créer mon compte</button></div>`;
+        <div class="reglage__boutons"><button type="button" class="bouton bouton--obi-petit" data-action="ouvrir-compte">Créer mon compte</button></div>`;
       return;
     }
     arreterChat = brancherChat(zone, { ouvrirJoueur });
@@ -297,8 +221,9 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
       b.setAttribute("aria-checked", String(b.dataset.onglet === nom));
     });
     conteneur.querySelectorAll("[data-panneau]").forEach((s) => { s.hidden = s.dataset.panneau !== nom; });
-    $(".social").classList.toggle("social--large", nom === "chat");
+    $(".social").classList.toggle("social--large", nom === "chat" || nom === "hotel");
     if (nom === "chat") rendreChat(); else { arreterChat?.(); arreterChat = null; }
+    if (nom === "hotel") afficherHotel($("#hotel"), { naviguer, apresChangement: majNavigation });
     if (nom === "classements") { if (enLigneDisponible()) chargerClassement(); else rendreClassement(); }
   }
 
@@ -306,6 +231,13 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     const b = e.target.closest("[data-action='onglet-social']");
     if (b) afficherOnglet(b.dataset.onglet);
   });
+
+  // Connexion ou deconnexion depuis la fenetre du compte : tout se remet a jour
+  const surCompte = () => {
+    if (!conteneur.isConnected) return window.removeEventListener("crossover:compte", surCompte);
+    rendreCompte(); rendreVitrine(); afficherOnglet(ongletSocial);
+  };
+  window.addEventListener("crossover:compte", surCompte);
 
   rendreVitrine();
   rendreCompte();

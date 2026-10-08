@@ -18,7 +18,7 @@ const pct = (x) => Math.round(x * 100);
 const C = COULEURS_AFFINITE;
 
 // Le cycle des affinites, dessine
-function schemaAffinites() {
+export function schemaAffinites() {
   const rond = (x, y, a) => `
     <circle cx="${x}" cy="${y}" r="27" fill="${C[a]}" stroke="#17192d" stroke-width="3"/>
     <text x="${x}" y="${y + 4}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#fff">${AFFINITES[a]}</text>`;
@@ -34,7 +34,7 @@ function schemaAffinites() {
 }
 
 // La formation : 2 devant, 3 derriere
-function schemaFormation() {
+export function schemaFormation() {
   const place = (role, texte) => `<span class="aide__place">${iconeRole(role)}<span>${texte}</span></span>`;
   return `
     <div class="aide__formation" role="img" aria-label="Ligne avant : tank et attaquant. Ligne arrière : assassin, soutien, contrôle.">

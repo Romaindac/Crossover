@@ -17,6 +17,7 @@ import {
   recupererGains, DUREE_VENTE_JOURS, TAXE_VENTE, PRIX_VENTE,
 } from "../services/enligne.js";
 import { htmlDetailsPiece, iconeEmplacement, ligneTexte } from "./equipement-ui.js";
+import { ouvrirCompte } from "./compte.js";
 
 const echapper = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -55,7 +56,7 @@ export function afficherHotel(zone, { naviguer, apresChangement = () => {}, vend
           : "L'hôtel des ventes ouvrira avec les comptes en ligne."}</p>
         ${enLigneDisponible() ? '<button type="button" class="bouton bouton--obi-petit" data-hv="compte">Créer mon compte</button>' : ""}
       </div>`;
-    zone.onclick = (e) => { if (e.target.closest("[data-hv='compte']")) naviguer("social", { onglet: "vitrine" }); };
+    zone.onclick = (e) => { if (e.target.closest("[data-hv='compte']")) ouvrirCompte(); };
     return;
   }
 

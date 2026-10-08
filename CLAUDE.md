@@ -85,6 +85,9 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   `supabase/catalogue.sql` (généré par `node js/outils/catalogue-sql.mjs`, à relancer et recoller si objets.js change).
   L'encre et l'inventaire restent locaux (triche possible sur sa propre partie, limitée par les contrôles).
   Règles de sécurité testées par `python3 tests/tester-supabase.py` (PostgreSQL local, 43 vérifications).
+- Fait : jeu en ligne plus visible. Bouton « Compte » dans la barre (fenêtre `js/ui/compte.js`, événement `crossover:compte`),
+  onglet Social = Chat, Hôtel des ventes, Classements, Ma vitrine ; bandeau « Joue avec les autres » au QG.
+  Tutoriel de départ en 7 pages (`js/ui/tutoriel.js`), ouvert au premier passage au QG, à revoir via « ? » puis « Tutoriel ».
 - Fait : écran Social. Vitrine de 6 cartes partageable par lien (`#vitrine=…`, sans serveur) ; comptes pseudo + mot de passe, sauvegarde en ligne (auto toutes les 5 min) et classements Tour / Boss / Collection via Supabase (`js/services/enligne.js`, appels REST sans bibliothèque).
   Pour activer : coller `supabase/a-coller.sql` (schema + catalogue, généré par `node js/outils/catalogue-sql.mjs`) dans le SQL Editor de Supabase, désactiver « Confirm email », puis mettre l'URL du projet et la clé « anon public » dans `js/donnees/config-enligne.js`. Jamais la clé service_role.
 - À venir : retours de test et corrections, roguelite (V0.4), PvP (V0.5).
