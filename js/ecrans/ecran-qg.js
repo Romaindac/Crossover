@@ -8,13 +8,12 @@
 import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { RARETES } from "../donnees/raretes.js";
 import { CHAPITRES, TOUTES_LES_ETAPES } from "../donnees/campagne.js";
-import { COUT_TIRAGE } from "../donnees/progression.js";
 import { ROLES } from "../donnees/roles.js";
 import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import {
   encre, idsPossedes, progressionDe, equipeSauvee, estBattu,
-  tiragesAvantLegendaire, statistiques, missionsDuJour, reclamerMission,
+  etatBoosters, statistiques, missionsDuJour, reclamerMission,
   reclamerBonusMissions, etatExpedition, recupererExpedition, vedette, entreeCombat, prochaineEtape, etapeBattue,
   missionsDeLaSemaine, reclamerMissionSemaine, chapitreTermine,
   cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes,
@@ -133,10 +132,10 @@ export function afficherQg(conteneur, { naviguer }) {
         </section>
 
         <section class="case case--tirages" aria-labelledby="titre-tirages">
-          <h2 class="case__titre" id="titre-tirages">Tirages</h2>
+          <h2 class="case__titre" id="titre-tirages">Boosters</h2>
           <p class="case__chiffre" id="qg-encre"></p>
-          <p class="case__aide">Légendaire garanti dans ${tiragesAvantLegendaire()} tirages au plus.</p>
-          <button type="button" class="bouton bouton--obi-petit" data-action="tirages">Ouvrir des tomes</button>
+          <p class="case__aide">${etatBoosters().tickets} ticket${etatBoosters().tickets > 1 ? "s" : ""} de booster. Légendaire garanti dans ${etatBoosters().avantLegendaire} boosters au plus.</p>
+          <button type="button" class="bouton bouton--obi-petit" data-action="tirages">Ouvrir des boosters</button>
         </section>
 
         <section class="case case--collection" aria-labelledby="titre-collection">

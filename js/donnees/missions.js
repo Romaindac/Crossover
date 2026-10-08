@@ -8,7 +8,7 @@
 
 export const MISSIONS = [
   { id: "victoires", texte: "Gagne 3 combats", cible: 3, recompense: 40, evenement: "victoire" },
-  { id: "tirage", texte: "Ouvre 1 tome aux tirages", cible: 1, recompense: 30, evenement: "tirage" },
+  { id: "tirage", texte: "Ouvre 1 booster", cible: 1, recompense: 30, evenement: "tirage" },
   { id: "ultimes", texte: "Lance 5 ultimes toi-même, en mode manuel", cible: 5, recompense: 50, evenement: "ultime-manuel" },
   { id: "rapide", texte: "Gagne un combat en moins de 30 secondes", cible: 1, recompense: 40, evenement: "victoire-rapide" },
   { id: "serie", texte: "Gagne avec 2 persos de la même série", cible: 1, recompense: 40, evenement: "victoire-serie" },

@@ -3,14 +3,13 @@
 // Presente sur les ecrans du jeu (pas en combat ni a l'accueil).
 // ==========================================================
 
-import { encre, quelqueChoseAReclamer } from "../services/partie.js";
-import { COUT_TIRAGE, COUT_TIRAGE_X10 } from "../donnees/progression.js";
+import { encre, quelqueChoseAReclamer, boostersDisponibles } from "../services/partie.js";
 
 const ONGLETS = [
   { ecran: "qg", nom: "QG" },
   { ecran: "aventure", nom: "Aventure" },
   { ecran: "equipe", nom: "Équipe" },
-  { ecran: "tirages", nom: "Tirages" },
+  { ecran: "tirages", nom: "Boosters" },
   { ecran: "collection", nom: "Collection" },
   { ecran: "reglages", nom: "Réglages" },
 ];
@@ -40,10 +39,10 @@ export function brancherNavigation(conteneur, naviguer, actif) {
     if (zone) zone.textContent = encre().toLocaleString("fr-FR");
     const pastille = conteneur.querySelector("[data-pastille]");
     if (pastille) {
-      const solde = encre();
-      pastille.textContent = solde >= COUT_TIRAGE_X10 ? "x10" : solde >= COUT_TIRAGE ? "x1" : "";
-      pastille.hidden = solde < COUT_TIRAGE;
-      pastille.setAttribute("aria-label", solde >= COUT_TIRAGE ? "tirage possible" : "");
+      const n = boostersDisponibles();
+      pastille.textContent = n > 9 ? "9+" : n ? String(n) : "";
+      pastille.hidden = n === 0;
+      pastille.setAttribute("aria-label", n ? `${n} booster${n > 1 ? "s" : ""} à ouvrir` : "");
     }
     const pastilleQg = conteneur.querySelector("[data-pastille-qg]");
     if (pastilleQg) {

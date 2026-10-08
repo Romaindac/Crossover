@@ -21,6 +21,7 @@ import { CHAPITRES, etapeDe, nombreEtoiles, ETOILE_VICTOIRE, ETOILE_SANS_KO, ETO
 import { ZONES, MULT_SOUS_ZONE, MULT_BOSS, CHANCE_DORE, BONUS_DORE } from "../donnees/zones.js";
 import { nomPiece } from "../moteur/equipement.js";
 import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
+import { varsSerie, motifSerie } from "../donnees/series.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { iconeEffet } from "../ui/icones-effets.js";
@@ -119,7 +120,7 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
     const attributs = u.camp === 0 ? 'type="button" data-action="ultime"' : "";
     return `
       <${balise} ${attributs} class="combattant combattant--${u.camp === 0 ? "a" : "b"}" data-uid="${u.uid}"
-        style="--aff: ${COULEURS_AFFINITE[perso.affinite]}" aria-label="${perso.nom}">
+        style="--aff: ${COULEURS_AFFINITE[perso.affinite]}; ${varsSerie(perso.serie)}" data-motif="${motifSerie(perso.serie)}" aria-label="${perso.nom}">
         <span class="combattant__pret" aria-hidden="true">Ultime prêt</span>
         <span class="combattant__corps" style="--decalage: ${(-Math.random() * 3).toFixed(2)}s">
           <span class="combattant__cadre">

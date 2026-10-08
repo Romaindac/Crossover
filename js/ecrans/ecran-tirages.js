@@ -1,88 +1,62 @@
 // ==========================================================
-// ECRAN DES TIRAGES
-// Chaque tirage est un tome de manga : l'obi annonce la rarete,
-// puis la couverture se retourne et revele le perso.
+// ECRAN DES BOOSTERS
+// La seule facon d'obtenir des persos : ouvrir des boosters.
+// Chaque edition a ses series ; un booster = 5 cartes. Les cartes
+// se retournent une par une, l'obi annonce la rarete d'abord.
+// L'atelier fabrique la carte de son choix avec la poussiere.
 // ==========================================================
 
 import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
-import { ETOILES_MAX, PITIE_LEGENDAIRE } from "../donnees/progression.js";
-import { encre, effectuerTirage, coutTirage, tiragesAvantLegendaire, idsPossedes } from "../services/partie.js";
+import { ETOILES_MAX } from "../donnees/progression.js";
+import {
+  EDITIONS, CASES_BOOSTER, CHANCE_BOOSTER_DORE, PITIE_BOOSTER, CHANCE_HOLO, CHANCE_DOREE,
+  STOCK_GRATUIT_MAX, POUSSIERE_PAR_BOOSTER, COUT_FABRICATION,
+} from "../donnees/boosters.js";
+import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
+import { serieDeLaSemaine } from "../donnees/hebdo.js";
+import {
+  encre, idsPossedes, possede, progressionDe, etatBoosters, ouvrirBoosterJoueur, fabriquerCarte, coutFabrication,
+  verifierTampons,
+} from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { annoncerTampons } from "../ui/toast.js";
-import { verifierTampons } from "../services/partie.js";
-import { serieDeLaSemaine } from "../donnees/hebdo.js";
-import { finDeSemaine } from "../donnees/tour.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+const pourcent = (x) => `${(x * 100).toFixed(x < 0.1 ? 1 : 0).replace(".", ",")} %`;
 const ONOMATOPEES_LEGENDAIRE = ["ゴゴゴ", "ドドド", "ズドン"];
 
-// Chance d'un perso precis par tirage (hors garanties) : la serie a l'honneur compte double dans sa rarete
-function chancePerso(perso, serie) {
-  const liste = PERSOS.filter((p) => p.rarete === perso.rarete);
-  const poids = (p) => (p.serie === serie ? 2 : 1);
-  return RARETES[perso.rarete].taux * poids(perso) / liste.reduce((t, p) => t + poids(p), 0);
+const persosEdition = (edition) => PERSOS.filter((p) => edition.series.includes(p.serie));
+
+function duree(ms) {
+  const minutes = Math.max(0, Math.ceil(ms / 60000));
+  const h = Math.floor(minutes / 60);
+  return h ? `${h} h ${String(minutes % 60).padStart(2, "0")}` : `${minutes} min`;
 }
-const pourcent = (x) => `${(x * 100).toFixed(1).replace(".", ",")} %`;
 
 export function afficherTirages(conteneur, { naviguer }) {
   const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let revelationEnCours = null; // { tomes, resultats, passer }
   const serie = serieDeLaSemaine();
-  const joursRestants = Math.max(0, Math.floor((finDeSemaine() - Date.now()) / 86400000));
+  let revelation = null;     // { edition, cartes, reveles, dore }
+  let vue = "boutique";      // boutique | atelier
+  let filtreAtelier = "manquants";
+  let messageAtelier = "";
 
   conteneur.innerHTML = `
     ${htmlNavigation("tirages")}
     <div class="tirages">
       <header class="tirages__entete">
-        <h1 class="equipe__titre">Tirages</h1>
+        <h1 class="equipe__titre">Boosters</h1>
+        <div class="boosters__onglets" role="tablist" aria-label="Boosters">
+          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="boutique">Ouvrir des boosters</button>
+          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="atelier">Atelier</button>
+        </div>
       </header>
-
-      <section class="etal">
-        <div class="pile" aria-hidden="true">
-          ${["commun", "rare", "peu_commun", "legendaire", "epique", "commun"].map((r, i) => `
-            <span class="pile__tome" style="--i: ${i}"><span class="obi-rarete obi-rarete--${r}"></span></span>
-          `).join("")}
-        </div>
-
-        <div class="etal__contenu">
-          <p class="etal__texte">Chaque tome cache un perso. Regarde bien l'obi : sa couleur annonce la rareté avant que la couverture ne se retourne.</p>
-          <p class="etal__honneur"><strong>À l'honneur cette semaine : ${serie}.</strong> Ses persos ont deux fois plus de chances de sortir dans leur rareté. Encore ${joursRestants} jour${joursRestants > 1 ? "s" : ""}.</p>
-          <div class="etal__boutons">
-            <button type="button" class="bouton bouton--clair bouton-tirage" data-action="tirer" data-nombre="1">
-              1 tome <span class="bouton-tirage__prix">${coutTirage(1)} d'encre</span>
-            </button>
-            <button type="button" class="bouton bouton--principal bouton-tirage" data-action="tirer" data-nombre="10">
-              10 tomes <span class="bouton-tirage__prix">${coutTirage(10)} d'encre</span>
-            </button>
-          </div>
-          <p class="etal__manque" id="manque" role="status" aria-live="polite"></p>
-
-          <div class="pitie">
-            <p id="pitie-texte"></p>
-            <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" id="pitie-barre"></span></span>
-          </div>
-
-          <details class="taux">
-            <summary>Voir les taux et les garanties</summary>
-            <table>
-              <thead><tr><th>Rareté</th><th class="nombre">Chance</th><th>Persos</th></tr></thead>
-              <tbody>
-                ${ORDRE_RARETES.map((r) => `
-                  <tr>
-                    <td><span class="obi-rarete obi-rarete--${r} obi-rarete--pastille">${RARETES[r].nom}</span></td>
-                    <td class="nombre">${Math.round(RARETES[r].taux * 100)} %</td>
-                    <td>${PERSOS.filter((p) => p.rarete === r).map((p) => `<span class="${p.serie === serie ? "taux__honneur" : ""}">${p.nom} (${pourcent(chancePerso(p, serie))})</span>`).join(", ")}</td>
-                  </tr>`).join("")}
-              </tbody>
-            </table>
-            <p>Entre parenthèses, la chance de chaque perso par tome ; en gras, la série à l'honneur. Dans chaque tirage de 10 tomes, au moins un perso Rare ou mieux. Un Légendaire est garanti au ${PITIE_LEGENDAIRE}e tirage sans Légendaire. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en encre.</p>
-          </details>
-        </div>
-      </section>
+      <section class="boosters__reserve" id="reserve" aria-live="polite"></section>
+      <div id="vue-boosters"></div>
     </div>
     <div id="revelation"></div>
   `;
@@ -90,67 +64,159 @@ export function afficherTirages(conteneur, { naviguer }) {
   const $ = (sel) => conteneur.querySelector(sel);
   const majEncre = brancherNavigation(conteneur, naviguer, "tirages");
 
-  function rendreEtal() {
-    const solde = encre();
-    majEncre();
-    conteneur.querySelectorAll("[data-action='tirer']").forEach((b) => {
-      b.disabled = solde < coutTirage(Number(b.dataset.nombre));
-    });
-    $("#manque").textContent = solde < coutTirage(1)
-      ? `Il te manque ${nombre(coutTirage(1) - solde)} d'encre. Gagne des combats pour en obtenir.`
-      : "";
-    const reste = tiragesAvantLegendaire();
-    $("#pitie-texte").innerHTML = `Légendaire garanti dans <strong>${reste}</strong> tirage${reste > 1 ? "s" : ""} au plus.`;
-    $("#pitie-barre").style.setProperty("--xp", (PITIE_LEGENDAIRE - reste) / PITIE_LEGENDAIRE);
+  // ---------- Reserve : tickets, encre, poussiere, pitie ----------
+
+  function rendreReserve() {
+    const b = etatBoosters();
+    const prochain = b.stockPlein
+      ? `Réserve de tickets gratuits pleine (${STOCK_GRATUIT_MAX}) : ouvre-les !`
+      : `Prochain ticket gratuit dans ${duree(b.prochainGratuit - Date.now())}.`;
+    $("#reserve").innerHTML = `
+      <div class="reserve__case"><span class="reserve__chiffre">${b.tickets}</span><span class="reserve__nom">ticket${b.tickets > 1 ? "s" : ""} de booster</span></div>
+      <div class="reserve__case"><span class="reserve__chiffre">${nombre(encre())}</span><span class="reserve__nom">encre (${nombre(b.prix)} le booster)</span></div>
+      <div class="reserve__case"><span class="reserve__chiffre">${nombre(b.poussiere)}</span><span class="reserve__nom">poussière pour l'atelier</span></div>
+      <p class="reserve__aide">${prochain} Un Légendaire est garanti dans <strong>${b.avantLegendaire}</strong> booster${b.avantLegendaire > 1 ? "s" : ""} au plus. Des tickets se gagnent aussi en finissant un chapitre de campagne et avec le bonus des missions du jour ; l'encre se gagne en combattant.</p>
+      <p class="etal__honneur"><strong>À l'honneur cette semaine : ${serie}.</strong> Ses persos ont deux fois plus de chances de sortir dans leur rareté.</p>`;
   }
 
-  // ---------- Un tome ----------
+  // ---------- Boutique : une edition = un booster ----------
 
-  function texteResultat(r) {
-    if (r.nouveau) return "Nouveau perso";
-    if (r.encreRendue) return `Déjà au maximum : +${r.encreRendue} d'encre`;
-    if (r.etoilesApres > r.etoilesAvant) return `Doublon : ${r.etoilesApres}e étoile\u202f!`;
-    return `Doublon : ${r.doublons} sur ${r.besoin} pour la prochaine étoile`;
-  }
-
-  function htmlTome(r, index) {
-    const perso = PERSOS_PAR_ID[r.id];
+  function htmlBooster(edition) {
+    const persos = persosEdition(edition);
+    const obtenus = persos.filter((p) => possede(p.id)).length;
+    const b = etatBoosters();
+    const payer = b.tickets > 0 ? "Ouvrir (1 ticket)" : `Ouvrir (${nombre(b.prix)} d'encre)`;
+    const peutOuvrir = b.tickets > 0 || encre() >= b.prix;
+    const s = styleSerie(edition.series[0]);
     return `
-      <button type="button" class="tome tome--${r.rarete}" data-action="reveler" data-index="${index}"
-        aria-label="Tome ${index + 1}, à révéler" style="--i: ${index}">
+      <article class="booster" style="--s1: ${s.c1}; --s2: ${s.c2}">
+        <div class="booster__paquet" aria-hidden="true">
+          <span class="booster__numero">Édition ${edition.numero}</span>
+          <span class="booster__nom">${edition.nom}</span>
+          <span class="booster__bandes">${edition.series.map((x) => `<span class="serie-bande-mini" data-motif="${motifSerie(x)}" style="${varsSerie(x)}"></span>`).join("")}</span>
+        </div>
+        <div class="booster__texte">
+          <h2 class="booster__titre">${edition.nom}</h2>
+          <p class="case__aide">${edition.texte}</p>
+          <p class="booster__series">${edition.series.join(" · ")}</p>
+          <p class="booster__progression"><strong>${obtenus}</strong> sur ${persos.length} persos</p>
+          <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" style="--xp: ${obtenus / persos.length}"></span></span>
+          <button type="button" class="bouton bouton--principal" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}>${payer}</button>
+        </div>
+      </article>`;
+  }
+
+  function htmlTaux() {
+    const nomsCases = ["Cartes 1 à 3", "Carte 4", "Carte 5"];
+    const cases = [CASES_BOOSTER[0], CASES_BOOSTER[3], CASES_BOOSTER[4]];
+    const ordre = ORDRE_RARETES.slice().reverse();
+    return `
+      <details class="taux">
+        <summary>Voir les taux et les garanties</summary>
+        <div class="defile">
+          <table>
+            <thead><tr><th>Case</th>${ordre.map((r) => `<th class="nombre">${RARETES[r].nom}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${cases.map((c, i) => `<tr><td>${nomsCases[i]}</td>${ordre.map((r) => `<td class="nombre">${c[r] ? pourcent(c[r]) : "–"}</td>`).join("")}</tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+        <p>Chaque carte a ${pourcent(CHANCE_HOLO)} de chances d'être Holo et ${pourcent(CHANCE_DOREE)} d'être Dorée : même force, autre cadre, à collectionner. Un booster sur ${Math.round(1 / CHANCE_BOOSTER_DORE)} est un booster doré (5 cartes Épiques ou Légendaires). Un Légendaire est garanti au ${PITIE_BOOSTER}e booster sans Légendaire. Chaque booster donne ${POUSSIERE_PAR_BOOSTER} poussière. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en poussière.</p>
+      </details>`;
+  }
+
+  function rendreBoutique() {
+    $("#vue-boosters").innerHTML = `
+      <div class="boosters__grille">${EDITIONS.map(htmlBooster).join("")}</div>
+      ${htmlTaux()}`;
+  }
+
+  // ---------- Atelier : fabriquer une carte avec la poussiere ----------
+
+  function rendreAtelier() {
+    const b = etatBoosters();
+    const liste = PERSOS.filter((p) => filtreAtelier === "tous" || !possede(p.id))
+      .sort((a, c) => RARETES[a.rarete].ordre - RARETES[c.rarete].ordre || a.nom.localeCompare(c.nom));
+    const ordre = ORDRE_RARETES.slice().reverse();
+    $("#vue-boosters").innerHTML = `
+      <section class="atelier">
+        <p class="case__aide">La poussière vient des boosters (${POUSSIERE_PAR_BOOSTER} par booster) et des doublons d'un perso déjà à ${ETOILES_MAX} étoiles. Coût : ${ordre.map((r) => `${RARETES[r].nom} ${nombre(COUT_FABRICATION[r])}`).join(", ")}.</p>
+        <div class="choix-segmente choix-segmente--gauche" role="radiogroup" aria-label="Persos affichés">
+          <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="manquants" aria-checked="${filtreAtelier === "manquants"}">Persos manquants</button>
+          <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="tous" aria-checked="${filtreAtelier === "tous"}">Tous (pour les étoiles)</button>
+        </div>
+        <p class="case__message" role="status" aria-live="polite">${messageAtelier}</p>
+        <div class="atelier__grille">
+          ${liste.length ? liste.map((p) => {
+            const cout = coutFabrication(p.id);
+            const prog = possede(p.id) ? progressionDe(p.id) : null;
+            const bloque = b.poussiere < cout || (prog && prog.etoiles >= ETOILES_MAX);
+            return `
+              <div class="atelier__carte" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">
+                <span class="atelier__portrait">${htmlPortrait(p)}<span class="obi-rarete obi-rarete--${p.rarete}">${RARETES[p.rarete].nom}</span></span>
+                <span class="atelier__nom">${p.nom}</span>
+                <span class="atelier__info">${p.serie}${prog ? ` · ${prog.etoiles} étoile${prog.etoiles > 1 ? "s" : ""}` : ""}</span>
+                <button type="button" class="bouton bouton--obi-petit" data-action="fabriquer" data-perso="${p.id}" ${bloque ? "disabled" : ""}>${nombre(cout)} poussière</button>
+              </div>`;
+          }).join("") : '<p class="case__aide">Tu as tous les persos ! Choisis « Tous » pour fabriquer des doublons et gagner des étoiles.</p>'}
+        </div>
+      </section>`;
+    chargerPortraits((id) => rafraichirPortrait(conteneur, id));
+  }
+
+  function rendre() {
+    rendreReserve();
+    conteneur.querySelectorAll("[data-action='vue']").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.vue === vue)));
+    if (vue === "atelier") rendreAtelier();
+    else rendreBoutique();
+    majEncre?.();
+  }
+
+  // ---------- Revelation des cartes ----------
+
+  function texteResultat(c) {
+    const variante = c.nouvelleVariante ? ` + version ${c.variante === "doree" ? "Dorée" : "Holo"} !` : "";
+    if (c.nouveau) return `Nouveau perso${variante}`;
+    if (c.poussiere) return `Déjà au maximum : +${c.poussiere} poussière${variante}`;
+    if (c.etoilesApres > c.etoilesAvant) return `${c.etoilesApres}e étoile !${variante}`;
+    return `Doublon : ${c.doublons} sur ${c.besoin} pour l'étoile suivante${variante}`;
+  }
+
+  function htmlCarteRevelee(c, index) {
+    const perso = PERSOS_PAR_ID[c.id];
+    return `
+      <button type="button" class="tome tome--${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}" data-action="reveler" data-index="${index}"
+        aria-label="Carte ${index + 1}, à révéler" style="--i: ${index}">
         <span class="tome__interieur">
           <span class="tome__face tome__face--dos">
             <span class="tome__logo">Crossover</span>
-            <span class="tome__obi"><span class="tome__obi-texte">${RARETES[r.rarete].nom}</span></span>
+            <span class="tome__obi"><span class="tome__obi-texte">${RARETES[c.rarete].nom}</span></span>
           </span>
-          <span class="tome__face tome__face--avant">
+          <span class="tome__face tome__face--avant" data-motif="${motifSerie(perso.serie)}" style="${varsSerie(perso.serie)}">
             ${htmlPortrait(perso)}
+            <span class="serie-bande" aria-hidden="true"></span>
             <span class="tome__titre">${perso.nom}</span>
-            <span class="obi-rarete obi-rarete--${r.rarete}">${RARETES[r.rarete].nom}</span>
-            ${r.nouveau ? '<span class="tampon">Nouveau</span>' : ""}
+            <span class="obi-rarete obi-rarete--${c.rarete}">${RARETES[c.rarete].nom}</span>
+            ${c.nouveau ? '<span class="tampon">Nouveau</span>' : ""}
+            ${c.variante ? `<span class="badge-variante badge-variante--${c.variante} tome__variante">${c.variante === "doree" ? "Dorée" : "Holo"}</span>` : ""}
           </span>
         </span>
-        <span class="tome__resultat">${texteResultat(r)}</span>
-      </button>
-    `;
+        <span class="tome__resultat">${texteResultat(c)}</span>
+      </button>`;
   }
 
-  // Revele un tome : l'obi d'abord, puis la couverture
   async function reveler(index, rapide = false) {
-    const etat = revelationEnCours;
+    const etat = revelation;
     if (!etat || etat.reveles.has(index)) return;
     etat.reveles.add(index);
-    const tome = $(`.tome[data-index="${index}"]`);
-    const r = etat.resultats[index];
-    const perso = PERSOS_PAR_ID[r.id];
-
-    tome.classList.add("tome--obi");
-    if (!rapide && !mouvementReduit) await pause(r.rarete === "legendaire" ? 900 : 420);
-    tome.classList.add("tome--revele");
-    const resultat = texteResultat(r);
-    tome.setAttribute("aria-label", `${perso.nom}, ${RARETES[r.rarete].nom}. ${resultat}${/[!.]$/.test(resultat) ? "" : "."}`);
-
-    if (r.rarete === "legendaire" && !rapide) {
+    const carte = $(`.tome[data-index="${index}"]`);
+    const c = etat.cartes[index];
+    const perso = PERSOS_PAR_ID[c.id];
+    carte.classList.add("tome--obi");
+    if (!rapide && !mouvementReduit) await pause(c.rarete === "legendaire" ? 900 : c.rarete === "epique" ? 600 : 380);
+    carte.classList.add("tome--revele");
+    carte.setAttribute("aria-label", `${perso.nom}, ${RARETES[c.rarete].nom}. ${texteResultat(c)}`);
+    if (c.rarete === "legendaire" && !rapide) {
       const flash = document.createElement("span");
       flash.className = "flash-legendaire";
       $("#revelation .revelation").appendChild(flash);
@@ -158,86 +224,97 @@ export function afficherTirages(conteneur, { naviguer }) {
       const ono = document.createElement("span");
       ono.className = "onomatopee onomatopee--tome";
       ono.textContent = ONOMATOPEES_LEGENDAIRE[Math.floor(Math.random() * ONOMATOPEES_LEGENDAIRE.length)];
-      tome.appendChild(ono);
+      carte.appendChild(ono);
     }
-    if (etat.reveles.size === etat.resultats.length) terminerRevelation();
+    if (etat.reveles.size === etat.cartes.length) terminerRevelation();
   }
 
   function terminerRevelation() {
-    const etat = revelationEnCours;
-    const nouveaux = etat.resultats.filter((r) => r.nouveau).length;
-    const etoiles = etat.resultats.filter((r) => r.etoilesApres > r.etoilesAvant).length;
+    const etat = revelation;
+    const nouveaux = etat.cartes.filter((c) => c.nouveau).length;
+    const etoiles = etat.cartes.filter((c) => c.etoilesApres > c.etoilesAvant).length;
+    const variantes = etat.cartes.filter((c) => c.nouvelleVariante).length;
     const resume = [
       nouveaux ? `${nouveaux} nouveau${nouveaux > 1 ? "x" : ""} perso${nouveaux > 1 ? "s" : ""}` : null,
       etoiles ? `${etoiles} étoile${etoiles > 1 ? "s" : ""} gagnée${etoiles > 1 ? "s" : ""}` : null,
+      variantes ? `${variantes} nouvelle${variantes > 1 ? "s" : ""} version${variantes > 1 ? "s" : ""}` : null,
     ].filter(Boolean).join(", ") || "Que des doublons, cette fois";
-    $("#revelation-resume").textContent = `${resume}. Collection : ${idsPossedes().length} sur ${PERSOS.length}.`;
+    $("#revelation-resume").textContent = `${resume}. +${POUSSIERE_PAR_BOOSTER} poussière. Collection : ${idsPossedes().length} sur ${PERSOS.length}.`;
     $("#revelation-actions").hidden = false;
-    annoncerTampons(verifierTampons());
     $("#tout-reveler").hidden = true;
-    const solde = encre();
-    $("#revelation [data-nombre='1']").disabled = solde < coutTirage(1);
-    $("#revelation [data-nombre='10']").disabled = solde < coutTirage(10);
-    rendreEtal();
+    const b = etatBoosters();
+    $("#revelation [data-action='ouvrir']").disabled = !(b.tickets > 0 || encre() >= b.prix);
+    annoncerTampons(verifierTampons());
+    rendre();
   }
 
-  async function lancerTirage(combien) {
-    const resultats = effectuerTirage(combien);
-    if (!resultats) return rendreEtal();
-    rendreEtal();
-
-    revelationEnCours = { resultats, reveles: new Set() };
+  async function ouvrir(editionId) {
+    const r = ouvrirBoosterJoueur(editionId);
+    if (!r) return rendre();
+    rendre();
+    const edition = EDITIONS.find((e) => e.id === editionId);
+    revelation = { edition, cartes: r.cartes, reveles: new Set(), dore: r.dore };
     $("#revelation").innerHTML = `
-      <div class="revelation" role="dialog" aria-modal="true" aria-labelledby="titre-revelation">
-        <h2 class="visuellement-cache" id="titre-revelation">Résultat du tirage</h2>
-        <div class="revelation__tomes revelation__tomes--${combien === 1 ? "un" : "dix"}">
-          ${resultats.map(htmlTome).join("")}
+      <div class="revelation ${r.dore ? "revelation--doree" : ""}" role="dialog" aria-modal="true" aria-labelledby="titre-revelation">
+        <h2 class="revelation__titre" id="titre-revelation">${r.dore ? "Booster doré !" : `Booster ${edition.nom}`}</h2>
+        <div class="revelation__tomes revelation__tomes--dix">
+          ${r.cartes.map(htmlCarteRevelee).join("")}
         </div>
         <p class="revelation__resume" id="revelation-resume" role="status" aria-live="polite"></p>
         <div class="revelation__barre">
           <button type="button" class="bouton bouton--clair" id="tout-reveler" data-action="tout-reveler">Tout révéler</button>
           <div class="revelation__actions" id="revelation-actions" hidden>
-            <button type="button" class="bouton bouton--clair" data-action="tirer" data-nombre="1">Encore 1 tome</button>
-            <button type="button" class="bouton bouton--principal" data-action="tirer" data-nombre="10">Encore 10 tomes</button>
+            <button type="button" class="bouton bouton--secondaire" data-action="ouvrir" data-edition="${editionId}">Encore un booster</button>
             <button type="button" class="bouton bouton--clair" data-action="fermer">Fermer</button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
     chargerPortraits((id) => rafraichirPortrait(conteneur, id));
     $("#tout-reveler").focus({ preventScroll: true });
-
-    // Les tomes se revelent un par un ; un clic les revele tout de suite
-    const etat = revelationEnCours;
-    await pause(mouvementReduit ? 100 : 500 + combien * 40);
-    for (let i = 0; i < resultats.length; i++) {
-      if (revelationEnCours !== etat) return;
+    const etat = revelation;
+    await pause(mouvementReduit ? 100 : 600);
+    for (let i = 0; i < r.cartes.length; i++) {
+      if (revelation !== etat) return;
       await reveler(i);
-      if (combien > 1 && !mouvementReduit) await pause(220);
+      if (!mouvementReduit) await pause(200);
     }
   }
 
   function fermer() {
-    revelationEnCours = null;
+    revelation = null;
     $("#revelation").innerHTML = "";
-    rendreEtal();
+    rendre();
   }
 
   conteneur.addEventListener("click", (e) => {
     const cible = e.target.closest("[data-action]");
-    if (!cible) return;
+    if (!cible || cible.disabled) return;
     const action = cible.dataset.action;
-    if (action === "tirer") lancerTirage(Number(cible.dataset.nombre));
+    if (action === "vue") { vue = cible.dataset.vue; messageAtelier = ""; rendre(); }
+    if (action === "ouvrir") ouvrir(cible.dataset.edition);
     if (action === "reveler") reveler(Number(cible.dataset.index), true);
-    if (action === "tout-reveler" && revelationEnCours) {
-      revelationEnCours.resultats.forEach((_, i) => reveler(i, true));
-    }
+    if (action === "tout-reveler" && revelation) revelation.cartes.forEach((_, i) => reveler(i, true));
     if (action === "fermer") fermer();
+    if (action === "filtre-atelier") { filtreAtelier = cible.dataset.valeur; rendreAtelier(); }
+    if (action === "fabriquer") {
+      const r = fabriquerCarte(cible.dataset.perso);
+      const perso = PERSOS_PAR_ID[cible.dataset.perso];
+      messageAtelier = r.ok ? `${perso.nom} fabriqué : ${texteResultat(r.carte)}` : r.erreur;
+      if (r.ok) annoncerTampons(verifierTampons());
+      rendre();
+    }
   });
 
   conteneur.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && revelationEnCours && !$("#revelation-actions")?.hidden) fermer();
+    if (e.key === "Escape" && revelation && !$("#revelation-actions")?.hidden) fermer();
   });
 
-  rendreEtal();
+  // Le compte a rebours du ticket gratuit se met a jour chaque minute
+  const minuteur = setInterval(() => {
+    if (!conteneur.isConnected) return clearInterval(minuteur);
+    if (!revelation) rendreReserve();
+  }, 60000);
+
+  chargerPortraits((id) => rafraichirPortrait(conteneur, id));
+  rendre();
 }

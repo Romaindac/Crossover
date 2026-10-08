@@ -1,0 +1,32 @@
+// ==========================================================
+// STYLE DES SERIES
+// Chaque manga a son cadre : deux couleurs et un motif, repris sur
+// toutes ses cartes. On reconnait une famille d'un coup d'oeil ;
+// la rarete, elle, se lit sur l'obi et sur l'eclat de la carte.
+// motif : points, rayures, damier, vagues, etoiles, spirale, eclairs,
+//         ecailles, croix, flammes (voir css/series.css)
+// ==========================================================
+
+export const STYLES_SERIES = {
+  "Dragon Ball":          { abrege: "DB",   c1: "#f08a1c", c2: "#1f4fa8", motif: "etoiles" },
+  "Naruto":               { abrege: "NRT",  c1: "#f2711c", c2: "#2b2b3a", motif: "spirale" },
+  "One Piece":            { abrege: "OP",   c1: "#c8322d", c2: "#e9c46a", motif: "vagues" },
+  "Pokémon":              { abrege: "PKM",  c1: "#d62f2f", c2: "#f4f4f4", motif: "points" },
+  "Berserk":              { abrege: "BSK",  c1: "#7a1010", c2: "#1a1a1a", motif: "croix" },
+  "Jujutsu Kaisen":       { abrege: "JJK",  c1: "#5b2a86", c2: "#12121c", motif: "eclairs" },
+  "Demon Slayer":         { abrege: "DS",   c1: "#1f7a5a", c2: "#151515", motif: "damier" },
+  "Hunter x Hunter":      { abrege: "HxH",  c1: "#2e8b3e", c2: "#e8e0c8", motif: "rayures" },
+  "Bleach":               { abrege: "BLC",  c1: "#1b1b1b", c2: "#e8e8e8", motif: "rayures" },
+  "My Hero Academia":     { abrege: "MHA",  c1: "#2a6fdb", c2: "#e63946", motif: "eclairs" },
+  "L'Attaque des Titans": { abrege: "SNK",  c1: "#4a5a3a", c2: "#c9b48a", motif: "croix" },
+  "Chainsaw Man":         { abrege: "CSM",  c1: "#e8590c", c2: "#1a1a1a", motif: "ecailles" },
+  "Frieren":              { abrege: "FRN",  c1: "#7fb3c9", c2: "#e8dcc0", motif: "etoiles" },
+  "Fairy Tail":           { abrege: "FT",   c1: "#d6336c", c2: "#f3d36b", motif: "flammes" },
+};
+
+const PAR_DEFAUT = { abrege: "", c1: "#17192d", c2: "#f2f0ea", motif: "points" };
+export const styleSerie = (serie) => STYLES_SERIES[serie] ?? PAR_DEFAUT;
+
+// A poser sur un cadre de carte : les deux couleurs (variables CSS) et le motif
+export const varsSerie = (serie) => `--s1: ${styleSerie(serie).c1}; --s2: ${styleSerie(serie).c2}`;
+export const motifSerie = (serie) => styleSerie(serie).motif;

@@ -1,5 +1,5 @@
 // ==========================================================
-// LES 32 PERSOS (24 de la V0.1, 8 du Volume 2)
+// LES 78 PERSOS (24 de la V0.1, 8 du Volume 2, 46 du Volume 3)
 // Chaque perso : sa serie, son role, son affinite, sa rarete, de petits
 // ajustements de stats (mods), son passif et son ultime.
 // Ajouter un perso = ajouter une entree ici.
@@ -292,6 +292,412 @@ export const PERSOS = [
     passif: { nom: "Texture surprise", description: "30 % de chance d'esquiver les attaques de base", type: "esquiveBase", chance: 0.3 },
     ultime: { nom: "Bungee Gum", description: "320 % et Étourdissement 2,5 s sur l'ennemi qui a le plus d'énergie (il coupe son ultime)", actions: [
       { type: "degats", cible: "plus-energie", mult: 3.2, effet: { type: "etourdi", duree: 2.5 } },
+    ] },
+  },
+  // ---------- Volume 3 : 2 persos de plus par serie ----------
+  {
+    id: "krilin", nom: "Krilin", serie: "Dragon Ball", role: "soutien", affinite: "technique", rarete: "commun",
+    mods: {},
+    passif: { nom: "Haricot magique", description: "À 40 % de PV, gagne 30 % de DEF (une fois)", type: "defSousPvUneFois", seuil: 0.4, bonus: 0.3 },
+    ultime: { nom: "Taiyoken", description: "Étourdissement 1,5 s sur la ligne avant ennemie et soin de 10 % pour toute l'équipe", actions: [
+      { type: "degats", cible: "ligne-avant", mult: 0.4, effet: { type: "etourdi", duree: 1.5 } },
+      { type: "soin", cible: "allies", pourcent: 0.1 },
+    ] },
+  },
+  {
+    id: "freezer", nom: "Freezer", serie: "Dragon Ball", role: "assassin", affinite: "chaos", rarete: "epique",
+    mods: { atq: 1.05 },
+    passif: { nom: "Empereur de l'univers", description: "ATQ +15 % par KO réalisé (max +45 %)", type: "atqParKo", bonus: 0.15, max: 0.45 },
+    ultime: { nom: "Death Beam", description: "3 rayons de 130 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 1.3, coups: 3 },
+    ] },
+  },
+  {
+    id: "kakashi", nom: "Kakashi", serie: "Naruto", role: "controle", affinite: "technique", rarete: "epique",
+    mods: { vit: 1.05 },
+    passif: { nom: "Sharingan", description: "25 % de chance d'esquiver les attaques de base", type: "esquiveBase", chance: 0.25 },
+    ultime: { nom: "Raikiri", description: "300 % et Étourdissement 2 s sur l'ennemi qui a le plus d'énergie", actions: [
+      { type: "degats", cible: "plus-energie", mult: 3.0, effet: { type: "etourdi", duree: 2 } },
+    ] },
+  },
+  {
+    id: "hinata", nom: "Hinata", serie: "Naruto", role: "soutien", affinite: "esprit", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Byakugan", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
+    ultime: { nom: "Poings du lion jumeau", description: "Bouclier de 15 % sur toute l'équipe et 120 % à la cible en face", actions: [
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.15 },
+      { type: "degats", cible: "face", mult: 1.2 },
+    ] },
+  },
+  {
+    id: "sanji", nom: "Sanji", serie: "One Piece", role: "assassin", affinite: "puissance", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Diable Jambe", description: "Ses attaques de base ont 50 % de chance d'appliquer Brûlure 1 s", type: "effetSurBase", effet: "brulure", duree: 1, chance: 0.5 },
+    ultime: { nom: "Hell Memories", description: "260 % et Brûlure 3 s à un perso de la ligne arrière", actions: [
+      { type: "degats", cible: "arriere", mult: 2.6, effet: { type: "brulure", duree: 3 } },
+    ] },
+  },
+  {
+    id: "robin", nom: "Robin", serie: "One Piece", role: "controle", affinite: "esprit", rarete: "rare",
+    mods: {},
+    passif: { nom: "Hana Hana", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
+    ultime: { nom: "Gigantesco Mano", description: "120 % à tous les ennemis et Étourdissement 1 s", actions: [
+      { type: "degats", cible: "tous", mult: 1.2, effet: { type: "etourdi", duree: 1 } },
+    ] },
+  },
+  {
+    id: "lucario", nom: "Lucario", serie: "Pokémon", role: "assassin", affinite: "technique", rarete: "rare",
+    mods: {},
+    passif: { nom: "Impassible", description: "+20 % de dégâts contre les ennemis sous 50 % de PV", type: "degatsContreBlesses", seuil: 0.5, bonus: 0.2 },
+    ultime: { nom: "Aurasphère", description: "300 % au perso ennemi qui a le moins de PV", actions: [
+      { type: "degats", cible: "plus-faible", mult: 3.0 },
+    ] },
+  },
+  {
+    id: "florizarre", nom: "Florizarre", serie: "Pokémon", role: "soutien", affinite: "esprit", rarete: "commun",
+    mods: { pv: 1.1, vit: 0.9 },
+    passif: { nom: "Engrais", description: "Récupère 3 % de ses PV toutes les 3 s", type: "regenPeriodique", pourcent: 0.03, periode: 3 },
+    ultime: { nom: "Synthèse", description: "Régénération 5 s pour toute l'équipe et Ralentissement 3 s sur la ligne avant ennemie", actions: [
+      { type: "effet", cible: "allies", effet: "regeneration", duree: 5 },
+      { type: "degats", cible: "ligne-avant", mult: 0.6, effet: { type: "ralenti", duree: 3 } },
+    ] },
+  },
+  {
+    id: "casca", nom: "Casca", serie: "Berserk", role: "assassin", affinite: "vitesse", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Commandante", description: "VIT +40 % sous 50 % de PV", type: "vitSousPv", seuil: 0.5, bonus: 0.4 },
+    ultime: { nom: "Assaut de la Troupe", description: "2 coups de 150 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 1.5, coups: 2 },
+    ] },
+  },
+  {
+    id: "schierke", nom: "Schierke", serie: "Berserk", role: "soutien", affinite: "esprit", rarete: "rare",
+    mods: {},
+    passif: { nom: "Esprits élémentaires", description: "Soins +25 % sur les alliés sous 40 % de PV", type: "soinsBonusBlesses", seuil: 0.4, bonus: 0.25 },
+    ultime: { nom: "Protection astrale", description: "Bouclier de 15 % et Renforcement 5 s pour toute l'équipe", actions: [
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.15 },
+      { type: "effet", cible: "allies", effet: "renforcement", duree: 5 },
+    ] },
+  },
+  {
+    id: "sukuna", nom: "Sukuna", serie: "Jujutsu Kaisen", role: "attaquant", affinite: "chaos", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Roi des fléaux", description: "ATQ +15 % par KO réalisé (max +45 %)", type: "atqParKo", bonus: 0.15, max: 0.45 },
+    ultime: { nom: "Sanctuaire malveillant", description: "4 vagues de 55 % sur tous les ennemis", actions: [
+      { type: "degats", cible: "tous", mult: 0.55, coups: 4 },
+    ] },
+  },
+  {
+    id: "todo", nom: "Todo", serie: "Jujutsu Kaisen", role: "tank", affinite: "puissance", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Meilleur ami", description: "-15 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.15 },
+    ultime: { nom: "Boogie Woogie", description: "180 % et Étourdissement 1,5 s à la cible en face, puis Provocation", actions: [
+      { type: "degats", cible: "face", mult: 1.8, effet: { type: "etourdi", duree: 1.5 } },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "rengoku", nom: "Rengoku", serie: "Demon Slayer", role: "attaquant", affinite: "puissance", rarete: "epique",
+    mods: {},
+    passif: { nom: "Cœur ardent", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
+    ultime: { nom: "Neuvième forme : Rengoku", description: "220 % et Brûlure 3 s à toute la ligne avant", actions: [
+      { type: "degats", cible: "ligne-avant", mult: 2.2, effet: { type: "brulure", duree: 3 } },
+    ] },
+  },
+  {
+    id: "inosuke", nom: "Inosuke", serie: "Demon Slayer", role: "assassin", affinite: "chaos", rarete: "commun",
+    mods: { pv: 1.05 },
+    passif: { nom: "Souffle de la bête", description: "Ses attaques de base frappent une 2e fois pour 15 % des dégâts", type: "doubleFrappe", mult: 0.15 },
+    ultime: { nom: "Crocs déchiquetants", description: "4 coups de 70 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 0.7, coups: 4 },
+    ] },
+  },
+  {
+    id: "netero", nom: "Netero", serie: "Hunter x Hunter", role: "attaquant", affinite: "esprit", rarete: "epique",
+    mods: {},
+    passif: { nom: "Gratitude", description: "Son premier coup du combat est un critique garanti", type: "premierCoupCritique" },
+    ultime: { nom: "Bodhisattva aux cent mains", description: "10 coups de 35 % sur des ennemis au hasard", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.35, coups: 10 },
+    ] },
+  },
+  {
+    id: "leorio", nom: "Leorio", serie: "Hunter x Hunter", role: "soutien", affinite: "puissance", rarete: "commun",
+    mods: { pv: 1.05 },
+    passif: { nom: "Futur médecin", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
+    ultime: { nom: "Poing distant", description: "Soigne toute l'équipe de 12 % et 150 % à la cible en face", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.12 },
+      { type: "degats", cible: "face", mult: 1.5 },
+    ] },
+  },
+
+  // ---------- Bleach ----------
+  {
+    id: "ichigo", nom: "Ichigo", serie: "Bleach", role: "attaquant", affinite: "vitesse", rarete: "epique",
+    mods: {},
+    passif: { nom: "Bankai", description: "VIT +40 % sous 50 % de PV", type: "vitSousPv", seuil: 0.5, bonus: 0.4 },
+    ultime: { nom: "Getsuga Tenshō", description: "260 % à la cible en face et au perso derrière elle", actions: [
+      { type: "degats", cible: "face+derriere", mult: 2.6 },
+    ] },
+  },
+  {
+    id: "rukia", nom: "Rukia", serie: "Bleach", role: "controle", affinite: "technique", rarete: "rare",
+    mods: {},
+    passif: { nom: "Danse de la lune blanche", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
+    ultime: { nom: "Sode no Shirayuki", description: "140 % et Étourdissement 1,5 s à toute la ligne avant (le gel)", actions: [
+      { type: "degats", cible: "ligne-avant", mult: 1.4, effet: { type: "etourdi", duree: 1.5 } },
+    ] },
+  },
+  {
+    id: "orihime", nom: "Orihime", serie: "Bleach", role: "soutien", affinite: "esprit", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Santen Kesshun", description: "Soins +25 % sur les alliés sous 40 % de PV", type: "soinsBonusBlesses", seuil: 0.4, bonus: 0.25 },
+    ultime: { nom: "Sōten Kisshun", description: "Soigne toute l'équipe de 10 % et Bouclier de 6 %", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.1 },
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.06 },
+    ] },
+  },
+  {
+    id: "byakuya", nom: "Byakuya", serie: "Bleach", role: "assassin", affinite: "technique", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Fierté des Kuchiki", description: "Ses critiques font x1,8 au lieu de x1,5", type: "multCrit", valeur: 1.8 },
+    ultime: { nom: "Senbonzakura Kageyoshi", description: "6 pétales de 60 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 0.6, coups: 6 },
+    ] },
+  },
+  {
+    id: "kenpachi", nom: "Kenpachi", serie: "Bleach", role: "tank", affinite: "chaos", rarete: "peu_commun",
+    mods: { atq: 1.15 },
+    passif: { nom: "Soif de combat", description: "ATQ +1 % par % de PV perdu (moitié de l'effet)", type: "atqSelonPvPerdus", ratio: 0.5 },
+    ultime: { nom: "Coup de sabre sauvage", description: "250 % à la cible en face, puis Provocation", actions: [
+      { type: "degats", cible: "face", mult: 2.5 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+
+  // ---------- My Hero Academia ----------
+  {
+    id: "deku", nom: "Deku", serie: "My Hero Academia", role: "attaquant", affinite: "puissance", rarete: "rare",
+    mods: { pv: 1.05 },
+    passif: { nom: "One For All", description: "ATQ +25 % sous 50 % de PV", type: "atqSousPv", seuil: 0.5, bonus: 0.25 },
+    ultime: { nom: "Detroit Smash", description: "340 % à la cible en face, mais il perd 8 % de ses PV", actions: [
+      { type: "degats", cible: "face", mult: 3.4 },
+      { type: "coutPv", pourcent: 0.08 },
+    ] },
+  },
+  {
+    id: "bakugo", nom: "Bakugo", serie: "My Hero Academia", role: "assassin", affinite: "puissance", rarete: "epique",
+    mods: {},
+    passif: { nom: "Explosion", description: "Ses attaques de base frappent une 2e fois pour 15 % des dégâts", type: "doubleFrappe", mult: 0.15 },
+    ultime: { nom: "Howitzer Impact", description: "3 explosions de 100 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 1.0, coups: 3 },
+    ] },
+  },
+  {
+    id: "allmight", nom: "All Might", serie: "My Hero Academia", role: "tank", affinite: "puissance", rarete: "legendaire",
+    mods: { atq: 1.2 },
+    passif: { nom: "Symbole de la paix", description: "ATQ +15 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.15 },
+    ultime: { nom: "United States of Smash", description: "200 % à tous les ennemis, puis Provocation", actions: [
+      { type: "degats", cible: "tous", mult: 2.0 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "uraraka", nom: "Uraraka", serie: "My Hero Academia", role: "controle", affinite: "esprit", rarete: "commun",
+    mods: {},
+    passif: { nom: "Zéro gravité", description: "20 % de chance d'étourdir 1 s l'ennemi qui la frappe", type: "etourdirAttaquant", chance: 0.2, duree: 1 },
+    ultime: { nom: "Pluie de météores", description: "5 débris de 60 % sur des ennemis au hasard et Ralentissement", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.6, coups: 5, effet: { type: "ralenti", duree: 3 } },
+    ] },
+  },
+  {
+    id: "todoroki", nom: "Todoroki", serie: "My Hero Academia", role: "controle", affinite: "technique", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Moitié froid, moitié chaud", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
+    ultime: { nom: "Glacier embrasé", description: "130 % et Brûlure 3 s à tous les ennemis", actions: [
+      { type: "degats", cible: "tous", mult: 1.3, effet: { type: "brulure", duree: 3 } },
+    ] },
+  },
+
+  // ---------- L'Attaque des Titans ----------
+  {
+    id: "eren", nom: "Eren", serie: "L'Attaque des Titans", role: "tank", affinite: "chaos", rarete: "epique",
+    mods: {},
+    passif: { nom: "Titan assaillant", description: "À 30 % de PV, se transforme : dort 2 s puis récupère 25 % de ses PV (une fois)", type: "reposUneFois", seuil: 0.3, duree: 2, soin: 0.25 },
+    ultime: { nom: "Coup du Titan", description: "200 % à la cible en face, Bouclier de 20 % et Provocation", actions: [
+      { type: "degats", cible: "face", mult: 2.0 },
+      { type: "effet", cible: "soi", effet: "bouclier", duree: 6, pourcentPv: 0.2 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "mikasa", nom: "Mikasa", serie: "L'Attaque des Titans", role: "assassin", affinite: "technique", rarete: "rare",
+    mods: {},
+    passif: { nom: "Sang Ackerman", description: "Son premier coup du combat est un critique garanti", type: "premierCoupCritique" },
+    ultime: { nom: "Tranche-nuque", description: "320 % à un perso de la ligne arrière", actions: [
+      { type: "degats", cible: "arriere", mult: 3.2 },
+    ] },
+  },
+  {
+    id: "livai", nom: "Livaï", serie: "L'Attaque des Titans", role: "assassin", affinite: "vitesse", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Soldat le plus fort de l'humanité", description: "Ses critiques font x1,8 au lieu de x1,5", type: "multCrit", valeur: 1.8 },
+    ultime: { nom: "Tourbillon", description: "Accélération 4 s, puis 5 coups de 70 % sur la ligne arrière", actions: [
+      { type: "effet", cible: "soi", effet: "acceleration", duree: 4 },
+      { type: "degats", cible: "arriere-aleatoire", mult: 0.7, coups: 5 },
+    ] },
+  },
+  {
+    id: "armin", nom: "Armin", serie: "L'Attaque des Titans", role: "soutien", affinite: "esprit", rarete: "commun",
+    mods: {},
+    passif: { nom: "Stratège", description: "ATQ +8 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.08 },
+    ultime: { nom: "Plan d'Armin", description: "Renforcement 6 s, Bouclier de 10 % et +30 d'énergie pour tous les alliés", actions: [
+      { type: "effet", cible: "allies", effet: "renforcement", duree: 6 },
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.1 },
+      { type: "energie", cible: "allies-autres", montant: 30 },
+    ] },
+  },
+  {
+    id: "hange", nom: "Hansi", serie: "L'Attaque des Titans", role: "soutien", affinite: "technique", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Curiosité scientifique", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
+    ultime: { nom: "Lance-foudre", description: "Bouclier de 15 % sur toute l'équipe et 180 % à la cible en face", actions: [
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.15 },
+      { type: "degats", cible: "face", mult: 1.8 },
+    ] },
+  },
+
+  // ---------- Chainsaw Man ----------
+  {
+    id: "denji", nom: "Denji", serie: "Chainsaw Man", role: "attaquant", affinite: "chaos", rarete: "rare",
+    mods: { pv: 1.05 },
+    passif: { nom: "Moteur relancé", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
+    ultime: { nom: "Tronçonneuses", description: "5 coups de 65 % sur la ligne avant", actions: [
+      { type: "degats", cible: "ligne-avant-aleatoire", mult: 0.65, coups: 5 },
+    ] },
+  },
+  {
+    id: "power", nom: "Power", serie: "Chainsaw Man", role: "tank", affinite: "chaos", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Démon du sang", description: "Récupère 3 % de ses PV toutes les 3 s", type: "regenPeriodique", pourcent: 0.03, periode: 3 },
+    ultime: { nom: "Marteau de sang", description: "190 % à la cible en face, puis Provocation", actions: [
+      { type: "degats", cible: "face", mult: 1.9 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "makima", nom: "Makima", serie: "Chainsaw Man", role: "controle", affinite: "esprit", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Démon du contrôle", description: "Ralentit toute l'équipe ennemie de 10 %", type: "auraVitEnnemis", malus: 0.1 },
+    ultime: { nom: "Pan", description: "180 % et Étourdissement 2 s sur l'ennemi qui a le plus d'énergie, puis 100 % à tous", actions: [
+      { type: "degats", cible: "plus-energie", mult: 1.8, effet: { type: "etourdi", duree: 2 } },
+      { type: "degats", cible: "tous", mult: 1.0 },
+    ] },
+  },
+  {
+    id: "aki", nom: "Aki", serie: "Chainsaw Man", role: "assassin", affinite: "technique", rarete: "rare",
+    mods: {},
+    passif: { nom: "Contrat du Renard", description: "+20 % de dégâts contre les ennemis sous 50 % de PV", type: "degatsContreBlesses", seuil: 0.5, bonus: 0.2 },
+    ultime: { nom: "Démon de la malédiction", description: "280 % et Vulnérabilité 4 s à un perso de la ligne arrière", actions: [
+      { type: "degats", cible: "arriere", mult: 2.8, effet: { type: "vulnerabilite", duree: 4 } },
+    ] },
+  },
+  {
+    id: "kobeni", nom: "Kobeni", serie: "Chainsaw Man", role: "assassin", affinite: "vitesse", rarete: "commun",
+    mods: {},
+    passif: { nom: "Instinct de survie", description: "30 % de chance d'esquiver les attaques de base", type: "esquiveBase", chance: 0.3 },
+    ultime: { nom: "Panique", description: "3 coups de 90 % sur la ligne arrière", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 0.9, coups: 3 },
+    ] },
+  },
+
+  // ---------- Frieren ----------
+  {
+    id: "frieren", nom: "Frieren", serie: "Frieren", role: "controle", affinite: "esprit", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Mage millénaire", description: "Gagne 3 d'énergie par seconde", type: "energieParSeconde", valeur: 3 },
+    ultime: { nom: "Zoltraak", description: "160 % et Vulnérabilité 4 s à tous les ennemis", actions: [
+      { type: "degats", cible: "tous", mult: 1.6, effet: { type: "vulnerabilite", duree: 4 } },
+    ] },
+  },
+  {
+    id: "fern", nom: "Fern", serie: "Frieren", role: "attaquant", affinite: "technique", rarete: "rare",
+    mods: {},
+    passif: { nom: "Tir rapide", description: "Ses attaques de base frappent une 2e fois pour 15 % des dégâts", type: "doubleFrappe", mult: 0.15 },
+    ultime: { nom: "Salve de Zoltraak", description: "6 tirs de 50 % sur des ennemis au hasard", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.5, coups: 6 },
+    ] },
+  },
+  {
+    id: "stark", nom: "Stark", serie: "Frieren", role: "tank", affinite: "puissance", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Courage tremblant", description: "À 40 % de PV, gagne 30 % de DEF (une fois)", type: "defSousPvUneFois", seuil: 0.4, bonus: 0.3 },
+    ultime: { nom: "Éclair du guerrier", description: "220 % à la cible en face, puis Provocation", actions: [
+      { type: "degats", cible: "face", mult: 2.2 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "himmel", nom: "Himmel", serie: "Frieren", role: "tank", affinite: "esprit", rarete: "rare",
+    mods: {},
+    passif: { nom: "Le héros", description: "-15 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.15 },
+    ultime: { nom: "Épée du héros", description: "Bouclier de 12 % sur toute l'équipe, 160 % à la cible en face et Provocation", actions: [
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.12 },
+      { type: "degats", cible: "face", mult: 1.6 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 3 },
+    ] },
+  },
+  {
+    id: "heiter", nom: "Heiter", serie: "Frieren", role: "soutien", affinite: "esprit", rarete: "commun",
+    mods: {},
+    passif: { nom: "Prêtre ivre", description: "Soins +20 % sur les alliés sous 30 % de PV", type: "soinsBonusBlesses", seuil: 0.3, bonus: 0.2 },
+    ultime: { nom: "Bénédiction", description: "Soigne toute l'équipe de 10 % et lui donne Régénération 2 s", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.1 },
+      { type: "effet", cible: "allies", effet: "regeneration", duree: 2 },
+    ] },
+  },
+
+  // ---------- Fairy Tail ----------
+  {
+    id: "natsu", nom: "Natsu", serie: "Fairy Tail", role: "attaquant", affinite: "puissance", rarete: "epique",
+    mods: {},
+    passif: { nom: "Chasseur de dragons", description: "Ses attaques de base ont 50 % de chance d'appliquer Brûlure 1 s", type: "effetSurBase", effet: "brulure", duree: 1, chance: 0.5 },
+    ultime: { nom: "Hurlement du dragon de feu", description: "150 % et Brûlure 3 s à tous les ennemis", actions: [
+      { type: "degats", cible: "tous", mult: 1.5, effet: { type: "brulure", duree: 3 } },
+    ] },
+  },
+  {
+    id: "lucy", nom: "Lucy", serie: "Fairy Tail", role: "soutien", affinite: "esprit", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Clés célestes", description: "ATQ +8 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.08 },
+    ultime: { nom: "Ouverture de la porte", description: "Soigne toute l'équipe de 12 % et 150 % à un ennemi au hasard", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.12 },
+      { type: "degats", cible: "aleatoire", mult: 1.5 },
+    ] },
+  },
+  {
+    id: "erza", nom: "Erza", serie: "Fairy Tail", role: "tank", affinite: "technique", rarete: "epique",
+    mods: { atq: 1.1 },
+    passif: { nom: "Rééquipement", description: "-15 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.15 },
+    ultime: { nom: "Armure du ciel", description: "8 lames de 30 % sur des ennemis au hasard, puis Provocation", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.3, coups: 8 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "gray", nom: "Gray", serie: "Fairy Tail", role: "controle", affinite: "technique", rarete: "peu_commun",
+    mods: {},
+    passif: { nom: "Ice Make", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
+    ultime: { nom: "Ice Make : Lance", description: "200 % et Étourdissement 1,5 s sur l'ennemi à la plus forte ATQ", actions: [
+      { type: "degats", cible: "plus-forte-atq", mult: 2.0, effet: { type: "etourdi", duree: 1.5 } },
+    ] },
+  },
+  {
+    id: "wendy", nom: "Wendy", serie: "Fairy Tail", role: "soutien", affinite: "vitesse", rarete: "commun",
+    mods: {},
+    passif: { nom: "Dragonne du ciel", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
+    ultime: { nom: "Arms et Vernier", description: "Accélération 2 s et Renforcement 3 s pour toute l'équipe", actions: [
+      { type: "effet", cible: "allies", effet: "acceleration", duree: 2 },
+      { type: "effet", cible: "allies", effet: "renforcement", duree: 3 },
     ] },
   },
 ];

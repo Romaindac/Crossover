@@ -8,7 +8,7 @@
 
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 import {
-  PERSOS_DE_DEPART, ENCRE_DE_DEPART, COUT_TIRAGE_X10, PART_XP_RESERVE,
+  PERSOS_DE_DEPART, ENCRE_DE_DEPART, PART_XP_RESERVE,
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX,
 } from "../donnees/progression.js";
 import { TOUTES_LES_ETAPES, encreEtape, xpEtape, COFFRES } from "../donnees/campagne.js";
@@ -16,7 +16,8 @@ import { ZONES, tableButin, xpChasse, eclatsChasse, MULT_SOUS_ZONE } from "../do
 import { OBJETS_PAR_ID } from "../donnees/objets.js";
 import { ORDRE_EMPLACEMENTS, NIVEAU_MAX_PIECE } from "../donnees/equipement.js";
 import { simulerCombat } from "../moteur/simulation.js";
-import { tirerSerie } from "../moteur/gacha.js";
+import { ouvrirBooster } from "../moteur/boosters.js";
+import { EDITIONS, PRIX_BOOSTER, TICKETS_DEPART, TICKETS_CHAPITRE } from "../donnees/boosters.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { composerEquipe } from "../moteur/composition.js";
@@ -28,7 +29,7 @@ const ECLATS_RECYCLAGE = { commun: 5, peu_commun: 10, rare: 20, epique: 40, lege
 export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour = 45, jours = 30 } = {}) {
   const h = creerHasard(graine);
   const j = {
-    collection: {}, encre: ENCRE_DE_DEPART, pitie: 0, eclats: 0,
+    collection: {}, encre: ENCRE_DE_DEPART, pitie: 0, eclats: 0, tickets: TICKETS_DEPART, boosters: 0,
     pieces: [], uid: 1, battues: new Set(), bossChasse: new Set(), echecs: 0,
   };
   for (const id of [...PERSOS_DE_DEPART, heros]) j.collection[id] = nouvelleProgression();
@@ -39,14 +40,17 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
 
   // ---------- Actions de base ----------
 
+  // Ouvre tous les boosters possibles (tickets d'abord, puis encre), en tournant entre les editions
   const tirer = () => {
-    while (j.encre >= COUT_TIRAGE_X10) {
-      j.encre -= COUT_TIRAGE_X10;
-      const r = tirerSerie(h.nombre, 10, j.pitie);
+    while (j.tickets > 0 || j.encre >= PRIX_BOOSTER) {
+      if (j.tickets > 0) j.tickets -= 1;
+      else j.encre -= PRIX_BOOSTER;
+      const edition = EDITIONS[j.boosters++ % EDITIONS.length];
+      const r = ouvrirBooster(h.nombre, edition.id, { pitie: j.pitie });
       j.pitie = r.pitie;
-      for (const t of r.tirages) {
-        if (!j.collection[t.id]) j.collection[t.id] = nouvelleProgression();
-        else j.encre += ajouterDoublon(j.collection[t.id]).encreRendue;
+      for (const c of r.cartes) {
+        if (!j.collection[c.id]) j.collection[c.id] = nouvelleProgression();
+        else ajouterDoublon(j.collection[c.id]);   // au-dela de 5 etoiles : poussiere (non modelisee ici)
       }
     }
   };
@@ -131,6 +135,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
       if (et.type === "boss") {
         ajouterObjets([objetAuHasard(h.nombre, et.chapitre)]);
         jalons[et.chapitre] = jour;
+        j.tickets += TICKETS_CHAPITRE;
         const coffre = COFFRES[0];      // approximation : le premier coffre d'etoiles a la fin du chapitre
         j.encre += coffre.encre;
         j.eclats += coffre.eclats;
@@ -172,6 +177,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
   for (jour = 1; jour <= jours && prochaineEtape(); jour++) {
     // L'expedition pendant l'absence
     const etapeExp = meilleureEtape();
+    if (jour > 1) j.tickets += 2;   // les tickets gratuits (un toutes les 12 h)
     if (jour > 1 && etapeExp) {
       const combats = Math.floor(Math.min(24 - minutesParJour / 60, EXPEDITION_HEURES_MAX) * EXPEDITION_COMBATS_PAR_HEURE);
       j.encre += combats * encreEtape(etapeExp, false);

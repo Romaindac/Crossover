@@ -19,7 +19,8 @@ import {
 } from "../services/partie.js";
 import { NOMS_STATS } from "../donnees/equipement.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { htmlPortrait, htmlObi, htmlEtoiles, rafraichirPortrait } from "../ui/cartes.js";
+import { htmlPortrait, htmlObi, htmlEtoiles, rafraichirPortrait, meilleureVariante } from "../ui/cartes.js";
+import { varsSerie, motifSerie } from "../donnees/series.js";
 import { htmlFiche } from "../ui/fiche.js";
 import { jouerEveil } from "../ui/eveil.js";
 import { jouerScene } from "../ui/scene.js";
@@ -63,7 +64,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     if (!possede(p.id)) {
       return `
         <div class="etagere__tome etagere__tome--manquant tome--${p.rarete}">
-          <span class="etagere__couverture">
+          <span class="etagere__couverture" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">
             <span class="tome__logo">?</span>
             <span class="tome__obi tome__obi--plein"><span>${RARETES[p.rarete].nom}</span></span>
           </span>
@@ -72,11 +73,14 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
         </div>`;
     }
     const prog = progressionDe(p.id);
+    const variante = meilleureVariante(prog);
+    const variantes = (prog.variantes ?? []).map((v) => `<span class="badge-variante badge-variante--${v}">${v === "doree" ? "Dorée" : "Holo"}</span>`).join(" ");
     return `
-      <button type="button" class="etagere__tome tome--${p.rarete}" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles. Voir sa fiche.">
-        <span class="etagere__couverture">${htmlPortrait(p)}${htmlObi(p)}</span>
+      <button type="button" class="etagere__tome tome--${p.rarete} ${variante ? `tome--${variante}` : ""}" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles${variantes ? `, versions : ${(prog.variantes ?? []).join(", ")}` : ""}. Voir sa fiche.">
+        <span class="etagere__couverture" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">${htmlPortrait(p)}${htmlObi(p)}</span>
         <span class="etagere__nom">${p.nom}</span>
         <span class="etagere__info">Niv. ${prog.niveau} ${htmlEtoiles(prog.etoiles)}</span>
+        ${variantes ? `<span class="etagere__info">${variantes}</span>` : ""}
         ${prog.eveil ? `<span class="badge-eveil">覚醒 ${["", "I", "II", "III", "IV"][prog.eveil]}</span>` : ""}
       </button>`;
   }
