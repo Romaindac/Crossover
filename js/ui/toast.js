@@ -19,8 +19,13 @@ export function afficherToast(html, { duree = 3800 } = {}) {
 }
 
 // Annonce des tampons nouvellement obtenus
+// Au-dela de 3 tampons d'un coup, un seul message les resume (ils restent tous dans le Carnet)
 export function annoncerTampons(tampons) {
-  for (const tp of tampons) {
+  const montres = tampons.length > 3 ? tampons.slice(0, 2) : tampons;
+  for (const tp of montres) {
     afficherToast(`<span class="toast__tampon" aria-hidden="true">印</span><span><strong>Tampon obtenu : ${tp.nom}</strong><br>${tp.texte}</span>`);
+  }
+  if (tampons.length > 3) {
+    afficherToast(`<span class="toast__tampon" aria-hidden="true">印</span><span><strong>+${tampons.length - 2} autres tampons !</strong><br>Retrouve-les dans Collection, onglet Carnet.</span>`);
   }
 }

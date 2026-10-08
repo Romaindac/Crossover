@@ -138,3 +138,13 @@ export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}
     </button>
   `;
 }
+
+// Une carte non cliquable (revelation des boosters, vitrines) : meme rendu, sans bouton
+export function htmlCarteStatique(perso, options = {}) {
+  return htmlCarte(perso, options)
+    .replace(/^\s*<button type="button"/, "<span")
+    .replace(/<\/button>\s*$/, "</span>")
+    .replace(' data-action="choisir-perso"', "")
+    .replace(' draggable="true"', "")
+    .replace(/ aria-pressed="[^"]*"/, "");
+}

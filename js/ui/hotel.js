@@ -16,7 +16,7 @@ import {
   enLigneDisponible, connecte, monId, annonces, mesVentes, mettreEnVente, acheterVente, retirerVente,
   recupererGains, DUREE_VENTE_JOURS, TAXE_VENTE, PRIX_VENTE,
 } from "../services/enligne.js";
-import { htmlDetailsPiece, iconeEmplacement, ligneTexte } from "./equipement-ui.js";
+import { htmlDetailsPiece, iconeEmplacement, htmlPieceCarte } from "./equipement-ui.js";
 import { ouvrirCompte } from "./compte.js";
 
 const echapper = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -60,16 +60,11 @@ export function afficherHotel(zone, { naviguer, apresChangement = () => {}, vend
     return;
   }
 
-  const carte = (p, { prix = null, vendeur = null, action = "", id = "", info = "" } = {}) => `
-    <button type="button" class="piece-carte hotel__carte piece--${p.rarete}" data-hv="${action}" data-id="${id}">
-      <span class="piece-carte__haut">${iconeEmplacement(p.emplacement)}<span class="piece-carte__nom">${nomPiece(p)}</span></span>
-      <span class="piece-carte__stat">${ligneTexte(p, p.lignes[0])}${p.niveau ? ` <em>+${p.niveau}</em>` : ""} <em>niv. ${objetDe(p)?.niveau ?? "?"}</em></span>
-      <span class="piece-carte__bas">
-        <span class="obi-rarete obi-rarete--${p.rarete} obi-rarete--pastille">${RARETES[p.rarete]?.nom ?? ""}</span>
-        ${prix !== null ? `<span class="hotel__prix"><span class="compteur-encre__goutte" aria-hidden="true"></span>${nombre(prix)}</span>` : ""}
-      </span>
-      ${vendeur || info ? `<span class="hotel__vendeur">${vendeur ? `par ${echapper(vendeur)}` : ""}${info ? ` · ${info}` : ""}</span>` : ""}
-    </button>`;
+  const carte = (p, { prix = null, vendeur = null, action = "", id = "", info = "" } = {}) => htmlPieceCarte(p, {
+    attributs: `data-hv="${action}" data-id="${id}"`,
+    prix,
+    sousTexte: `${vendeur ? `par ${echapper(vendeur)}` : ""}${vendeur && info ? " · " : ""}${info}`,
+  });
 
   function rendre() {
     const gains = (miennes ?? []).filter((v) => v.statut === "vendue" && !v.recupere).reduce((s, v) => s + Math.floor(v.prix * (1 - TAXE_VENTE)), 0);

@@ -19,8 +19,9 @@ import {
 } from "../services/partie.js";
 import { NOMS_STATS } from "../donnees/equipement.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { htmlPortrait, htmlObi, htmlEtoiles, rafraichirPortrait, meilleureVariante } from "../ui/cartes.js";
-import { varsSerie, motifSerie } from "../donnees/series.js";
+import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "../ui/cartes.js";
+import { varsSerie, motifSerie, styleSerie } from "../donnees/series.js";
+import { editionDeSerie } from "../donnees/boosters.js";
 import { htmlFiche } from "../ui/fiche.js";
 import { jouerEveil } from "../ui/eveil.js";
 import { jouerScene } from "../ui/scene.js";
@@ -28,7 +29,7 @@ import { annoncerTampons } from "../ui/toast.js";
 import { TAMPONS, PAGES } from "../donnees/tampons.js";
 import { CADRES } from "../donnees/saisons.js";
 import { LIENS, LIENS_PAR_CLE, niveauLien, VICTOIRES_DECOUVERTE, BONUS_PAR_NIVEAU_LIEN } from "../donnees/liens.js";
-import { ouvrirChoixPiece, htmlDetailsPiece, iconeEmplacement, ligneTexte, texteOrigine } from "../ui/equipement-ui.js";
+import { ouvrirChoixPiece, htmlDetailsPiece, iconeEmplacement, ligneTexte, texteOrigine, htmlPieceCarte } from "../ui/equipement-ui.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { afficherHotel } from "../ui/hotel.js";
 
@@ -65,26 +66,38 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
   function htmlTome(p) {
     if (!possede(p.id)) {
       return `
-        <div class="etagere__tome etagere__tome--manquant tome--${p.rarete}">
-          <span class="etagere__couverture" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">
-            <span class="tome__logo">?</span>
-            <span class="tome__obi tome__obi--plein"><span>${RARETES[p.rarete].nom}</span></span>
+        <div class="carte-manquante carte-manquante--${p.rarete}" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}" aria-label="${p.nom}, ${RARETES[p.rarete].nom}, à obtenir">
+          <span class="carte-manquante__visuel">
+            ${htmlPortrait(p)}
+            <span class="carte-manquante__cadenas" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V8a5 5 0 0110 0v2h1.5v11h-13V10zm2 0h6V8a3 3 0 00-6 0z" fill="currentColor"/></svg></span>
+            <span class="obi-rarete obi-rarete--${p.rarete}">${RARETES[p.rarete].nom}</span>
           </span>
-          <span class="etagere__nom">${p.nom}</span>
-          <span class="etagere__info">À obtenir</span>
+          <span class="carte-manquante__nom">${p.nom}</span>
+          <span class="carte-manquante__info">À obtenir</span>
         </div>`;
     }
     const prog = progressionDe(p.id);
-    const variante = meilleureVariante(prog);
-    const variantes = (prog.variantes ?? []).map((v) => `<span class="badge-variante badge-variante--${v}">${v === "doree" ? "Dorée" : "Holo"}</span>`).join(" ");
+    const variantes = prog.variantes ?? [];
+    const carte = htmlCarteStatique(p, { progression: prog });
     return `
-      <button type="button" class="etagere__tome tome--${p.rarete} ${variante ? `tome--${variante}` : ""}" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles${variantes ? `, versions : ${(prog.variantes ?? []).join(", ")}` : ""}. Voir sa fiche.">
-        <span class="etagere__couverture" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">${htmlPortrait(p)}${htmlObi(p)}</span>
-        <span class="etagere__nom">${p.nom}</span>
-        <span class="etagere__info">Niv. ${prog.niveau} ${htmlEtoiles(prog.etoiles)}</span>
-        ${variantes ? `<span class="etagere__info">${variantes}</span>` : ""}
-        ${prog.eveil ? `<span class="badge-eveil">覚醒 ${["", "I", "II", "III", "IV"][prog.eveil]}</span>` : ""}
+      <button type="button" class="carte-collection" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles${variantes.length ? `, versions : ${variantes.join(", ")}` : ""}. Voir sa fiche.">
+        ${carte}
+        ${prog.eveil ? `<span class="badge-eveil carte-collection__eveil">覚醒 ${["", "I", "II", "III", "IV"][prog.eveil]}</span>` : ""}
+        ${variantes.length ? `<span class="carte-collection__variantes">${variantes.map((v) => `<span class="badge-variante badge-variante--${v}">${v === "doree" ? "Dorée" : "Holo"}</span>`).join("")}</span>` : ""}
       </button>`;
+  }
+
+  function htmlEnteteSerie(serie) {
+    const membres = PERSOS.filter((p) => p.serie === serie);
+    const n = membres.filter((p) => possede(p.id)).length;
+    const st = styleSerie(serie);
+    const edition = editionDeSerie(serie);
+    return `
+      <header class="entete-serie" data-motif="${motifSerie(serie)}" style="${varsSerie(serie)}">
+        <span class="entete-serie__medaillon" aria-hidden="true">${st.abrege}</span>
+        <span class="entete-serie__titre"><h2 class="etagere__serie">${serie}</h2>${edition ? `<span class="entete-serie__edition">${edition.nom}</span>` : ""}</span>
+        <span class="entete-serie__compte ${n === membres.length ? "entete-serie__compte--complet" : ""}"><span class="entete-serie__nombre"><strong>${n}</strong> / ${membres.length}</span><span class="entete-serie__jauge"><span style="--v: ${n / membres.length}"></span></span></span>
+      </header>`;
   }
 
   function rendrePersos() {
@@ -96,9 +109,9 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
       </div>
       <div class="etageres">
         ${series.map((serie) => `
-          <section class="etagere" aria-label="${serie}">
-            <h2 class="etagere__serie">${serie}</h2>
-            <div class="etagere__rang">${PERSOS.filter((p) => p.serie === serie).map(htmlTome).join("")}</div>
+          <section class="etagere etagere--cartes" aria-label="${serie}">
+            ${htmlEnteteSerie(serie)}
+            <div class="etagere__rang etagere__rang--cartes">${PERSOS.filter((p) => p.serie === serie).map(htmlTome).join("")}</div>
           </section>`).join("")}
       </div>`;
   }
@@ -163,15 +176,10 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
       <p class="case__message" role="status" aria-live="polite">${message}</p>
       ${liste.length ? `
         <div class="inventaire">
-          ${liste.map((p) => `
-            <button type="button" class="piece-carte piece--${p.rarete} ${pieceParfaite(p) ? "piece-carte--parfaite" : ""}" data-action="piece" data-uid="${p.uid}" aria-label="${nomPiece(p)}, ${RARETES[p.rarete].nom}${p.niveau ? `, +${p.niveau}` : ""}${p.porteur ? `, portée par ${PERSOS_PAR_ID[p.porteur].nom}` : ""}">
-              <span class="piece-carte__haut">${iconeEmplacement(p.emplacement)}<span class="piece-carte__nom">${nomPiece(p)}</span>${p.verrou ? '<span class="cadenas" title="Protégée"></span>' : ""}</span>
-              <span class="piece-carte__stat">${ligneTexte(p, p.lignes[0])}${p.niveau ? ` <em>+${p.niveau}</em>` : ""} <em>niv. ${objetDe(p).niveau}</em></span>
-              <span class="piece-carte__bas">
-                <span class="obi-rarete obi-rarete--${p.rarete} obi-rarete--pastille">${RARETES[p.rarete].nom}</span>
-                ${p.porteur ? `<span class="piece-carte__porteur">${htmlPortrait(PERSOS_PAR_ID[p.porteur])}</span>` : ""}
-              </span>
-            </button>`).join("")}
+          ${liste.map((p) => htmlPieceCarte(p, {
+            attributs: `data-action="piece" data-uid="${p.uid}" aria-label="${nomPiece(p)}, ${RARETES[p.rarete].nom}${p.niveau ? `, +${p.niveau}` : ""}${p.porteur ? `, portée par ${PERSOS_PAR_ID[p.porteur].nom}` : ""}"`,
+            porteur: p.porteur, verrou: p.verrou, parfaite: pieceParfaite(p),
+          })).join("")}
         </div>`
         : `<p class="case__aide">${toutes.length ? "Aucune pièce ne correspond à ces filtres." : "Aucune pièce pour l'instant : va chasser dans les zones de l'Aventure pour en trouver."}</p>`}
     `;
