@@ -3,6 +3,7 @@
 // Presente sur les ecrans du jeu (pas en combat ni a l'accueil).
 // ==========================================================
 
+import { htmlDevenirFort } from "./aide.js";
 import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources } from "../services/partie.js";
 
 // Le lexique des ressources : a quoi sert chaque monnaie et comment l'obtenir
@@ -23,14 +24,19 @@ function lignesLexique() {
   ];
 }
 
-function ouvrirLexique() {
+export function ouvrirLexique(onglet = "ressources") {
   document.querySelector(".voile--lexique")?.remove();
   const voile = document.createElement("div");
   voile.className = "voile voile--lexique";
   voile.innerHTML = `
     <div class="resultat lexique" role="dialog" aria-modal="true" aria-labelledby="titre-lexique">
-      <h2 class="resultat__titre" id="titre-lexique" tabindex="-1">Tes ressources</h2>
-      <dl class="lexique__liste">
+      <h2 class="resultat__titre" id="titre-lexique" tabindex="-1">Aide</h2>
+      <div class="choix-segmente choix-segmente--gauche lexique__onglets" role="tablist" aria-label="Aide">
+        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="ressources" aria-selected="${onglet === "ressources"}" aria-checked="${onglet === "ressources"}">Tes ressources</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="fort" aria-selected="${onglet === "fort"}" aria-checked="${onglet === "fort"}">Devenir plus fort</button>
+      </div>
+      <div class="lexique__page" data-page="fort" ${onglet === "fort" ? "" : "hidden"}>${htmlDevenirFort()}</div>
+      <dl class="lexique__liste lexique__page" data-page="ressources" ${onglet === "ressources" ? "" : "hidden"}>
         ${lignesLexique().map(([nom, valeur, sert, gagne]) => `
           <div class="lexique__ligne">
             <dt><span>${nom}</span><strong>${valeur}</strong></dt>
@@ -40,6 +46,13 @@ function ouvrirLexique() {
       <div class="resultat__actions"><button type="button" class="bouton bouton--clair" data-fermer-lexique>Fermer</button></div>
     </div>`;
   voile.addEventListener("click", (ev) => {
+    const tab = ev.target.closest("[data-onglet-aide]");
+    if (tab) {
+      voile.querySelectorAll("[data-onglet-aide]").forEach((b) => { b.setAttribute("aria-selected", String(b === tab)); b.setAttribute("aria-checked", String(b === tab)); });
+      voile.querySelectorAll(".lexique__page").forEach((pg) => { pg.hidden = pg.dataset.page !== tab.dataset.ongletAide; });
+      voile.querySelector(".lexique").scrollTop = 0;
+      return;
+    }
     if (ev.target === voile || ev.target.closest("[data-fermer-lexique]")) voile.remove();
   });
   document.body.append(voile);
@@ -66,7 +79,7 @@ export function htmlNavigation(actif) {
         `).join("")}
       </div>
       <p class="compteur-energie" title="Énergie : les combats en coûtent (payée seulement à la victoire), +1 toutes les 3 minutes"><svg class="compteur-energie__eclair" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span data-energie>${etatEnergie()?.valeur ?? 0}/${etatEnergie()?.max ?? 0}</span><span class="visuellement-cache"> d'énergie</span></p>
-      <button type="button" class="navigation__aide" data-lexique aria-label="Tes ressources : à quoi elles servent" title="Tes ressources">?</button>
+      <button type="button" class="navigation__aide" data-lexique aria-label="Aide : tes ressources et comment devenir plus fort" title="Aide">?</button>
       <p class="compteur-encre navigation__encre"><span class="compteur-encre__goutte" aria-hidden="true"></span><span data-encre>${encre().toLocaleString("fr-FR")}</span><span class="visuellement-cache"> d'encre</span></p>
     </nav>
   `;

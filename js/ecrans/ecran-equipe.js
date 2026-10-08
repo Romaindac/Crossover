@@ -9,7 +9,6 @@ import { ROLES } from "../donnees/roles.js";
 import { RARETES } from "../donnees/raretes.js";
 import { CHAPITRES } from "../donnees/campagne.js";
 import { encreCombat } from "../donnees/progression.js";
-import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import { chercherEquipeConseillee } from "../moteur/composition.js";
 import { cibleAvant, cibleArriere } from "../moteur/regles.js";
@@ -24,7 +23,8 @@ import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINI
 import { htmlFiche } from "../ui/fiche.js";
 import { ouvrirChoixPiece } from "../ui/equipement-ui.js";
 import { jouerEveil } from "../ui/eveil.js";
-import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { htmlNavigation, brancherNavigation, ouvrirLexique } from "../ui/navigation.js";
+import { htmlSynergies } from "../ui/synergies.js";
 
 const NOMS_PLACES = ["Avant 1", "Avant 2", "Arrière 1", "Arrière 2", "Arrière 3"];
 const ORDRE_ROLES = ["tous", "tank", "attaquant", "assassin", "soutien", "controle"];
@@ -70,11 +70,19 @@ export function afficherEquipe(conteneur, { naviguer }) {
           <div class="equipes-enregistrees" id="equipes-enregistrees"></div>
           <div id="formation"></div>
           <p class="formation__message" id="message" role="status" aria-live="polite"></p>
-          <p class="formation__bonus" id="bonus"></p>
         </section>
 
         <section class="detail" id="detail" aria-live="polite"></section>
       </div>
+
+      <section class="panneau-synergies" aria-labelledby="titre-synergies">
+        <div class="panneau-synergies__entete">
+          <h2 id="titre-synergies">Synergies</h2>
+          <p class="case__aide">Ce qui rend ton équipe plus forte que la somme de ses persos. Mis à jour à chaque changement.</p>
+          <button type="button" class="bouton-texte" data-action="aide-synergies">Comment devenir plus fort ?</button>
+        </div>
+        <div id="synergies"></div>
+      </section>
 
       <section class="selection" aria-labelledby="titre-selection">
         <div class="selection__entete">
@@ -170,19 +178,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
       </div>
     `;
 
-    const persos = equipe.filter(Boolean).map((id) => PERSOS_PAR_ID[id]);
-    const series = [...new Set(persos.map((p) => p.serie))];
-    const actifs = series
-      .map((serie) => {
-        const p = persos.find((x) => x.serie === serie);
-        const b = bonusSerie(p, persos);
-        const n = persos.filter((x) => x.serie === serie).length;
-        return b.atq ? `${serie} x${n} : ATQ +${Math.round(b.atq * 100)} %${b.pv ? `, PV +${Math.round(b.pv * 100)} %` : ""}` : null;
-      })
-      .filter(Boolean);
-    $("#bonus").innerHTML = actifs.length
-      ? `<strong>Bonus de série.</strong> ${actifs.join(". ")}.`
-      : "Place 2 ou 3 persos de la même série pour gagner un bonus.";
+    $("#synergies").innerHTML = htmlSynergies({ equipe, etape: prochaineEtape(), vises });
 
     $("#message").textContent = message;
     $("#combattre").disabled = equipe.some((id) => !id);
@@ -313,6 +309,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
   conteneur.addEventListener("click", (e) => {
     const cible = e.target.closest("[data-action]");
     if (!cible) return;
+    if (cible.dataset.action === "aide-synergies") return ouvrirLexique("fort");
     const action = cible.dataset.action;
 
     if (action === "tirages") return naviguer("tirages");

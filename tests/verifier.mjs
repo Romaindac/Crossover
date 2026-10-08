@@ -37,7 +37,8 @@ verifier(OBJETS.every((o) => !o.panoplie || PANOPLIES[o.panoplie]), "chaque obje
 verifier(TOUTES_LES_ETAPES.length === 40, "40 etapes de campagne");
 verifier([1, 10, 50, 100].every((n) => etageTour(n).equipe.length === 5), "les etages de la Tour ont 5 ennemis");
 verifier(new Set(TAMPONS.map((t) => t.id)).size === TAMPONS.length, `tampons aux ids uniques (${TAMPONS.length})`);
-verifier(LIENS.every((l) => PERSOS.find((p) => p.id === l.a).serie !== PERSOS.find((p) => p.id === l.b).serie), "les 20 liens relient des series differentes");
+verifier(LIENS.every((l) => PERSOS.find((p) => p.id === l.a).serie !== PERSOS.find((p) => p.id === l.b).serie), `les ${LIENS.length} liens relient des series differentes`);
+verifier(new Set(LIENS.map((l) => l.cle)).size === LIENS.length && LIENS.every((l) => l.scene.every((r) => r.qui === "narrateur" || r.qui === l.a || r.qui === l.b)), "liens uniques, chaque replique dite par un des deux persos");
 
 // Une brulure de N secondes fait N tics de degats, meme posee pile sur un tic de seconde
 const ticsDeBrulure = (poseAuTic, secondes) => {

@@ -1,0 +1,419 @@
+/* ==========================================================
+   PANNEAU SYNERGIES (ecran Equipe)
+   ========================================================== */
+
+.panneau-synergies {
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 3px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.panneau-synergies__entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.panneau-synergies__entete h2 {
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+
+.synergies {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.synergie {
+  --teinte: var(--obi);
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 0.75rem 0.8rem 0.85rem;
+  background: color-mix(in srgb, var(--teinte) 7%, var(--papier));
+  border: 2px solid var(--encre);
+  border-top: 6px solid var(--teinte);
+  border-radius: 4px;
+}
+
+.synergie--serie     { --teinte: #e9b526; }
+.synergie--lien      { --teinte: #e0517a; }
+.synergie--affinite  { --teinte: #3d8fd6; }
+.synergie--placement { --teinte: #2f9e6e; }
+
+.synergie__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.synergie__icone {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0.22rem;
+  color: var(--papier);
+  background: var(--encre);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--teinte);
+}
+
+.synergie__liste {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pastille-syn {
+  --bord: var(--teinte);
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.4rem 0.55rem 0.45rem 0.65rem;
+  background: var(--papier);
+  border: 1.5px solid var(--encre);
+  border-left: 5px solid var(--bord);
+  border-radius: 3px;
+}
+
+/* Une pastille de serie prend les couleurs du manga ; d'affinite, sa couleur */
+.pastille-syn[style*="--s1"] { --bord: var(--s1); }
+.pastille-syn[style*="--aff"] { --bord: var(--aff); }
+
+.pastille-syn--actif {
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.pastille-syn--actif .pastille-syn__texte::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.35rem;
+  vertical-align: 0.08rem;
+  background: #2f9e6e;
+  border-radius: 50%;
+}
+
+.pastille-syn--piste {
+  background: transparent;
+  border-style: dashed;
+  border-left-style: solid;
+  opacity: 0.85;
+}
+
+.pastille-syn--danger {
+  --bord: #c8372d;
+  background: color-mix(in srgb, #c8372d 9%, var(--papier));
+}
+
+.pastille-syn--danger .pastille-syn__texte {
+  color: #a02a22;
+}
+
+.pastille-syn--vide {
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.pastille-syn__texte {
+  font-weight: 800;
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.pastille-syn__detail {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--encre-douce);
+}
+
+/* Progression d'un lien */
+.jauge-syn {
+  display: block;
+  height: 5px;
+  margin-top: 0.2rem;
+  background: color-mix(in srgb, var(--encre) 12%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.jauge-syn span {
+  display: block;
+  width: calc(var(--v) * 100%);
+  height: 100%;
+  background: linear-gradient(90deg, #e0517a, #f59fb8);
+}
+
+.synergie__aide {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--encre-douce);
+}
+
+.synergie__aide b {
+  color: var(--encre);
+  border-bottom: 3px solid var(--aff);
+}
+
+.synergie__aide .icone-role {
+  width: 0.9rem;
+  height: 0.9rem;
+  vertical-align: -0.15rem;
+}
+
+@media (max-width: 70rem) {
+  .synergies {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 34rem) {
+  .synergies {
+    grid-template-columns: 1fr;
+  }
+
+  .panneau-synergies {
+    padding: 0.9rem;
+  }
+}
+
+/* ==========================================================
+   AIDE « DEVENIR PLUS FORT » (fenetre du bouton « ? »)
+   ========================================================== */
+
+.lexique {
+  width: min(46rem, 100%);
+}
+
+.lexique__onglets {
+  margin-top: -0.3rem;
+}
+
+.aide {
+  display: grid;
+  gap: 1.3rem;
+}
+
+.aide__section {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.aide__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.aide__titre::after {
+  content: "";
+  flex: 1;
+  height: 3px;
+  background: linear-gradient(90deg, var(--encre), transparent);
+}
+
+.aide__tuiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.aide__tuiles--trois {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.aide__tuile {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+  padding: 0.7rem 0.75rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.aide__chiffre {
+  font-family: var(--police-titre);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--encre);
+  text-shadow: 0.07em 0.07em 0 var(--obi);
+}
+
+.aide__tuile-titre {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.aide__tuile-texte,
+.aide__texte {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--encre-douce);
+}
+
+.aide__texte b {
+  color: var(--encre);
+}
+
+.aide__etapes {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aide__etape {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.aide__num {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  font-family: var(--police-titre);
+  font-size: 0.85rem;
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 50%;
+}
+
+.aide__duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.aide__bloc {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: color-mix(in srgb, var(--encre) 4%, var(--papier));
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.aide__sous-titre {
+  font-weight: 800;
+}
+
+.aide__schema {
+  width: 100%;
+  max-width: 21rem;
+  justify-self: center;
+}
+
+.aide__formation {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+}
+
+.aide__ligne-nom {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--encre-douce);
+}
+
+.aide__ligne {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.aide__place {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  min-width: 4.4rem;
+  padding: 0.45rem 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.aide__place .icone-role {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.aide__section--reflexe {
+  padding: 0.8rem 0.9rem;
+  background: color-mix(in srgb, var(--obi) 22%, var(--papier));
+  border: 2px solid var(--encre);
+  border-left: 8px solid var(--obi);
+  border-radius: 4px;
+}
+
+@media (max-width: 40rem) {
+  .aide__tuiles,
+  .aide__tuiles--trois,
+  .aide__duo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aide__duo {
+    grid-template-columns: 1fr;
+  }
+
+  .aide__place {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.lexique__page[hidden] {
+  display: none;
+}
+
+/* Barre du haut sur telephone : logo, energie, aide et encre tiennent sur une ligne */
+@media (max-width: 40rem) {
+  .navigation {
+    gap: 0.45rem;
+  }
+
+  .navigation__logo {
+    font-size: 1.1rem;
+  }
+
+  .navigation__aide {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .compteur-energie,
+  .navigation__encre {
+    padding-inline: 0.45rem;
+    font-size: 0.9rem;
+  }
+}
