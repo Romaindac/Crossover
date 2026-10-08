@@ -15,6 +15,12 @@ export const REGLAGES = {
   secousses: { defaut: true },
   boucleContinuer: { defaut: false },   // la boucle de chasse continue apres une defaite
   recyclageAuto: { defaut: false },     // recycler les Communes libres pendant les boucles
+  portraits: { defaut: "couleur", valeurs: ["couleur", "encre"] },   // style des portraits
+};
+
+export const NOMS_PORTRAITS = {
+  couleur: "Couleur",
+  encre: "Encre (monochrome)",
 };
 
 export const NOMS_CASES = {

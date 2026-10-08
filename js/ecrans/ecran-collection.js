@@ -73,7 +73,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     }
     const prog = progressionDe(p.id);
     return `
-      <button type="button" class="etagere__tome" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles. Voir sa fiche.">
+      <button type="button" class="etagere__tome tome--${p.rarete}" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles. Voir sa fiche.">
         <span class="etagere__couverture">${htmlPortrait(p)}${htmlObi(p)}</span>
         <span class="etagere__nom">${p.nom}</span>
         <span class="etagere__info">Niv. ${prog.niveau} ${htmlEtoiles(prog.etoiles)}</span>

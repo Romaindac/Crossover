@@ -107,7 +107,7 @@ export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}
     ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles)}`
     : `<span class="carte__meta">${ROLES[perso.role].nom}</span>`;
   return `
-    <button type="button" class="carte ${dansEquipe ? "carte--prise" : ""}"
+    <button type="button" class="carte carte--${perso.rarete} ${dansEquipe ? "carte--prise" : ""}"
       data-action="choisir-perso" data-perso="${perso.id}" draggable="true"
       aria-pressed="${dansEquipe}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}"
       aria-label="${perso.nom}, ${RARETES[perso.rarete].nom}, ${ROLES[perso.role].nom}${progression ? `, niveau ${progression.niveau}, ${progression.etoiles} étoiles` : ""}${dansEquipe ? ", dans ton équipe" : ""}">

@@ -12,6 +12,8 @@ import { afficherCollection } from "./ecrans/ecran-collection.js";
 import { afficherReglages } from "./ecrans/ecran-reglages.js";
 import { afficherQg } from "./ecrans/ecran-qg.js";
 import { afficherAventure } from "./ecrans/ecran-aventure.js";
+import { brancherInclinaison } from "./ui/inclinaison.js";
+import { reglage } from "./services/reglages.js";
 
 const ECRANS = {
   accueil: afficherAccueil,
@@ -37,4 +39,6 @@ function naviguer(nom, donnees = {}) {
   window.scrollTo(0, 0);
 }
 
+brancherInclinaison();
+document.body.classList.toggle("portraits-encre", reglage("portraits") === "encre");
 ECRANS.accueil(racine, { naviguer });

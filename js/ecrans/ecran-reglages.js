@@ -2,7 +2,7 @@
 // REGLAGES : options de combat et sauvegarde
 // ==========================================================
 
-import { NOMS_CASES, reglage, changerReglage, tousLesReglages, restaurerReglages } from "../services/reglages.js";
+import { NOMS_CASES, NOMS_PORTRAITS, reglage, changerReglage, tousLesReglages, restaurerReglages } from "../services/reglages.js";
 import { exporterPartie, importerPartie, effacerPartie } from "../services/partie.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 
@@ -33,6 +33,18 @@ export function afficherReglages(conteneur, { naviguer }) {
           <label class="interrupteur"><input type="checkbox" data-action="opt-continuer" ${reglage("boucleContinuer") ? "checked" : ""}><span>Boucle de chasse : continuer après une défaite</span></label>
           <label class="interrupteur"><input type="checkbox" data-action="opt-recyclage" ${reglage("recyclageAuto") ? "checked" : ""}><span>Boucles : recycler automatiquement les Communes libres</span></label>
           <p class="reglage__aide">En mode manuel, les touches 1 à 5 lancent l'ultime du perso correspondant.</p>
+        </div>
+      </section>
+
+      <section class="carte-reglage" aria-labelledby="titre-affichage">
+        <h2 id="titre-affichage">Affichage</h2>
+        <div class="reglage">
+          <p class="reglage__nom">Style des portraits</p>
+          <p class="reglage__aide">Les portraits viennent de sources aux styles différents. « Encre » les passe tous en monochrome teinté, comme les pages d'un même tome.</p>
+          <div class="choix-segmente choix-segmente--gauche" role="radiogroup" aria-label="Style des portraits">
+            ${Object.entries(NOMS_PORTRAITS).map(([val, nom]) => `
+              <button type="button" role="radio" class="choix-segmente__option" data-action="portraits" data-valeur="${val}" aria-checked="${reglage("portraits") === val}">${nom}</button>`).join("")}
+          </div>
         </div>
       </section>
 
@@ -99,6 +111,11 @@ export function afficherReglages(conteneur, { naviguer }) {
       conteneur.querySelectorAll("[data-action='cases']").forEach((b) => b.setAttribute("aria-checked", String(b === cible)));
     }
     if (action === "secousses") changerReglage("secousses", cible.checked);
+    if (action === "portraits") {
+      changerReglage("portraits", cible.dataset.valeur);
+      document.body.classList.toggle("portraits-encre", cible.dataset.valeur === "encre");
+      conteneur.querySelectorAll("[data-action='portraits']").forEach((b) => b.setAttribute("aria-checked", String(b === cible)));
+    }
     if (action === "opt-continuer") changerReglage("boucleContinuer", cible.checked);
     if (action === "opt-recyclage") changerReglage("recyclageAuto", cible.checked);
 
