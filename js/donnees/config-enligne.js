@@ -6,6 +6,6 @@
 // ==========================================================
 
 export const SUPABASE_URL = "https://cqymvhwaiafjoycbslvr.supabase.co";
-export const SUPABASE_CLE = "";
+export const SUPABASE_CLE = "sb_publishable_dmeEKXUBDbdUL1AyTVg_zw_T1CWBvB5";
 
 export const enLigneDisponible = () => Boolean(SUPABASE_URL && SUPABASE_CLE);

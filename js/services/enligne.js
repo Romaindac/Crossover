@@ -42,6 +42,8 @@ function messageErreur(corps, statut) {
   const brut = `${corps?.msg ?? corps?.message ?? corps?.error_description ?? corps?.error ?? ""}`.toLowerCase();
   if (brut.includes("already registered") || brut.includes("already exists") || brut.includes("duplicate")) return "Ce pseudo est déjà pris.";
   if (brut.includes("invalid login") || brut.includes("invalid_grant") || brut.includes("invalid credentials")) return "Pseudo ou mot de passe incorrect.";
+  if (brut.includes("email") && (brut.includes("invalid") || brut.includes("valid"))) return "Le serveur refuse l'adresse technique du compte : préviens le créateur du jeu (erreur « email »).";
+  if (brut.includes("signups not allowed") || brut.includes("signup is disabled")) return "Les inscriptions sont fermées dans Supabase (Authentication > Sign In / Providers > Allow new users to sign up).";
   if (brut.includes("password")) return "Mot de passe trop court (6 caractères minimum).";
   if (brut.includes("email not confirmed")) return "Le serveur demande une confirmation par mail : il faut la désactiver dans Supabase.";
   if (brut.includes("objet refuse")) return "Le serveur refuse cet objet : ses stats sont impossibles.";
