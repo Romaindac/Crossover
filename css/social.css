@@ -581,3 +581,64 @@
 .reglages-page.social {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* Bandeau du compte en haut de l'onglet Social */
+.social__compte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0.9rem;
+  background: color-mix(in srgb, var(--obi) 18%, var(--papier));
+  border: 2px solid var(--encre);
+  border-left: 7px solid var(--obi);
+  border-radius: 4px;
+}
+
+.social__compte:empty {
+  display: none;
+}
+
+.social__compte-texte {
+  flex: 1;
+  min-width: 14rem;
+  font-size: 0.9rem;
+}
+
+.social__onglets {
+  flex-wrap: wrap;
+}
+
+/* Bandeau « joue en ligne » du QG */
+.bandeau-compte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.9rem;
+  padding: 0.75rem 1rem;
+  color: var(--papier);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 14px, rgb(255 255 255 / 0.05) 14px 28px),
+    var(--encre);
+  border-left: 8px solid var(--obi);
+  border-radius: 4px;
+}
+
+.bandeau-compte__texte {
+  flex: 1;
+  min-width: 15rem;
+  font-size: 0.92rem;
+}
+
+.bandeau-compte__texte strong {
+  display: block;
+  font-family: var(--police-mincho);
+  font-size: 1.1rem;
+  color: var(--obi);
+}
+
+.bandeau-compte .bouton-texte {
+  color: var(--papier);
+}

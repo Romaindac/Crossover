@@ -24,6 +24,10 @@ import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { htmlDecor } from "../ui/decors.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { ouvrirCompte } from "../ui/compte.js";
+import { ouvrirTutoriel, tutorielVu } from "../ui/tutoriel.js";
+import { enLigneDisponible, connecte } from "../services/enligne.js";
+import { lire as lireReglage, ecrire as ecrireReglage } from "../services/sauvegarde.js";
 import { annoncerTampons } from "../ui/toast.js";
 import { serieDeLaSemaine, numeroDuMagazine, BONUS_HONNEUR, BUTIN_HONNEUR } from "../donnees/hebdo.js";
 import { finDeSemaine } from "../donnees/tour.js";
@@ -72,6 +76,7 @@ export function afficherQg(conteneur, { naviguer }) {
     <main class="qg">
       <h1 class="visuellement-cache">Ton QG</h1>
       <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
+      <div id="bandeau-compte"></div>
       <div id="guide"></div>
       <div class="planche">
 
@@ -278,6 +283,18 @@ export function afficherQg(conteneur, { naviguer }) {
     return [r.encre && `${r.encre} d'encre`, r.tickets && `${r.tickets} booster${r.tickets > 1 ? "s" : ""}`, r.energie && `${r.energie} d'énergie`].filter(Boolean).join(" + ");
   }
 
+  // ---------- Bandeau « joue en ligne » ----------
+  function rendreBandeauCompte() {
+    const zone = $("#bandeau-compte");
+    if (!enLigneDisponible() || connecte() || lireReglage("bandeau-compte-masque", false)) { zone.innerHTML = ""; return; }
+    zone.innerHTML = `
+      <section class="bandeau-compte" aria-label="Jouer en ligne">
+        <p class="bandeau-compte__texte"><strong>Joue avec les autres</strong>Crée ton compte (pseudo et mot de passe, sans mail) : sauvegarde en ligne, chat, hôtel des ventes et classements.</p>
+        <button type="button" class="bouton bouton--obi-petit" data-action="ouvrir-compte">Créer mon compte</button>
+        <button type="button" class="bouton-texte" data-action="masquer-bandeau-compte">Plus tard</button>
+      </section>`;
+  }
+
   function rendreGuide(message = "") {
     const g = etatGuide();
     const zone = $("#guide");
@@ -444,6 +461,8 @@ export function afficherQg(conteneur, { naviguer }) {
       rendreEncre();
       return;
     }
+    if (action === "ouvrir-compte") return ouvrirCompte();
+    if (action === "masquer-bandeau-compte") { ecrireReglage("bandeau-compte-masque", true); return rendreBandeauCompte(); }
     if (action === "guide") {
       const o = reclamerGuide();
       if (o) {
@@ -482,8 +501,13 @@ export function afficherQg(conteneur, { naviguer }) {
   rendreNouveautes();
   rendreEncre();
   rendreExpedition();
+  rendreBandeauCompte();
   rendreGuide();
   rendreMissions();
+  const surCompte = () => { if (conteneur.isConnected) rendreBandeauCompte(); else window.removeEventListener("crossover:compte", surCompte); };
+  window.addEventListener("crossover:compte", surCompte);
+  // Premiere visite au QG : le tutoriel de depart
+  if (!tutorielVu()) setTimeout(() => { if (conteneur.isConnected) ouvrirTutoriel(); }, 400);
   rendreEvenements();
   rendreStats();
   rendreHebdo();

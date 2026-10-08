@@ -1,0 +1,262 @@
+/* ==========================================================
+   TUTORIEL DE DEPART
+   ========================================================== */
+
+.voile--tuto {
+  z-index: 50;
+  background: rgb(14 15 30 / 0.78);
+}
+
+.tuto {
+  width: min(34rem, 100%);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 6px;
+  box-shadow: 8px 8px 0 var(--obi);
+  animation: tuto-entree 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes tuto-entree {
+  from { transform: translateY(14px) scale(0.97); opacity: 0; }
+}
+
+/* La scene illustree, en encre comme les ecrans de jeu */
+.tuto__scene {
+  display: grid;
+  place-items: center;
+  min-height: 11rem;
+  padding: 1rem;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 120%, rgb(255 255 255 / 0.05) 0 4deg, transparent 4deg 12deg),
+    var(--encre);
+  border-bottom: 3px solid var(--obi);
+}
+
+.tuto__scene .aide__schema {
+  max-width: 17rem;
+  padding: 0.4rem;
+  background: var(--papier);
+  border-radius: 6px;
+}
+
+.tuto__scene .aide__formation {
+  padding: 0.6rem;
+  color: var(--encre);
+  background: var(--papier);
+  border-radius: 6px;
+}
+
+.tuto__equipe {
+  display: flex;
+  justify-content: center;
+}
+
+.tuto__heros {
+  width: 4.6rem;
+  margin: 0 -0.45rem;
+  border: 3px solid var(--papier);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 6px 0 rgb(0 0 0 / 0.35);
+  transform: rotate(calc((var(--i) - 2) * 7deg)) translateY(calc(var(--i) * (4 - var(--i)) * -3px));
+  animation: tuto-carte 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+.tuto__heros .portrait {
+  aspect-ratio: 3 / 4;
+}
+
+@keyframes tuto-carte {
+  from { opacity: 0; translate: 0 18px; }
+}
+
+.tuto__sachets {
+  display: flex;
+  justify-content: center;
+}
+
+.tuto__sachet {
+  width: 10rem;
+  margin: -1.4rem -2.6rem;
+  transform: rotate(calc((var(--i) - 1) * 9deg));
+  animation: tuto-carte 420ms both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+.tuto__sachet .sachet {
+  width: 100%;
+  scale: 0.7;
+}
+
+.tuto__jour,
+.tuto__social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 24rem;
+}
+
+.tuto__case,
+.tuto__bulle {
+  padding: 0.5rem 0.8rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--obi);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--obi);
+  animation: tuto-carte 360ms both;
+  animation-delay: calc(var(--i) * 60ms);
+}
+
+.tuto__bulle {
+  border-radius: 14px 14px 14px 4px;
+}
+
+.tuto__fin {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--police-titre);
+  font-size: 3.4rem;
+  color: var(--obi);
+  text-shadow: 4px 4px 0 var(--sceau, #c8372d);
+}
+
+.tuto__fin .icone-role {
+  width: 2.6rem;
+  height: 2.6rem;
+  color: var(--papier);
+}
+
+/* Le texte */
+.tuto__corps {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 1rem 1.25rem 0.6rem;
+  overflow-y: auto;
+}
+
+.tuto__etape {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--encre-douce);
+}
+
+.tuto__titre {
+  font-family: var(--police-mincho);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.tuto__texte {
+  font-size: 0.97rem;
+  line-height: 1.45;
+}
+
+.tuto__pastilles {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tuto__pastilles li {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  background: color-mix(in srgb, var(--obi) 14%, var(--papier));
+  border-left: 4px solid var(--obi);
+  border-radius: 2px;
+}
+
+.tuto__compte {
+  justify-self: start;
+}
+
+/* La barre du bas */
+.tuto__bas {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.25rem 0.9rem;
+  border-top: 2px solid color-mix(in srgb, var(--encre) 15%, transparent);
+}
+
+.tuto__points {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tuto__points li {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: color-mix(in srgb, var(--encre) 25%, transparent);
+  border-radius: 50%;
+  transition: width 160ms;
+}
+
+.tuto__points .tuto__point--actif {
+  width: 1.3rem;
+  background: var(--encre);
+  border-radius: 999px;
+}
+
+.tuto__nav {
+  display: flex;
+  gap: 0.4rem;
+}
+
+@media (max-width: 30rem) {
+  .tuto__scene {
+    min-height: 9rem;
+  }
+
+  .tuto__heros {
+    width: 3.8rem;
+  }
+
+  .tuto__sachet {
+    margin: -1.8rem -3rem;
+  }
+
+  .tuto__sachet .sachet {
+    scale: 0.6;
+  }
+
+  .tuto__bas {
+    grid-template-columns: 1fr auto;
+  }
+
+  .tuto__points {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuto,
+  .tuto__heros,
+  .tuto__sachet,
+  .tuto__case,
+  .tuto__bulle {
+    animation: none;
+  }
+}
