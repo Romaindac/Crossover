@@ -1,0 +1,161 @@
+/* ==========================================================
+   CADRES PREMIUM DES CARTES
+   Le cadre de chaque manga, facon carte a collectionner : un metal
+   teinte aux couleurs de la serie (--s1, --s2), son motif grave en
+   relief discret, un filet clair autour de l'illustration et un
+   medaillon de la serie. Charge apres series.css.
+   ========================================================== */
+
+[data-motif] {
+  --cadre-clair: color-mix(in srgb, var(--s1) 50%, #fff);
+  --cadre-sombre: color-mix(in srgb, var(--s1) 50%, #000);
+  --cadre-metal:
+    linear-gradient(125deg, rgb(255 255 255 / 0.45), transparent 30%, transparent 62%, rgb(255 255 255 / 0.25) 80%, transparent),
+    linear-gradient(160deg, var(--cadre-clair), var(--s1) 26%, var(--cadre-sombre) 50%, var(--s1) 74%, var(--cadre-clair));
+}
+
+/* Doree : le cadre passe a l'or, quelle que soit la serie */
+.carte--doree[data-motif],
+.tome--doree [data-motif] {
+  --cadre-metal:
+    linear-gradient(125deg, rgb(255 255 255 / 0.6), transparent 30%, transparent 60%, rgb(255 255 255 / 0.35) 80%, transparent),
+    linear-gradient(160deg, #fff1b8, #d4a017 28%, #8a6200 50%, #e6b93a 72%, #fff1b8);
+}
+
+/* Holo : un arc-en-ciel qui suit l'inclinaison */
+.carte--holo[data-motif],
+.tome--holo [data-motif] {
+  --cadre-metal:
+    linear-gradient(115deg, #ff9a9a, #ffd88a 18%, #9cf5c8 36%, #8ac4ff 54%, #d9a2ff 72%, #ff9a9a 90%) var(--mx, 50%) var(--my, 50%) / 300% 300%;
+}
+
+/* ---------- La carte de la grille (equipe, debut, vitrine) ---------- */
+
+.carte[data-motif] {
+  gap: 0;
+  padding: 5px;
+  border: 1.5px solid var(--encre);
+  border-radius: 11px;
+  background: var(--cadre-metal);
+}
+
+/* Le motif de la serie, grave dans le metal */
+.carte[data-motif]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--motif);
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+}
+
+.carte[data-motif] .carte__visuel,
+.carte[data-motif] .carte__infos {
+  position: relative;
+  z-index: 1;
+}
+
+.carte[data-motif] .carte__visuel {
+  overflow: hidden;
+  border-radius: 7px 7px 2px 2px;
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.8), 0 0 0 3px rgb(0 0 0 / 0.25);
+}
+
+.carte[data-motif] .carte__infos {
+  margin-top: 4px;
+  padding: 0.45rem 0.55rem 0.45rem;
+  background: linear-gradient(180deg, var(--papier) 55%, color-mix(in srgb, var(--s1) 12%, var(--papier)));
+  border-radius: 2px 2px 7px 7px;
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.8), 0 0 0 3px rgb(0 0 0 / 0.25);
+}
+
+.carte[data-motif] .carte__role {
+  z-index: 3;
+  top: 0.55rem;
+  left: 0.55rem;
+}
+
+.carte[data-motif] .carte__bandeau {
+  z-index: 4;
+}
+
+/* L'ancienne bande a motif laisse la place au medaillon */
+.carte[data-motif] .carte__bande {
+  display: none;
+}
+
+.carte[data-motif] .carte__nom {
+  padding-right: 1.9rem;
+}
+
+/* Le medaillon de la serie, a cheval entre l'illustration et le nom */
+.carte[data-motif] .carte__serie {
+  position: absolute;
+  top: -1.25rem;
+  right: 0.3rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  padding: 0;
+  font-family: var(--police-titre);
+  font-size: 0.5rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.65), 0 0 3px rgb(0 0 0 / 0.4);
+  background: radial-gradient(circle at 35% 28%, var(--cadre-clair), var(--s1) 52%, var(--cadre-sombre));
+  border: 2px solid var(--s2);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--encre), 0 2px 4px rgb(0 0 0 / 0.4), inset 0 1px 1px rgb(255 255 255 / 0.5);
+}
+
+/* L'obi de rarete : un ruban plus fin, avec un reflet */
+.carte[data-motif] .obi-rarete {
+  padding: 0.08rem 2.4rem 0.08rem 0.4rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-top: 1.5px solid var(--encre);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+/* Les anneaux interieurs de rarete tomberaient sur le cadre : le ruban suffit */
+.carte--peu_commun[data-motif],
+.carte--rare[data-motif] {
+  box-shadow: none;
+}
+
+/* ---------- Les autres cartes : equipe, revelation, collection ---------- */
+
+.equipe .place[data-motif],
+.tome .tome__face--avant[data-motif],
+.etagere .etagere__couverture[data-motif] {
+  border: 4px solid transparent;
+  background:
+    linear-gradient(var(--papier), var(--papier)) padding-box,
+    var(--cadre-metal) border-box;
+  box-shadow: 0 0 0 1.5px var(--encre), inset 0 0 0 1.5px rgb(255 255 255 / 0.75);
+}
+
+.etagere .etagere__couverture[data-motif] {
+  border-left-width: 7px;
+  box-shadow: 0 0 0 1.5px var(--encre), inset 0 0 0 1.5px rgb(255 255 255 / 0.75), 3px 3px 0 var(--encre);
+}
+
+.etagere__couverture[data-motif]::before {
+  display: none;
+}
+
+/* En combat : un cadre metallique, sans la bande */
+.combattant[data-motif] .combattant__cadre::after {
+  display: none;
+}
+
+.tome__face--avant[data-motif] .serie-bande {
+  display: none;
+}

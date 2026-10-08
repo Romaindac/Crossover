@@ -32,7 +32,7 @@ Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 - `js/services/partie.js` : l'état du joueur, toutes les règles de progression et de récompenses.
 - `js/ui/` : composants d'affichage partagés (cartes, fiche, équipement, scènes, décors, navigation).
 - `js/ecrans/` : un fichier par écran (accueil, qg, aventure, equipe, combat, tirages, collection, reglages...).
-- `css/premium.css` est chargé en dernier : c'est la couche de finition « manga premium ».
+- `css/premium.css` : la couche de finition « manga premium » ; `css/series.css` puis `css/cadres.css` (cadre métallisé par manga, médaillon de série) sont chargés après.
 
 ## Direction artistique (manga premium)
 
