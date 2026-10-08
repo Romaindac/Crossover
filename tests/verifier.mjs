@@ -12,8 +12,8 @@ import { etageTour } from "../js/donnees/tour.js";
 import { TAMPONS } from "../js/donnees/tampons.js";
 import { LIENS } from "../js/donnees/liens.js";
 import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
-import { ouvrirBooster } from "../js/moteur/boosters.js";
-import { EDITIONS, PITIE_BOOSTER } from "../js/donnees/boosters.js";
+import { ouvrirBooster, ouvrirBoosterDepart } from "../js/moteur/boosters.js";
+import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
 import { creerHasard } from "../js/moteur/hasard.js";
 import { STYLES_SERIES } from "../js/donnees/series.js";
 import { creerCombat, avancer } from "../js/moteur/simulation.js";
@@ -56,9 +56,14 @@ verifier(ticsDeBrulure(20, 1) === 1 && ticsDeBrulure(23, 1) === 1 && ticsDeBrulu
 
 // Boosters : 5 cartes de l'edition, reproductibles, et Legendaire garanti par la pitie
 const hb = creerHasard(3);
-verifier(EDITIONS.every((e) => { const r = ouvrirBooster(hb.nombre, e.id); return r.cartes.length === 5 && r.cartes.every((c) => e.series.includes(PERSOS.find((p) => p.id === c.id).serie)); }), "chaque booster donne 5 cartes de son edition");
+verifier(EDITIONS.every((e) => { const r = ouvrirBooster(hb.nombre, e.id); return r.cartes.length === CARTES_PAR_BOOSTER && r.cartes.every((c) => e.series.includes(PERSOS.find((p) => p.id === c.id).serie)); }), "chaque booster donne ses cartes, toutes de son edition");
 verifier(ouvrirBooster(creerHasard(9).nombre, "shonen", { pitie: PITIE_BOOSTER - 1 }).cartes.some((c) => c.rarete === "legendaire"), "la pitie garantit un Legendaire au 20e booster");
 verifier(PERSOS.every((p) => EDITIONS.some((e) => e.series.includes(p.serie)) && STYLES_SERIES[p.serie]), "chaque perso est dans une edition et sa serie a un style de carte");
+
+verifier([1, 2, 3, 4, 5].every((g) => { const c = ouvrirBoosterDepart(creerHasard(g).nombre).cartes; return c.length === 5 && new Set(c.map((x) => PERSOS.find((p) => p.id === x.id).role)).size === 5 && c.filter((x) => x.rarete === "rare").length === 1; }), "le booster de depart donne 5 persos, un par role, dont un Rare");
+// Chaque perso peut sortir d'un booster : son edition a des cases qui tirent sa rarete
+const raretesTirables = new Set(CASES_BOOSTER.flatMap((c) => Object.keys(c)));
+verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 78 persos peuvent sortir d'un booster");
 
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);
