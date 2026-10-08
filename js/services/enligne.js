@@ -63,7 +63,10 @@ async function appel(chemin, { methode = "GET", corps, entetes = {}, authentifie
       method: methode,
       headers: {
         apikey: SUPABASE_CLE,
-        Authorization: `Bearer ${authentifie ? session.jeton : SUPABASE_CLE}`,
+        // Connecte : le jeton du joueur. Sinon, seule une ancienne cle « anon » (un jeton eyJ...)
+        // va aussi dans Authorization ; les nouvelles cles « publishable » (sb_publishable_...) non.
+        ...(authentifie ? { Authorization: `Bearer ${session.jeton}` }
+          : SUPABASE_CLE.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_CLE}` } : {}),
         "Content-Type": "application/json",
         ...entetes,
       },
