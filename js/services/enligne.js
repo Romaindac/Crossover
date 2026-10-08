@@ -19,6 +19,7 @@ let session = lire(CLE_SESSION, null);
 
 export const connecte = () => Boolean(session?.jeton);
 export const pseudoConnecte = () => session?.pseudo ?? null;
+export const monId = () => session?.id ?? null;
 
 function garderSession(donnees, pseudo) {
   session = {
@@ -43,6 +44,8 @@ function messageErreur(corps, statut) {
   if (brut.includes("invalid login") || brut.includes("invalid_grant") || brut.includes("invalid credentials")) return "Pseudo ou mot de passe incorrect.";
   if (brut.includes("password")) return "Mot de passe trop court (6 caractères minimum).";
   if (brut.includes("email not confirmed")) return "Le serveur demande une confirmation par mail : il faut la désactiver dans Supabase.";
+  if (brut.includes("trop rapide")) return "Doucement : un message toutes les 2 secondes.";
+  if (brut.includes("bloque")) return "Ce joueur ne reçoit pas tes messages.";
   if (statut === 429) return "Trop d'essais : attends une minute.";
   return "Le serveur ne répond pas comme prévu. Réessaie plus tard.";
 }
@@ -135,4 +138,100 @@ export async function classement(cle, limite = 50) {
   const c = CLASSEMENTS[cle];
   const filtre = c.semaine ? `&semaine=eq.${numeroSemaine()}&boss_semaine=gt.0` : "";
   return appel(`/rest/v1/joueurs?select=pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine&order=${c.ordre}${filtre}&limit=${limite}`);
+}
+
+// ---------- Chat ----------
+
+export const CANAUX = [
+  { id: "general", nom: "Général", texte: "Discussion libre entre joueurs." },
+  { id: "entraide", nom: "Entraide", texte: "Questions, équipes, synergies : on s'aide." },
+  { id: "echanges", nom: "Échanges", texte: "Parler des cartes qu'on cherche et qu'on a en trop." },
+];
+
+const minimal = { Prefer: "return=minimal" };
+const champsMessage = "id,canal,auteur,pseudo,texte,cree";
+
+// Les messages d'un canal, du plus ancien au plus recent (apres l'id donne)
+export async function messagesCanal(canal, apresId = 0, limite = 60) {
+  const lignes = await appel(`/rest/v1/messages?select=${champsMessage}&canal=eq.${canal}&id=gt.${apresId}&order=id.desc&limit=${limite}`, { authentifie: true });
+  return (lignes ?? []).reverse();
+}
+
+export async function envoyerMessage(canal, texte) {
+  await appel("/rest/v1/messages", { methode: "POST", authentifie: true, entetes: minimal, corps: { canal, texte } });
+}
+
+export async function effacerMessage(id) {
+  await appel(`/rest/v1/messages?id=eq.${Number(id)}`, { methode: "DELETE", authentifie: true, entetes: minimal });
+}
+
+// Tous mes messages prives (envoyes et recus) apres l'id donne
+export async function messagesPrives(apresId = 0) {
+  const moi = session.id;
+  const lignes = await appel(`/rest/v1/prives?select=id,de,a,texte,lu,cree&or=(de.eq.${moi},a.eq.${moi})&id=gt.${apresId}&order=id.desc&limit=300`, { authentifie: true });
+  return (lignes ?? []).reverse();
+}
+
+export async function envoyerPrive(a, texte) {
+  await appel("/rest/v1/prives", { methode: "POST", authentifie: true, entetes: minimal, corps: { a, texte } });
+}
+
+export async function marquerLus(de) {
+  await appel(`/rest/v1/prives?a=eq.${session.id}&de=eq.${de}&lu=eq.false`, { methode: "PATCH", authentifie: true, entetes: minimal, corps: { lu: true } });
+}
+
+export async function nombreNonLus() {
+  if (!connecte()) return 0;
+  const lignes = await appel(`/rest/v1/prives?select=id&a=eq.${session.id}&lu=eq.false&limit=99`, { authentifie: true });
+  return lignes?.length ?? 0;
+}
+
+const champsJoueur = "id,pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine";
+
+export async function joueursParIds(ids) {
+  const liste = [...new Set(ids)].filter((id) => /^[0-9a-f-]{36}$/.test(id));
+  if (!liste.length) return [];
+  return appel(`/rest/v1/joueurs?select=${champsJoueur}&id=in.(${liste.join(",")})`, { authentifie: true });
+}
+
+export async function chercherJoueurs(debut) {
+  const propre = String(debut).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 20);
+  if (propre.length < 2) return [];
+  return appel(`/rest/v1/joueurs?select=${champsJoueur}&pseudo=ilike.${propre}*&limit=8`, { authentifie: true });
+}
+
+export async function mesBlocages() {
+  const lignes = await appel("/rest/v1/blocages?select=bloque", { authentifie: true });
+  return (lignes ?? []).map((l) => l.bloque);
+}
+
+export async function bloquer(id) {
+  await appel("/rest/v1/blocages", { methode: "POST", authentifie: true, entetes: { Prefer: "resolution=ignore-duplicates,return=minimal" }, corps: { bloque: id } });
+}
+
+export async function debloquer(id) {
+  await appel(`/rest/v1/blocages?bloque=eq.${id}`, { methode: "DELETE", authentifie: true, entetes: minimal });
+}
+
+export async function signaler({ cible, messageId = null, texte = "", raison = "" }) {
+  await appel("/rest/v1/signalements", { methode: "POST", authentifie: true, entetes: minimal,
+    corps: { cible, message_id: messageId, texte: String(texte).slice(0, 500), raison: String(raison).slice(0, 300) } });
+}
+
+export async function suisModerateur() {
+  const lignes = await appel(`/rest/v1/moderateurs?select=id&id=eq.${session.id}`, { authentifie: true }).catch(() => []);
+  return Boolean(lignes?.length);
+}
+
+// Messages prives non lus : garde en memoire pour la barre de navigation
+let nonLus = 0;
+export const nonLusEnMemoire = () => nonLus;
+export async function rafraichirNonLus() {
+  try {
+    nonLus = await nombreNonLus();
+  } catch {
+    return nonLus;
+  }
+  window.dispatchEvent(new CustomEvent("crossover:non-lus", { detail: nonLus }));
+  return nonLus;
 }

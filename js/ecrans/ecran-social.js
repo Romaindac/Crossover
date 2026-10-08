@@ -14,6 +14,7 @@ import { numeroSemaine } from "../donnees/tour.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlCarte, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { brancherChat } from "../ui/chat.js";
 
 const echapper = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -35,7 +36,9 @@ export function htmlResume(r = {}) {
   </ul>`;
 }
 
-export function afficherSocial(conteneur, { naviguer }) {
+export function afficherSocial(conteneur, { naviguer, onglet = null }) {
+  let ongletSocial = onglet ?? (connecte() ? "chat" : "vitrine");
+  let arreterChat = null;
   let edition = false;
   let ongletClassement = "semaine";
   let joueurs = null;
@@ -44,19 +47,28 @@ export function afficherSocial(conteneur, { naviguer }) {
     ${htmlNavigation("social")}
     <div class="reglages-page social">
       <h1 class="equipe__titre">Social</h1>
+      <div class="choix-segmente choix-segmente--gauche social__onglets" role="tablist" aria-label="Social">
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="chat">Chat</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="classements">Classements</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="vitrine">Vitrine et compte</button>
+      </div>
 
-      <section class="carte-reglage" aria-labelledby="titre-vitrine">
+      <section class="carte-reglage social__chat" data-panneau="chat" aria-label="Chat">
+        <div id="chat"></div>
+      </section>
+
+      <section class="carte-reglage" data-panneau="vitrine" aria-labelledby="titre-vitrine">
         <h2 id="titre-vitrine">Ma vitrine</h2>
         <p class="reglage__aide">Tes ${TAILLE_VITRINE} plus belles cartes. Envoie le lien à tes potes : ils voient ta vitrine sans rien installer, et ton score au boss de la semaine devient un défi à battre.</p>
         <div id="vitrine"></div>
       </section>
 
-      <section class="carte-reglage" aria-labelledby="titre-compte">
+      <section class="carte-reglage" data-panneau="vitrine" aria-labelledby="titre-compte">
         <h2 id="titre-compte">Compte et sauvegarde en ligne</h2>
         <div id="compte"></div>
       </section>
 
-      <section class="carte-reglage" aria-labelledby="titre-classement">
+      <section class="carte-reglage" data-panneau="classements" aria-labelledby="titre-classement">
         <h2 id="titre-classement">Classements</h2>
         <div id="classement"></div>
       </section>
@@ -260,9 +272,44 @@ export function afficherSocial(conteneur, { naviguer }) {
     if (action === "deconnecter") { deconnecter(); rendreCompte("Déconnecté. Ta partie reste dans ce navigateur."); rendreClassement(); rendreVitrine(); }
   });
 
+  // ---------- Onglets et chat ----------
+  function rendreChat() {
+    arreterChat?.();
+    arreterChat = null;
+    const zone = $("#chat");
+    if (!enLigneDisponible()) {
+      zone.innerHTML = '<p class="reglage__aide">Le chat s\'ouvrira avec les comptes en ligne. En attendant, partage ta vitrine à tes potes depuis l\'onglet « Vitrine et compte ».</p>';
+      return;
+    }
+    if (!connecte()) {
+      zone.innerHTML = `
+        <p class="reglage__aide">Le chat réunit tous les joueurs : canaux Général, Entraide et Échanges, et messages privés. Il faut un compte (juste un pseudo et un mot de passe).</p>
+        <div class="reglage__boutons"><button type="button" class="bouton bouton--obi-petit" data-action="onglet-social" data-onglet="vitrine">Créer mon compte</button></div>`;
+      return;
+    }
+    arreterChat = brancherChat(zone, { ouvrirJoueur });
+  }
+
+  function afficherOnglet(nom) {
+    ongletSocial = nom;
+    conteneur.querySelectorAll("[data-action='onglet-social'][role='tab']").forEach((b) => {
+      b.setAttribute("aria-selected", String(b.dataset.onglet === nom));
+      b.setAttribute("aria-checked", String(b.dataset.onglet === nom));
+    });
+    conteneur.querySelectorAll("[data-panneau]").forEach((s) => { s.hidden = s.dataset.panneau !== nom; });
+    $(".social").classList.toggle("social--large", nom === "chat");
+    if (nom === "chat") rendreChat(); else { arreterChat?.(); arreterChat = null; }
+    if (nom === "classements") { if (enLigneDisponible()) chargerClassement(); else rendreClassement(); }
+  }
+
+  conteneur.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-action='onglet-social']");
+    if (b) afficherOnglet(b.dataset.onglet);
+  });
+
   rendreVitrine();
   rendreCompte();
-  if (enLigneDisponible()) chargerClassement(); else rendreClassement();
+  afficherOnglet(ongletSocial);
   chargerPortraits((id) => rafraichirPortrait(conteneur, id));
 }
 
