@@ -36,7 +36,7 @@ export const TAMPONS = [
   t("boucle-50", "chasse", "Machine", "Gagner 50 combats d'affilée dans une boucle", (x) => x.boucleMax >= 50, { encre: 100 }),
 
   // ---------- Collection ----------
-  ...[10, 25, 50, 78].map((n) => t(`collection-${n}`, "collection", `${n} persos`, `Réunir ${n} persos`, (x) => x.collection >= n, { encre: 5 * n })),
+  ...[10, 25, 50, 78, 120, 160].map((n) => t(`collection-${n}`, "collection", `${n} persos`, `Réunir ${n} persos`, (x) => x.collection >= n, { encre: 5 * n })),
   t("cinq-etoiles", "collection", "Étoile pleine", "Monter un perso à 5 étoiles", (x) => x.cinqEtoiles, { encre: 100 }),
   t("serie-complete", "collection", "Série complète", "Réunir tous les persos d'une série", (x) => x.serieComplete, { encre: 60 }),
   t("legendaires-3", "collection", "Trio légendaire", "Posséder 3 Légendaires", (x) => x.legendaires >= 3, { encre: 150, fragments: 3 }),

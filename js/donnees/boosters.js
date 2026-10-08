@@ -9,27 +9,27 @@
 export const EDITIONS = [
   {
     id: "shonen", nom: "Shōnen Légendes", numero: 1,
-    texte: "Les piliers du genre : les héros qui ont tout commencé.",
+    texte: "Les piliers du genre : les héros qui ont tout commencé, chevaliers du zodiaque compris.",
     couleurs: ["#f08a1c", "#c2410c", "#fde68a"], vedettes: ["naruto", "goku", "luffy"],
-    series: ["Dragon Ball", "Naruto", "One Piece", "Bleach"],
+    series: ["Dragon Ball", "Naruto", "One Piece", "Bleach", "Saint Seiya"],
   },
   {
     id: "vague", nom: "Nouvelle Vague", numero: 2,
-    texte: "La relève : exorcistes, pourfendeurs de démons et apprentis héros.",
+    texte: "La relève : exorcistes, pourfendeurs de démons, mages et chasseurs.",
     couleurs: ["#6d28d9", "#1e1b4b", "#c4b5fd"], vedettes: ["tanjiro", "gojo", "deku"],
-    series: ["Jujutsu Kaisen", "Demon Slayer", "My Hero Academia"],
+    series: ["Jujutsu Kaisen", "Demon Slayer", "My Hero Academia", "Black Clover", "Solo Leveling"],
   },
   {
     id: "aventures", nom: "Grandes Aventures", numero: 3,
-    texte: "Voyages, guildes et compagnons : l'aventure avant tout.",
+    texte: "Voyages, guildes, alchimistes et compagnons : l'aventure avant tout.",
     couleurs: ["#0f9d74", "#0b4f6c", "#a7f3d0"], vedettes: ["gon", "frieren", "natsu"],
-    series: ["Pokémon", "Hunter x Hunter", "Fairy Tail", "Frieren"],
+    series: ["Pokémon", "Hunter x Hunter", "Fairy Tail", "Frieren", "Fullmetal Alchemist"],
   },
   {
     id: "tenebres", nom: "Ténèbres", numero: 4,
-    texte: "Dark fantasy, titans et démons : les pages les plus sombres.",
+    texte: "Dark fantasy, titans, goules et vampires : les pages les plus sombres.",
     couleurs: ["#b91c1c", "#1c1917", "#fca5a5"], vedettes: ["eren", "guts", "denji"],
-    series: ["Berserk", "L'Attaque des Titans", "Chainsaw Man"],
+    series: ["Berserk", "L'Attaque des Titans", "Chainsaw Man", "Tokyo Ghoul", "JoJo"],
   },
 ];
 
