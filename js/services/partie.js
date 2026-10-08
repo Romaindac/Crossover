@@ -32,7 +32,7 @@ import { LIENS, niveauLien, BONUS_PAR_NIVEAU_LIEN, VICTOIRES_DECOUVERTE } from "
 import { TAMPONS, PAGES, TITRE_DE_DEPART } from "../donnees/tampons.js";
 import { serieDeLaSemaine, BONUS_HONNEUR, BUTIN_HONNEUR, MISSIONS_SEMAINE } from "../donnees/hebdo.js";
 import { RANGS, saisonActuelle, pointsSaison, rangDe, CADRES } from "../donnees/saisons.js";
-import { pieceParfaite } from "../moteur/equipement.js";
+import { pieceParfaite, nomPiece } from "../moteur/equipement.js";
 import { simulerCombat } from "../moteur/simulation.js";
 import { composerEquipe } from "../moteur/composition.js";
 import {
@@ -131,7 +131,13 @@ function validerEquipement(e, collection) {
     if (p.porteur && !collection[p.porteur]) p.porteur = null;
     pieces.push(p);
   }
-  return { pieces, prochainUid: Number(e?.prochainUid) || pieces.length + 1, eclats };
+  // Retouche payee mais pas encore tranchee : on la garde si la piece existe encore
+  const r = e?.retouche;
+  const piece = r && pieces.find((p) => p.uid === r.uid);
+  const retouche = piece && piece.lignes[r.index] && Number.isFinite(r.valeur)
+    ? { uid: r.uid, index: Number(r.index), valeur: r.valeur }
+    : null;
+  return { pieces, prochainUid: Number(e?.prochainUid) || pieces.length + 1, eclats, retouche };
 }
 
 let partie = valider(lire(CLE, null));
@@ -783,32 +789,55 @@ export function marquerSceneVue(cle) {
 
 // ---------- Retouche a l'encre ----------
 
-// Le jet propose est garde dans la partie : on ne peut pas inventer une valeur.
-let retoucheEnCours = null;   // { uid, index, valeur }
+// Le jet propose est garde dans la sauvegarde : recharger la page ne le fait pas perdre,
+// et on ne peut pas lancer une autre retouche tant que celle-ci n'est pas tranchee.
+function retoucheEnCours() {
+  const r = partie?.equipement.retouche;
+  if (!r) return null;
+  if (!pieceParUid(r.uid)?.lignes[r.index]) {
+    partie.equipement.retouche = null;   // la piece a ete recyclee entre-temps
+    return null;
+  }
+  return r;
+}
 
 export function retoucherLigne(uid, index) {
   const piece = pieceParUid(uid);
   if (!piece || !piece.lignes[index]) return { ok: false, erreur: "Ligne introuvable." };
+  const attente = retoucheEnCours();
+  if (attente) {
+    const autre = pieceParUid(attente.uid);
+    return { ok: false, erreur: attente.uid === uid
+      ? "Choisis d'abord entre l'ancien et le nouveau jet."
+      : `Choisis d'abord entre l'ancien et le nouveau jet de ${nomPiece(autre)}.` };
+  }
   if (piece.sublime === index) return { ok: false, erreur: "Cette ligne est sublimée : la retoucher l'effacerait." };
   const cout = coutRetouche(piece);
   if (partie.equipement.eclats < cout) return { ok: false, erreur: `Il te manque ${cout - partie.equipement.eclats} éclats.` };
   partie.equipement.eclats -= cout;
   piece.retouches = (piece.retouches ?? 0) + 1;
-  retoucheEnCours = { uid, index, valeur: nouveauJet(Math.random, piece, index) };
+  partie.equipement.retouche = { uid, index, valeur: nouveauJet(Math.random, piece, index) };
   partie.stats.retouches = (partie.stats.retouches ?? 0) + 1;
   signalerSemaine("retouche");
   sauver();
-  return { ok: true, cout, ancienne: piece.lignes[index].valeur, nouvelle: retoucheEnCours.valeur, index };
+  return { ok: true, cout, ancienne: piece.lignes[index].valeur, nouvelle: partie.equipement.retouche.valeur, index };
 }
 
-export const retouchePendante = (uid) => (retoucheEnCours?.uid === uid ? { ...retoucheEnCours } : null);
+export const retouchePendante = (uid) => {
+  const r = retoucheEnCours();
+  return r?.uid === uid ? { ...r } : null;
+};
+
+// L'uid de la piece qui attend un choix de retouche (pour le badge de l'inventaire)
+export const uidRetouchePendante = () => retoucheEnCours()?.uid ?? null;
 
 // garderNouveau : true pour garder le nouveau jet, false pour l'ancien
 export function choisirRetouche(uid, garderNouveau) {
-  if (!retoucheEnCours || retoucheEnCours.uid !== uid) return;
+  const r = retoucheEnCours();
+  if (!r || r.uid !== uid) return;
   const piece = pieceParUid(uid);
-  if (piece && garderNouveau) piece.lignes[retoucheEnCours.index].valeur = retoucheEnCours.valeur;
-  retoucheEnCours = null;
+  if (piece && garderNouveau) piece.lignes[r.index].valeur = r.valeur;
+  partie.equipement.retouche = null;
   sauver();
 }
 
@@ -1187,8 +1216,13 @@ function assurerMissionsSemaine() {
   const semaine = numeroSemaine();
   if (!partie.missionsSemaine || partie.missionsSemaine.semaine !== semaine) {
     // 3 missions tirees parmi 6, toujours les memes pour une semaine donnee
-    const ordre = [...MISSIONS_SEMAINE].sort((a, b) => ((semaine * 31 + a.id.length * 7) % 11) - ((semaine * 31 + b.id.length * 7) % 11));
-    const choisies = [ordre[semaine % 6], ordre[(semaine + 2) % 6], ordre[(semaine + 4) % 6]];
+    const h = creerHasard((semaine * 7919) >>> 0);
+    const ordre = [...MISSIONS_SEMAINE];
+    for (let i = ordre.length - 1; i > 0; i--) {
+      const j = Math.floor(h.nombre() * (i + 1));
+      [ordre[i], ordre[j]] = [ordre[j], ordre[i]];
+    }
+    const choisies = ordre.slice(0, 3);
     partie.missionsSemaine = { semaine, liste: choisies.map((m) => ({ id: m.id, progres: 0, reclamee: false })) };
   }
   return partie.missionsSemaine;

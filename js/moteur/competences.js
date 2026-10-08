@@ -68,9 +68,11 @@ function selectionner(etat, u, cible) {
 
 // ---------- Ultimes ----------
 
-export function executerUltime(etat, u) {
+export function executerUltime(etat, u, { manuel = false } = {}) {
   u.energie = 0;
-  emettre(etat, { type: "ultime", source: u.uid, nom: u.ultime.nom });
+  emettre(etat, manuel
+    ? { type: "ultime", source: u.uid, nom: u.ultime.nom, manuel: true }
+    : { type: "ultime", source: u.uid, nom: u.ultime.nom });
 
   for (const action of u.ultime.actions) {
     switch (action.type) {

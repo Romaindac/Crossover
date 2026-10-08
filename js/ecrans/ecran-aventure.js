@@ -28,6 +28,10 @@ import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlDecor } from "../ui/decors.js";
 import { iconeEmplacement } from "../ui/equipement-ui.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { creerHasard } from "../moteur/hasard.js";
+import { lire, ecrire } from "../services/sauvegarde.js";
+
+const DUREE_CRENEAU_DORE = 10 * 60 * 1000;
 
 const KANJI = { terrain: "修行", forteresse: "鉄壁", toits: "暗殺", domaine: "領域", brasier: "伝説" };
 const pourcent = (x) => `${String(Math.round(x * 1000) / 10).replace(".", ",")} %`;
@@ -40,7 +44,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
   const derniereOuverte = [...ZONES].reverse().find((z) => zoneOuverte(z.id))?.id ?? 1;
   let zoneChoisie = zoneId && zoneOuverte(zoneId) ? zoneId : derniereOuverte;
   let indexChoisi = index;
-  let dores = [];      // quels groupes sont dores (tire a chaque affichage d'une sous-zone)
+  let dores = [];      // quels groupes sont dores (fixe pour un creneau de 10 minutes)
   let calcul = 0;
   let vue = onglet ?? (zoneId ? "chasse" : "campagne");
   let chapitreChoisi = chapitre ?? prochaineEtape().chapitre;
@@ -525,8 +529,26 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
     rendreZone();
   }
 
+  // Les groupes dores dependent du creneau de 10 minutes (et non d'un clic) :
+  // recliquer sur l'onglet ne les relance plus. Un groupe dore deja combattu
+  // ne revient pas avant le creneau suivant.
+  function creneauDores() {
+    return Math.floor(Date.now() / DUREE_CRENEAU_DORE);
+  }
+  function cleDore(numero) {
+    return `${zoneChoisie}:${indexChoisi}:${numero}`;
+  }
+  function doresCombattus() {
+    const vus = lire("dores", null);
+    return vus && vus.creneau === creneauDores() && Array.isArray(vus.cles) ? vus.cles : [];
+  }
+  function marquerDoreCombattu(numero) {
+    ecrire("dores", { creneau: creneauDores(), cles: [...doresCombattus(), cleDore(numero)] });
+  }
   function tirerDores() {
-    dores = [0, 1, 2].map(() => Math.random() < CHANCE_DORE);
+    const h = creerHasard((creneauDores() * 7919 + zoneChoisie * 131 + indexChoisi * 17) >>> 0);
+    const combattus = doresCombattus();
+    dores = [0, 1, 2].map((numero) => h.nombre() < CHANCE_DORE && !combattus.includes(cleDore(numero)));
   }
 
   conteneur.addEventListener("click", (e) => {
@@ -604,6 +626,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
     if (action === "equipe") naviguer("equipe");
     if (action === "combattre") {
       const numero = Number(cible.dataset.groupe);
+      if (indexChoisi < 3 && dores[numero]) marquerDoreCombattu(numero);
       naviguer("combat", {
         equipe,
         chasse: { zoneId: zoneChoisie, index: indexChoisi, groupe: numero, dore: indexChoisi < 3 && dores[numero], boucle: null },

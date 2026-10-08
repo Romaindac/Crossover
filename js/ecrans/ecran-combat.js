@@ -532,6 +532,8 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
         break;
       case "ultime": {
         const u = unite(ev.source);
+        // Mission du jour : on ne compte que les ultimes vraiment lances a la main
+        if (ev.manuel) ultimesManuels += 1;
         annoncer(`${u.nom} lance ${u.ultime.nom}`);
         elanUltime(u.uid);
         secouer(1.5);
@@ -979,7 +981,6 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
       }
       if (u.energie >= ENERGIE_MAX) {
         demanderUltime(etat, u.uid);
-        ultimesManuels += 1;
         cible.classList.add("combattant--arme");
       }
     }
@@ -995,7 +996,6 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
       const u = etat.equipes[0][Number(e.key) - 1];
       if (u && u.pv > 0 && u.energie >= 100) {
         demanderUltime(etat, u.uid);
-        ultimesManuels += 1;
         cartes[u.uid]?.classList.add("combattant--arme");
       }
     }

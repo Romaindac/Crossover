@@ -157,7 +157,7 @@ export function avancer(etat) {
   lanceurs.sort(parVitesse(etat));
   for (const u of lanceurs) {
     if (u.pv <= 0 || aEffet(u, "etourdi")) continue;
-    executerUltime(etat, u);
+    executerUltime(etat, u, { manuel: u.camp === 0 && !etat.autoA });
     if (verifierFin(etat)) return etat.evenements;
   }
 

@@ -112,7 +112,10 @@ export function appliquerEffet(etat, cible, type, dureeSecondes, source, { valeu
     emettre(etat, { type: "resiste", cible: cible.uid, source: source?.uid ?? null, effet: type, duree: dureeSecondes, valeur: 0 });
     return false;
   }
-  const tics = Math.round(dureeSecondes * TICS_PAR_SECONDE);
+  // Brulure et regeneration agissent a chaque seconde pleine : un tic de plus
+  // evite de perdre une seconde quand l'effet est pose pile sur un tic de seconde.
+  const ticsEnPlus = type === "brulure" || type === "regeneration" ? 1 : 0;
+  const tics = Math.round(dureeSecondes * TICS_PAR_SECONDE) + ticsEnPlus;
   const pose = poserEffet(cible, type, tics, { valeur, source, temps: etat.t, force });
   emettre(etat, {
     type: pose ? "effet" : "resiste",

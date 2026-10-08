@@ -192,7 +192,7 @@ export const PERSOS = [
     id: "zenitsu", nom: "Zenitsu", serie: "Demon Slayer", role: "assassin", affinite: "vitesse", rarete: "peu_commun",
     mods: { atq: 1.05 },
     passif: { nom: "Sommeil", description: "VIT +40 % sous 50 % de PV", type: "vitSousPv", seuil: 0.5, bonus: 0.4 },
-    ultime: { nom: "Éclair foudroyant", description: "400 % à un perso de la ligne arrière, ignore la Provocation", actions: [
+    ultime: { nom: "Éclair foudroyant", description: "400 % à un perso de la ligne arrière", actions: [
       { type: "degats", cible: "arriere", mult: 4.0 },
     ] },
   },
@@ -211,7 +211,7 @@ export const PERSOS = [
     id: "killua", nom: "Killua", serie: "Hunter x Hunter", role: "assassin", affinite: "vitesse", rarete: "peu_commun",
     mods: { vit: 1.05 },
     passif: { nom: "Né assassin", description: "Son premier coup du combat est un critique garanti", type: "premierCoupCritique" },
-    ultime: { nom: "Godspeed", description: "VIT +60 % pendant 5 s et 200 % à la ligne arrière avec Étourdissement 1 s", actions: [
+    ultime: { nom: "Godspeed", description: "VIT +60 % pendant 5 s et 200 % à un perso de la ligne arrière avec Étourdissement 1 s", actions: [
       { type: "effet", cible: "soi", effet: "acceleration", duree: 5 },
       { type: "degats", cible: "arriere", mult: 2.0, effet: { type: "etourdi", duree: 1 } },
     ] },

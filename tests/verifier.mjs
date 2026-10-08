@@ -11,6 +11,8 @@ import { TOUTES_LES_ETAPES } from "../js/donnees/campagne.js";
 import { etageTour } from "../js/donnees/tour.js";
 import { TAMPONS } from "../js/donnees/tampons.js";
 import { LIENS } from "../js/donnees/liens.js";
+import { creerCombat, avancer } from "../js/moteur/simulation.js";
+import { appliquerEffet } from "../js/moteur/regles.js";
 
 let erreurs = 0;
 const verifier = (condition, message) => {
@@ -29,6 +31,21 @@ verifier(TOUTES_LES_ETAPES.length === 40, "40 etapes de campagne");
 verifier([1, 10, 50, 100].every((n) => etageTour(n).equipe.length === 5), "les etages de la Tour ont 5 ennemis");
 verifier(new Set(TAMPONS.map((t) => t.id)).size === TAMPONS.length, `tampons aux ids uniques (${TAMPONS.length})`);
 verifier(LIENS.every((l) => PERSOS.find((p) => p.id === l.a).serie !== PERSOS.find((p) => p.id === l.b).serie), "les 20 liens relient des series differentes");
+
+// Une brulure de N secondes fait N tics de degats, meme posee pile sur un tic de seconde
+const ticsDeBrulure = (poseAuTic, secondes) => {
+  const etat = creerCombat({ equipeA: equipe, equipeB: equipe, graine: 7 });
+  while (etat.t < poseAuTic) avancer(etat);
+  const cible = etat.equipes[1][0];
+  appliquerEffet(etat, cible, "brulure", secondes, etat.equipes[0][0]);
+  let tics = 0;
+  while (cible.effets.some((e) => e.type === "brulure")) {
+    for (const ev of avancer(etat)) if (ev.type === "perte" && ev.cible === cible.uid && ev.origine === "Brûlure") tics++;
+    if (etat.fini) break;
+  }
+  return tics;
+};
+verifier(ticsDeBrulure(20, 1) === 1 && ticsDeBrulure(23, 1) === 1 && ticsDeBrulure(20, 4) === 4, "une brulure de N s fait N tics de degats");
 
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);
