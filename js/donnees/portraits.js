@@ -1,9 +1,10 @@
 // ==========================================================
 // SOURCES DES PORTRAITS
-// - Pokemon : images officielles de PokeAPI (adresses fixes)
-// - Les autres : AniList, via son API publique
+// - Tous les persos : AniList, via son API publique (une image tiree de l'anime)
+// - Pokemon : en plus, "pokemon" donne l'illustration officielle PokeAPI,
+//   affichee en secours tant qu'AniList n'a rien trouve
 //     recherche : nom a chercher sur AniList
-//     verif     : mot qui doit apparaitre dans le nom trouve,
+//     verif     : mot (ou liste de mots) qui doit apparaitre dans le nom trouve,
 //                 pour ne jamais afficher le mauvais perso
 //     cadrage   : (facultatif) quelle partie de l'image garder,
 //                 "50% 0%" = le haut, "50% 50%" = le centre
@@ -22,9 +23,9 @@ export const SOURCES_PORTRAITS = {
   zoro:     { recherche: "Roronoa Zoro", verif: "zoro" },
   chopper:  { recherche: "Tony Tony Chopper", verif: "chopper" },
 
-  pikachu:  { pokemon: 25 },
-  ronflex:  { pokemon: 143 },
-  mewtwo:   { pokemon: 150 },
+  pikachu:  { recherche: "Pikachu", verif: "pikachu", pokemon: 25 },
+  ronflex:  { recherche: "Snorlax", verif: ["snorlax", "kabigon"], pokemon: 143 },
+  mewtwo:   { recherche: "Mewtwo", verif: ["mewtwo", "myuutsuu"], pokemon: 150 },
 
   guts:     { recherche: "Guts", verif: "guts" },
   griffith: { recherche: "Griffith", verif: "griffith" },
@@ -46,7 +47,7 @@ export const SOURCES_PORTRAITS = {
   c18:       { recherche: "Android 18", verif: "18" },
   tsunade:   { recherche: "Tsunade", verif: "tsunade" },
   nami:      { recherche: "Nami", verif: "nami" },
-  dracaufeu: { pokemon: 6 },
+  dracaufeu: { recherche: "Charizard", verif: ["charizard", "lizardon"], pokemon: 6 },
   chevalier: { recherche: "Skull Knight", verif: "skull" },
   nobara:    { recherche: "Nobara Kugisaki", verif: "kugisaki" },
   shinobu:   { recherche: "Shinobu Kochou", verif: "kochou" },
@@ -59,8 +60,8 @@ export const SOURCES_PORTRAITS = {
   hinata:     { recherche: "Hinata Hyuuga", verif: "hinata" },
   sanji:      { recherche: "Sanji", verif: "sanji" },
   robin:      { recherche: "Nico Robin", verif: "robin" },
-  lucario:    { pokemon: 448 },
-  florizarre: { pokemon: 3 },
+  lucario:    { recherche: "Lucario", verif: "lucario", pokemon: 448 },
+  florizarre: { recherche: "Venusaur", verif: ["venusaur", "fushigibana"], pokemon: 3 },
   casca:      { recherche: "Casca", verif: "casca" },
   schierke:   { recherche: "Schierke", verif: "schierke" },
   sukuna:     { recherche: "Sukuna Ryoumen", verif: "sukuna" },

@@ -84,7 +84,15 @@ export function rafraichirPortrait(racine, persoId) {
   const url = portraitDe(persoId);
   if (!url) return;
   racine.querySelectorAll(`[data-portrait="${persoId}"]`).forEach((zone) => {
-    if (zone.querySelector("img")) return;
+    const img = zone.querySelector("img");
+    if (img) {
+      // L'image de l'anime remplace l'illustration de secours d'un Pokemon
+      if (img.getAttribute("src") !== url) {
+        img.setAttribute("src", url);
+        zone.classList.remove("portrait--pokemon");
+      }
+      return;
+    }
     zone.insertAdjacentHTML("beforeend", `<img src="${url}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`);
   });
 }
