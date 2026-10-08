@@ -669,12 +669,28 @@ input[type="number"] {
   filter: saturate(0.88) contrast(1.08);
 }
 
-/* Les Pokemon recoivent un contour d'encre, comme un perso dessine sur la page */
+/* Les Pokemon : leur illustration est carree, sur fond transparent. Pour qu'elle
+   remplisse le cadre comme les portraits d'anime, on l'agrandit et on la recadre
+   (cover), sur un decor lumineux aux couleurs de l'affinite, avec un sol. */
+.portrait--pokemon {
+  background:
+    radial-gradient(ellipse 70% 14% at 50% 90%, color-mix(in srgb, var(--encre) 30%, transparent), transparent 70%),
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--aff) 12%, #fff) 0 22%, color-mix(in srgb, var(--aff) 45%, var(--papier)) 55%, color-mix(in srgb, var(--aff) 70%, var(--encre)) 100%);
+}
+
+/* Image chargee : les initiales de secours ne doivent plus se voir a travers la transparence */
+.portrait--pokemon:has(img) .portrait__initiales {
+  visibility: hidden;
+}
+
 .portrait--pokemon img {
+  object-fit: cover;
+  object-position: var(--cadrage, 50% 50%);
+  padding: 0;
+  transform: scale(var(--zoom, 1.18));
   filter:
-    drop-shadow(1.5px 0 0 var(--encre)) drop-shadow(-1.5px 0 0 var(--encre))
-    drop-shadow(0 1.5px 0 var(--encre)) drop-shadow(0 -1.5px 0 var(--encre))
-    drop-shadow(0 5px 0 color-mix(in srgb, var(--encre) 35%, transparent));
+    drop-shadow(1px 0 0 var(--encre)) drop-shadow(-1px 0 0 var(--encre))
+    drop-shadow(0 1px 0 var(--encre)) drop-shadow(0 -1px 0 var(--encre));
 }
 
 /* Style « encre » : tous les portraits en monochrome, teintes par l'affinite */
