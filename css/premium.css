@@ -651,7 +651,7 @@ input[type="number"] {
 /* ==========================================================
    CARTES PREMIUM
    - un meme traitement pour TOUS les portraits (artwork Pokemon ou
-     capture d'anime) : fond d'affinite, trame, vignette ;
+     capture d'anime) : fond d'affinite, vignette douce ;
    - un cadre par rarete, un lisere anime pour Epique et Legendaire,
      un reflet holographique pour les Legendaires ;
    - inclinaison 3D et reflet qui suivent la souris ou le doigt.
@@ -688,22 +688,15 @@ input[type="number"] {
     drop-shadow(0 1.5px 0 var(--encre)) drop-shadow(0 -1.5px 0 var(--encre));
 }
 
-/* Trame de points + vignette + degrade d'affinite en bas du portrait */
+/* Vignette douce + leger degrade d'affinite en bas du portrait (sans trame :
+   les points abimaient certaines images) */
 .portrait:not(.portrait--rature)::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--aff) 55%, transparent) 100%),
-    radial-gradient(color-mix(in srgb, var(--encre) 26%, transparent) 0.7px, transparent 0.9px) 0 0 / 4px 4px;
-  mix-blend-mode: multiply;
-  box-shadow: inset 0 0 18px color-mix(in srgb, var(--encre) 55%, transparent);
-}
-
-/* Sur les Pokemon (fond transparent), la trame reste plus legere */
-.portrait--pokemon::after {
-  opacity: 0.6;
+  background: linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--aff) 35%, transparent) 100%);
+  box-shadow: inset 0 0 14px color-mix(in srgb, var(--encre) 35%, transparent);
 }
 
 /* Inclinaison 3D au survol (variables posees par inclinaison.js) */
