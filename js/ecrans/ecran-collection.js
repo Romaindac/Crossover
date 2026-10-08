@@ -30,6 +30,7 @@ import { CADRES } from "../donnees/saisons.js";
 import { LIENS, LIENS_PAR_CLE, niveauLien, VICTOIRES_DECOUVERTE, BONUS_PAR_NIVEAU_LIEN } from "../donnees/liens.js";
 import { ouvrirChoixPiece, htmlDetailsPiece, iconeEmplacement, ligneTexte, texteOrigine } from "../ui/equipement-ui.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { afficherHotel } from "../ui/hotel.js";
 
 export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
   const series = [...new Set(PERSOS.map((p) => p.serie))];
@@ -45,6 +46,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
         <div class="onglets-collection" role="tablist" aria-label="Collection">
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="persos">Persos</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="equipement">Équipement</button>
+          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="hotel">Hôtel des ventes</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="encyclopedie">Encyclopédie</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="liens">Liens</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="carnet">Carnet</button>
@@ -192,6 +194,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
             </button>
             <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="verrou" data-uid="${uid}">${p.verrou ? "Retirer le cadenas" : "Protéger (cadenas)"}</button>
             <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="recycler" data-uid="${uid}" ${p.verrou || p.porteur ? "disabled" : ""}>Recycler (+${gainRecyclage(p)} éclats)</button>
+            <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="vendre-hotel" data-uid="${uid}" ${p.verrou ? "disabled" : ""}>Vendre à l'hôtel</button>
           </div>
           ${htmlRetouche(p)}
           <div class="fenetre-piece__porteur">
@@ -382,10 +385,11 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
 
   // ---------- Onglets ----------
 
-  function afficherOnglet(nom) {
+  function afficherOnglet(nom, options = {}) {
     onglet = nom;
     conteneur.querySelectorAll(".onglet-collection").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.onglet === nom)));
-    if (nom === "persos") rendrePersos();
+    if (nom === "hotel") afficherHotel($("#contenu"), { naviguer, apresChangement: majNavigation, vendreUid: options.vendreUid ?? null });
+    else if (nom === "persos") rendrePersos();
     else if (nom === "equipement") rendreEquipement();
     else if (nom === "liens") rendreLiens();
     else if (nom === "carnet") { annoncerTampons(verifierTampons()); rendreCarnet(); }
@@ -400,6 +404,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     const action = cible.dataset.action;
 
     if (action === "onglet") return afficherOnglet(cible.dataset.onglet);
+    if (action === "vendre-hotel") { fermerFenetre(); return afficherOnglet("hotel", { vendreUid: cible.dataset.uid }); }
     if (action === "fiche") return ouvrirFiche(cible.dataset.perso);
     if (action === "fermer-fiche" && (cible.tagName === "BUTTON" || e.target === cible)) {
       fermerFenetre();
