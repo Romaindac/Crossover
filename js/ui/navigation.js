@@ -11,6 +11,7 @@ const ONGLETS = [
   { ecran: "equipe", nom: "Équipe" },
   { ecran: "tirages", nom: "Boosters" },
   { ecran: "collection", nom: "Collection" },
+  { ecran: "social", nom: "Social" },
   { ecran: "reglages", nom: "Réglages" },
 ];
 

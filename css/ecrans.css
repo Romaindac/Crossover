@@ -1064,8 +1064,8 @@
     bottom: 0;
     z-index: 10;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0.15rem;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.1rem;
     margin: 0;
     padding: 0.45rem 0.45rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
     background: var(--papier);
@@ -1073,8 +1073,8 @@
   }
 
   .navigation__onglet {
-    padding: 0.5rem 0.1rem;
-    font-size: 0.8rem;
+    padding: 0.5rem 0.05rem;
+    font-size: 0.72rem;
     border-radius: 10px;
   }
 

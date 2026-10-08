@@ -1774,3 +1774,28 @@ export function nouveautes() {
   if (partie.saisonPrecedente && !partie.saisonPrecedente.reclamee) liste.push({ texte: "La récompense de la saison passée t'attend", nav: "qg" });
   return liste;
 }
+
+// ---------- Jeu en ligne : resume public et sauvegarde brute ----------
+
+// Les chiffres montres au classement et sur la vitrine
+export function resumeJoueur() {
+  if (!partie) return { collection: 0, etoiles: 0, tour: 0, raid: 0 };
+  const progs = Object.values(partie.collection);
+  return {
+    collection: progs.length,
+    etoiles: progs.reduce((s, p) => s + (p.etoiles ?? 0), 0),
+    tour: partie.tour.record,
+    raid: Math.max(0, ...Object.values(partie.raid?.records ?? {})),
+  };
+}
+
+export const partieBrute = () => (partie ? JSON.parse(JSON.stringify(partie)) : null);
+
+// Remplace la partie par une sauvegarde venue du serveur. Renvoie true si elle est valide
+export function remplacerPartie(brut) {
+  const nouvelle = valider(brut);
+  if (!nouvelle) return false;
+  partie = nouvelle;
+  sauver();
+  return true;
+}
