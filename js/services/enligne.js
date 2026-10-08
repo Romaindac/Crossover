@@ -44,6 +44,10 @@ function messageErreur(corps, statut) {
   if (brut.includes("invalid login") || brut.includes("invalid_grant") || brut.includes("invalid credentials")) return "Pseudo ou mot de passe incorrect.";
   if (brut.includes("password")) return "Mot de passe trop court (6 caractères minimum).";
   if (brut.includes("email not confirmed")) return "Le serveur demande une confirmation par mail : il faut la désactiver dans Supabase.";
+  if (brut.includes("objet refuse")) return "Le serveur refuse cet objet : ses stats sont impossibles.";
+  if (brut.includes("limite ventes jour")) return "5 mises en vente par jour au maximum.";
+  if (brut.includes("limite ventes actives")) return "8 objets en vente en même temps au maximum.";
+  if (brut.includes("indisponible")) return "Cet objet n'est plus disponible.";
   if (brut.includes("trop rapide")) return "Doucement : un message toutes les 2 secondes.";
   if (brut.includes("bloque")) return "Ce joueur ne reçoit pas tes messages.";
   if (statut === 429) return "Trop d'essais : attends une minute.";
@@ -235,3 +239,32 @@ export async function rafraichirNonLus() {
   window.dispatchEvent(new CustomEvent("crossover:non-lus", { detail: nonLus }));
   return nonLus;
 }
+
+// ---------- Hotel des ventes ----------
+
+export const DUREE_VENTE_JOURS = 3;
+export const TAXE_VENTE = 0.05;
+export const PRIX_VENTE = { min: 10, max: 20000 };
+const champsVente = "id,vendeur,pseudo,objet,objet_id,rarete,emplacement,prix,statut,cree,vendue,recupere";
+
+// Les annonces en cours (3 derniers jours), filtrees et triees
+export async function annonces({ emplacement = "tous", rarete = "toutes", tri = "recent" } = {}) {
+  const depuis = new Date(Date.now() - DUREE_VENTE_JOURS * 86400000).toISOString();
+  const filtres = [`statut=eq.en_vente`, `cree=gt.${encodeURIComponent(depuis)}`];
+  if (emplacement !== "tous") filtres.push(`emplacement=eq.${emplacement}`);
+  if (rarete !== "toutes") filtres.push(`rarete=eq.${rarete}`);
+  const ordre = { recent: "cree.desc", "prix-bas": "prix.asc", "prix-haut": "prix.desc" }[tri] ?? "cree.desc";
+  return appel(`/rest/v1/ventes?select=${champsVente}&${filtres.join("&")}&order=${ordre}&limit=60`, { authentifie: true });
+}
+
+export async function mesVentes() {
+  return appel(`/rest/v1/ventes?select=${champsVente}&vendeur=eq.${session.id}&order=cree.desc&limit=40`, { authentifie: true });
+}
+
+export async function mettreEnVente(objet, prix) {
+  await appel("/rest/v1/ventes", { methode: "POST", authentifie: true, entetes: minimal, corps: { objet, prix } });
+}
+
+export const acheterVente = (id) => appel("/rest/v1/rpc/acheter_vente", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
+export const retirerVente = (id) => appel("/rest/v1/rpc/retirer_vente", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
+export const recupererGains = () => appel("/rest/v1/rpc/recuperer_gains", { methode: "POST", authentifie: true, corps: {} });

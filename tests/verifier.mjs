@@ -11,6 +11,8 @@ import { TOUTES_LES_ETAPES } from "../js/donnees/campagne.js";
 import { etageTour } from "../js/donnees/tour.js";
 import { TAMPONS } from "../js/donnees/tampons.js";
 import { LIENS } from "../js/donnees/liens.js";
+import { catalogueSql } from "../js/outils/catalogue-sql.mjs";
+import { readFileSync } from "node:fs";
 import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../js/moteur/boosters.js";
 import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
@@ -65,6 +67,7 @@ verifier([1, 2, 3, 4, 5].every((g) => { const c = ouvrirBoosterDepart(creerHasar
 // Chaque perso peut sortir d'un booster : son edition a des cases qui tirent sa rarete
 const raretesTirables = new Set(CASES_BOOSTER.flatMap((c) => Object.keys(c)));
 verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 160 persos peuvent sortir d'un booster");
+verifier(readFileSync(new URL("../supabase/catalogue.sql", import.meta.url), "utf8") === catalogueSql(), "supabase/catalogue.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);

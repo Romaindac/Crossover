@@ -80,6 +80,11 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   Tables `messages`, `prives`, `blocages`, `signalements`, `moderateurs` dans `supabase/schema.sql` (pseudo imposé par le serveur,
   500 caractères, un message toutes les 2 s). Pour être modérateur : ajouter son id à la table `moderateurs` dans Supabase.
   Nouveaux messages par interrogation toutes les 4 s (chat ouvert) ; pastille des privés non lus chaque minute.
+- Fait : hôtel des ventes (onglet de la Collection, `js/ui/hotel.js`) : équipement contre encre, 3 jours par annonce, taxe 5 %,
+  5 mises en vente par jour, 8 en même temps, prix 10 à 20 000. Le serveur refuse les objets impossibles grâce à
+  `supabase/catalogue.sql` (généré par `node js/outils/catalogue-sql.mjs`, à relancer et recoller si objets.js change).
+  L'encre et l'inventaire restent locaux (triche possible sur sa propre partie, limitée par les contrôles).
+  Règles de sécurité testées par `python3 tests/tester-supabase.py` (PostgreSQL local, 43 vérifications).
 - Fait : écran Social. Vitrine de 6 cartes partageable par lien (`#vitrine=…`, sans serveur) ; comptes pseudo + mot de passe, sauvegarde en ligne (auto toutes les 5 min) et classements Tour / Boss / Collection via Supabase (`js/services/enligne.js`, appels REST sans bibliothèque).
   Pour activer : coller `supabase/schema.sql` dans le SQL Editor de Supabase, désactiver « Confirm email », puis mettre l'URL du projet et la clé « anon public » dans `js/donnees/config-enligne.js`. Jamais la clé service_role.
 - À venir : retours de test et corrections, roguelite (V0.4), PvP (V0.5).

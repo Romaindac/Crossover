@@ -1856,3 +1856,58 @@ export function reclamerGuide() {
   sauver();
   return e.objectif;
 }
+
+// ---------- Hotel des ventes : ce qui touche a la partie locale ----------
+
+// La copie d'une piece qu'on envoie au serveur (sans uid, porteur ni verrou)
+export function objetAVendre(uid) {
+  const p = pieceParUid(uid);
+  if (!p) return { ok: false, erreur: "Objet introuvable." };
+  if (p.verrou) return { ok: false, erreur: "Cet objet est verrouillé : déverrouille-le d'abord." };
+  if (retoucheEnCours()?.uid === uid) return { ok: false, erreur: "Termine d'abord la retouche de cet objet." };
+  const objet = { objet: p.objet, emplacement: p.emplacement, rarete: p.rarete, panoplie: p.panoplie ?? null, niveau: p.niveau, lignes: p.lignes.map((l) => ({ stat: l.stat, valeur: l.valeur })) };
+  if (p.sublime !== undefined) objet.sublime = p.sublime;
+  if (p.retouches) objet.retouches = p.retouches;
+  return { ok: true, objet, porteur: p.porteur };
+}
+
+// Retire une piece de l'inventaire (mise en vente reussie)
+export function enleverPiece(uid) {
+  const i = partie.equipement.pieces.findIndex((p) => p.uid === uid);
+  if (i < 0) return false;
+  partie.equipement.pieces.splice(i, 1);
+  sauver();
+  return true;
+}
+
+// Ajoute une piece venue de l'hotel des ventes (achat, ou annonce retiree)
+export function recevoirPiece(objet) {
+  const o = OBJETS_PAR_ID[objet?.objet];
+  if (!o || !Array.isArray(objet.lignes)) return null;
+  const piece = {
+    uid: `e${partie.equipement.prochainUid++}`,
+    objet: o.id, emplacement: o.emplacement, rarete: o.rarete, panoplie: o.panoplie,
+    niveau: Math.max(0, Math.min(NIVEAU_MAX_PIECE, Number(objet.niveau) || 0)),
+    lignes: objet.lignes.map((l) => ({ stat: l.stat, valeur: Number(l.valeur) || 0 })),
+    verrou: false, porteur: null,
+  };
+  if (Number.isInteger(objet.sublime)) piece.sublime = objet.sublime;
+  if (objet.retouches) piece.retouches = Number(objet.retouches) || 0;
+  partie.equipement.pieces.push(piece);
+  if (!partie.chasse.decouverts.includes(o.id)) partie.chasse.decouverts.push(o.id);
+  sauver();
+  return piece;
+}
+
+export function depenserEncre(n) {
+  if (!partie || partie.encre < n) return false;
+  partie.encre -= n;
+  sauver();
+  return true;
+}
+
+export function gagnerEncre(n) {
+  if (!partie || !(n > 0)) return;
+  partie.encre += Math.floor(n);
+  sauver();
+}

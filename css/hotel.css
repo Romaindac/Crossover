@@ -1,0 +1,172 @@
+/* ==========================================================
+   HOTEL DES VENTES (onglet de la Collection)
+   ========================================================== */
+
+.hotel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.hotel__entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.8rem 1rem;
+  color: var(--papier);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 14px, rgb(255 255 255 / 0.04) 14px 28px),
+    var(--encre);
+  border-left: 8px solid var(--obi);
+  border-radius: 4px;
+}
+
+.hotel__titre {
+  font-family: var(--police-mincho);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.hotel--ferme {
+  padding: 1.2rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.hotel--ferme .hotel__titre {
+  color: var(--encre);
+}
+
+.hotel__encre {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.8rem;
+  font-size: 1.05rem;
+  color: var(--encre);
+  background: var(--papier);
+  border-radius: 999px;
+}
+
+.hotel__carte {
+  position: relative;
+}
+
+.hotel__prix {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.05rem 0.5rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--encre);
+  background: var(--obi);
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+}
+
+.hotel__prix .compteur-encre__goutte,
+.hotel__fenetre-prix .compteur-encre__goutte,
+.hotel__vente-prix .compteur-encre__goutte {
+  width: 0.7rem;
+  height: 0.85rem;
+}
+
+.hotel__vendeur {
+  font-size: 0.72rem;
+  color: var(--encre-douce);
+}
+
+.hotel__fenetre-prix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.7rem;
+  background: color-mix(in srgb, var(--obi) 22%, var(--papier));
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.hotel__form-vente {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.hotel__gains {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.7rem 0.9rem;
+  background: color-mix(in srgb, var(--obi) 30%, var(--papier));
+  border: 2px solid var(--encre);
+  border-left: 8px solid #2f9e6e;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.hotel__mes-ventes {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotel__vente {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-left: 6px solid var(--obi);
+  border-radius: 4px;
+}
+
+.hotel__vente--vendue { border-left-color: #2f9e6e; }
+.hotel__vente--retiree { border-left-color: #9a9a9a; opacity: 0.7; }
+.hotel__vente--expiree { border-left-color: #c8372d; }
+
+.hotel__vente-nom {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-weight: 800;
+}
+
+.hotel__vente-prix {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 800;
+}
+
+.hotel__vente-etat {
+  font-size: 0.82rem;
+  color: var(--encre-douce);
+}
+
+.case__message--erreur {
+  color: #a02a22;
+}
+
+.hotel__voile {
+  z-index: 30;
+}
+
+@media (max-width: 40rem) {
+  .hotel__vente {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .hotel__vente-etat {
+    grid-column: 1 / -1;
+  }
+}

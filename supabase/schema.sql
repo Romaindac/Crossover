@@ -183,3 +183,134 @@ begin
 end $$;
 drop trigger if exists avant_prive_lu on public.prives;
 create trigger avant_prive_lu before update on public.prives for each row execute function public.avant_prive_lu();
+
+-- ==========================================================
+-- HOTEL DES VENTES : equipement contre encre
+-- Le serveur refuse les objets impossibles (catalogue.sql), limite
+-- les ventes et fait chaque achat d'un seul coup (pas de double achat).
+-- ==========================================================
+
+create table if not exists public.objets_catalogue (
+  id text primary key,
+  rarete text not null,
+  emplacement text not null,
+  lignes jsonb not null
+);
+alter table public.objets_catalogue enable row level security;
+drop policy if exists "catalogue lisible" on public.objets_catalogue;
+create policy "catalogue lisible" on public.objets_catalogue for select using (true);
+
+create table if not exists public.ventes (
+  id bigint generated always as identity primary key,
+  vendeur uuid not null default auth.uid() references public.joueurs (id) on delete cascade,
+  pseudo text not null default '',
+  objet jsonb not null,
+  objet_id text not null default '',
+  rarete text not null default '',
+  emplacement text not null default '',
+  prix integer not null check (prix between 10 and 20000),
+  statut text not null default 'en_vente' check (statut in ('en_vente', 'vendue', 'retiree')),
+  acheteur uuid references public.joueurs (id) on delete set null,
+  cree timestamptz not null default now(),
+  vendue timestamptz,
+  recupere boolean not null default false
+);
+create index if not exists ventes_statut on public.ventes (statut, cree desc);
+create index if not exists ventes_vendeur on public.ventes (vendeur, statut);
+alter table public.ventes enable row level security;
+
+-- Un objet est possible s'il existe au catalogue et si chaque ligne reste dans sa fourchette
+-- (jusqu'a +15 % pour une ligne sublimee)
+create or replace function public.objet_valide(o jsonb) returns boolean
+language plpgsql stable security definer set search_path = public as $$
+declare
+  c record;
+  n integer;
+  i integer;
+  v numeric;
+begin
+  select * into c from public.objets_catalogue where id = o->>'objet';
+  if not found or o->>'rarete' <> c.rarete then return false; end if;
+  if (o->>'niveau')::integer not between 0 and 12 then return false; end if;
+  n := jsonb_array_length(o->'lignes');
+  if n <> jsonb_array_length(c.lignes) then return false; end if;
+  for i in 0 .. n - 1 loop
+    if o->'lignes'->i->>'stat' <> c.lignes->i->>0 then return false; end if;
+    v := (o->'lignes'->i->>'valeur')::numeric;
+    if v < (c.lignes->i->>1)::numeric - 1 or v > (c.lignes->i->>2)::numeric * 1.15 + 1 then return false; end if;
+  end loop;
+  return true;
+exception when others then
+  return false;
+end $$;
+
+create or replace function public.avant_vente() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.vendeur := auth.uid();
+  select pseudo into new.pseudo from public.joueurs where id = auth.uid();
+  if new.pseudo is null then raise exception 'profil introuvable'; end if;
+  if not public.objet_valide(new.objet) then raise exception 'objet refuse'; end if;
+  if (select count(*) from public.ventes where vendeur = auth.uid() and cree > now() - interval '1 day') >= 5 then
+    raise exception 'limite ventes jour';
+  end if;
+  if (select count(*) from public.ventes where vendeur = auth.uid() and statut = 'en_vente') >= 8 then
+    raise exception 'limite ventes actives';
+  end if;
+  new.objet_id := new.objet->>'objet';
+  new.rarete := new.objet->>'rarete';
+  select emplacement into new.emplacement from public.objets_catalogue where id = new.objet_id;
+  new.statut := 'en_vente';
+  new.acheteur := null;
+  new.vendue := null;
+  new.recupere := false;
+  new.cree := now();
+  return new;
+end $$;
+drop trigger if exists avant_vente on public.ventes;
+create trigger avant_vente before insert on public.ventes for each row execute function public.avant_vente();
+
+-- Lecture : les objets en vente, et ses propres ventes et achats. Ecriture : mise en vente seulement ;
+-- acheter, retirer et encaisser passent par les fonctions ci-dessous.
+drop policy if exists "ventes lues" on public.ventes;
+create policy "ventes lues" on public.ventes for select using (auth.uid() is not null and (statut = 'en_vente' or vendeur = auth.uid() or acheteur = auth.uid()));
+drop policy if exists "ventes creees" on public.ventes;
+create policy "ventes creees" on public.ventes for insert with check (auth.uid() is not null);
+
+-- Une annonce reste 3 jours en vente
+create or replace function public.acheter_vente(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r record;
+begin
+  update public.ventes set statut = 'vendue', acheteur = auth.uid(), vendue = now()
+    where id = p_id and statut = 'en_vente' and vendeur <> auth.uid() and cree > now() - interval '3 days'
+    returning objet, prix into r;
+  if not found then raise exception 'indisponible'; end if;
+  return jsonb_build_object('objet', r.objet, 'prix', r.prix);
+end $$;
+
+create or replace function public.retirer_vente(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r record;
+begin
+  update public.ventes set statut = 'retiree'
+    where id = p_id and statut = 'en_vente' and vendeur = auth.uid()
+    returning objet into r;
+  if not found then raise exception 'indisponible'; end if;
+  return r.objet;
+end $$;
+
+-- Encaisse les ventes conclues, moins 5 % de taxe
+create or replace function public.recuperer_gains() returns integer
+language sql security definer set search_path = public as $$
+  with faites as (
+    update public.ventes set recupere = true
+      where vendeur = auth.uid() and statut = 'vendue' and not recupere
+      returning prix
+  )
+  select coalesce(sum(floor(prix * 0.95)), 0)::integer from faites;
+$$;
+
+grant execute on function public.acheter_vente(bigint) to authenticated;
+grant execute on function public.retirer_vente(bigint) to authenticated;
+grant execute on function public.recuperer_gains() to authenticated;
