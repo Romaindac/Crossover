@@ -202,6 +202,24 @@
   color: #c8372d;
 }
 
+.chrono-bloc {
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+}
+
+/* Rage d'encre : apres 60 s, le combat s'emballe */
+.rage {
+  margin: 0;
+  padding: 0 0.4rem;
+  font-family: var(--police-titre);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--papier);
+  background: var(--sceau);
+  transform: rotate(-3deg);
+}
+
 /* ---------- Arene ---------- */
 
 .arene {

@@ -9,6 +9,13 @@ import { aEffet, trouverEffet, retirerEffet, poserEffet, EFFETS } from "./effets
 
 export const TICS_PAR_SECONDE = 10;
 export const DUREE_MAX = 90 * TICS_PAR_SECONDE;   // 90 secondes
+
+// Rage d'encre : a partir de 60 s, toutes les 5 s, +15 % de degats et -15 % de soins
+// pour tout le monde (cumulable). Les combats a soins ne s'enlisent plus jusqu'au temps.
+export const DEBUT_RAGE = 60 * TICS_PAR_SECONDE;
+const PALIER_RAGE = 5 * TICS_PAR_SECONDE;
+const EFFET_RAGE = 0.15;
+export const niveauRage = (t) => (t < DEBUT_RAGE ? 0 : 1 + Math.floor((t - DEBUT_RAGE) / PALIER_RAGE));
 export const INTERVALLE_BASE = 1.5;               // secondes entre 2 attaques a 100 de vitesse
 export const ENERGIE_PAR_ATTAQUE = 10;
 export const ENERGIE_MAX = 100;
@@ -137,6 +144,7 @@ export function soigner(etat, source, cible, montant) {
   }
   montant *= 1 + (source.stats.bonusSoins || 0);   // ensemble Coeur du sage
   montant *= etat.mods?.soinsMult ?? 1;               // arc de la survie
+  montant *= Math.max(0.1, 1 - EFFET_RAGE * niveauRage(etat.t));
   const reel = Math.min(Math.round(montant), cible.pvMax - cible.pv);
   if (reel <= 0) return 0;
   cible.pv += reel;
@@ -265,6 +273,7 @@ export function infligerDegats(etat, source, cible, { mult = 1, base = false, cr
   // Formule de degats
   const def = defActuelle(cible) * (1 - (source.stats.percage || 0));
   let degats = atqActuelle(etat, source) * mult * (100 / (100 + def));
+  degats *= 1 + EFFET_RAGE * niveauRage(etat.t);
 
   const avantage = DOMINE[source.affinite].includes(cible.affinite);
   if (avantage) degats *= 1 + BONUS_AFFINITE;

@@ -8,7 +8,7 @@ import { PERSOS_PAR_ID } from "../donnees/persos.js";
 import { PALIERS } from "../donnees/ennemis.js";
 import { creerCombat, avancer, demanderUltime } from "../moteur/simulation.js";
 import { nouvelleGraine } from "../moteur/hasard.js";
-import { TICS_PAR_SECONDE, DUREE_MAX, ENERGIE_MAX } from "../moteur/regles.js";
+import { TICS_PAR_SECONDE, DUREE_MAX, ENERGIE_MAX, niveauRage } from "../moteur/regles.js";
 import { EFFETS, aEffet } from "../moteur/effets.js";
 import { reglage, changerReglage, NOMS_CASES } from "../services/reglages.js";
 import { entreeCombat, appliquerResultatCombat, appliquerResultatChasse, appliquerResultatCampagne, appliquerResultatTour, palierMaxDebloque, definirPalier, aUnePartie, sceneVue, marquerSceneVue } from "../services/partie.js";
@@ -91,7 +91,10 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
             <span class="tableau-pv__nom">Ton équipe</span>
             <span class="jauge-equipe"><span class="jauge-equipe__rempli" id="pv-a"></span></span>
           </div>
-          <p class="chrono" id="chrono" aria-label="Temps restant">90</p>
+          <div class="chrono-bloc">
+            <p class="chrono" id="chrono" aria-label="Temps restant">90</p>
+            <p class="rage" id="rage" hidden title="Après 60 s, toutes les 5 s : +15 % de dégâts et -15 % de soins pour tout le monde"></p>
+          </div>
           <div class="tableau-pv__camp tableau-pv__camp--b">
             <span class="tableau-pv__nom">${adversaire.nom} <small>niv. ${adversaire.niveau}</small></span>
             <span class="jauge-equipe"><span class="jauge-equipe__rempli" id="pv-b"></span></span>
@@ -221,6 +224,10 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
     const chrono = $("#chrono");
     chrono.textContent = reste;
     chrono.classList.toggle("chrono--urgent", reste <= 10);
+    const rage = niveauRage(etat.t);
+    const badge = $("#rage");
+    badge.hidden = rage === 0;
+    if (rage) badge.textContent = `Rage x${rage}`;
   }
 
   // ---------- Petits effets visuels ----------

@@ -12,9 +12,11 @@ import { bonusEquipement } from "./equipement.js";
 import { BONUS_EVEIL, TALENTS } from "../donnees/eveil.js";
 
 // Bonus de serie : 2 persos de la meme serie, ou 3
+// (allege apres mesure : le trio valait +19 a +33 points de victoire et dictait les equipes ;
+// il en vaut maintenant +12 a +22, un vrai choix plutot qu'une obligation)
 export const BONUS_SERIE = {
-  2: { atq: 0.08, pv: 0 },
-  3: { atq: 0.15, pv: 0.1 },
+  2: { atq: 0.05, pv: 0 },
+  3: { atq: 0.10, pv: 0.05 },
 };
 
 export function bonusSerie(perso, persosEquipe) {

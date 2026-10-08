@@ -11,7 +11,7 @@ import { CHAPITRES } from "../donnees/campagne.js";
 import { encreCombat } from "../donnees/progression.js";
 import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
-import { composerEquipe } from "../moteur/composition.js";
+import { chercherEquipeConseillee } from "../moteur/composition.js";
 import { cibleAvant, cibleArriere } from "../moteur/regles.js";
 import {
   possede, progressionDe, idsPossedes, equipeSauvee, palierSauve,
@@ -60,7 +60,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
           <div class="formation__titre-ligne">
             <h2 id="titre-formation">Formation</h2>
             <div class="formation__outils">
-              <button type="button" class="bouton-texte" data-action="meilleure">Meilleure équipe</button>
+              <button type="button" class="bouton-texte" data-action="meilleure" title="Cherche, par combats simulés, la meilleure équipe et le meilleur placement contre la prochaine étape">Équipe conseillée</button>
               <button type="button" class="bouton-texte" data-action="equiper-equipe">Équiper toute l'équipe</button>
               <button type="button" class="bouton-texte" data-action="hasard">Au hasard</button>
               <button type="button" class="bouton-texte" data-action="vider">Vider</button>
@@ -251,6 +251,35 @@ export function afficherEquipe(conteneur, { naviguer }) {
     rendrePaliers();
   }
 
+  // ---------- Equipe conseillee ----------
+  // Des centaines de combats simules contre la prochaine etape : on avance
+  // par tranches de 25 ms pour que l'ecran reste fluide.
+  let conseilEnCours = false;
+  async function conseillerEquipe(bouton) {
+    if (conseilEnCours) return;
+    conseilEnCours = true;
+    bouton.disabled = true;
+    message = "Calcul de l'équipe conseillée…";
+    $("#message").textContent = message;
+    const collection = Object.fromEntries(idsPossedes().map((id) => [id, progressionDe(id)]));
+    const recherche = chercherEquipeConseillee(collection, prochaineEtape(), (id, eq) => entreeCombat(id, eq.indexOf(id), eq));
+    let etape;
+    do {
+      const debut = performance.now();
+      do etape = recherche.next(); while (!etape.done && performance.now() - debut < 25);
+      if (!etape.done) await new Promise((r) => setTimeout(r, 0));
+      if (!conteneur.isConnected) return;
+    } while (!etape.done);
+    conseilEnCours = false;
+    bouton.disabled = false;
+    equipe = [...etape.value.equipe, null, null, null, null, null].slice(0, 5);
+    message = "Équipe conseillée contre la prochaine étape (persos et placement testés en combats simulés). À toi d'ajuster !";
+    placeChoisie = null;
+    sauver();
+    toutRendre();
+    estimerChances();
+  }
+
   // ---------- Placement des persos ----------
 
   function placer(id, place = null) {
@@ -354,11 +383,8 @@ export function afficherEquipe(conteneur, { naviguer }) {
       palier = choix;
       sauver();
     } else if (action === "meilleure") {
-      const collection = Object.fromEntries(idsPossedes().map((id) => [id, progressionDe(id)]));
-      equipe = composerEquipe(collection);
-      message = "Équipe composée : le meilleur tank, le meilleur soutien, puis tes persos les plus forts.";
-      placeChoisie = null;
-      sauver();
+      conseillerEquipe(cible);
+      return;
     } else if (action === "hasard") {
       const reserve = persosObtenus().map((p) => p.id).sort(() => Math.random() - 0.5).slice(0, 5);
       const tanks = reserve.filter((id) => PERSOS_PAR_ID[id].role === "tank");
