@@ -70,8 +70,9 @@ export function htmlPortrait(perso) {
   const url = portraitDe(perso.id);
   const classe = estPokemon(perso.id) ? "portrait portrait--pokemon" : "portrait";
   const cadrage = SOURCES_PORTRAITS[perso.id]?.cadrage;
+  const zoom = SOURCES_PORTRAITS[perso.id]?.zoom;   // Pokemon : agrandissement propre a l'illustration
   return `
-    <span class="${classe}" data-portrait="${perso.id}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}${cadrage ? `; --cadrage: ${cadrage}` : ""}">
+    <span class="${classe}" data-portrait="${perso.id}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}${cadrage ? `; --cadrage: ${cadrage}` : ""}${zoom ? `; --zoom: ${zoom}` : ""}">
       <span class="portrait__initiales" aria-hidden="true">${initiales(perso.nom)}</span>
       ${url ? `<img src="${url}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
     </span>
