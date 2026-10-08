@@ -16,7 +16,8 @@ import { etageTour, arcDeLaSemaine } from "../donnees/tour.js";
 import { sceneAvantEtape, MOMENTS } from "../donnees/histoire.js";
 import { jouerScene } from "../ui/scene.js";
 import { annoncerTampons } from "../ui/toast.js";
-import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres } from "../services/partie.js";
+import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres, assezDEnergie, payerEnergie, coutEnergie, etatEnergie, rechargerEnergie, bonusDerniereVictoire, encre as encreJoueur } from "../services/partie.js";
+import { afficherToast } from "../ui/toast.js";
 import { CHAPITRES, etapeDe, nombreEtoiles, ETOILE_VICTOIRE, ETOILE_SANS_KO, ETOILE_RAPIDE, SECONDES_RAPIDE } from "../donnees/campagne.js";
 import { ZONES, MULT_SOUS_ZONE, MULT_BOSS, CHANCE_DORE, BONUS_DORE } from "../donnees/zones.js";
 import { nomPiece } from "../moteur/equipement.js";
@@ -45,6 +46,41 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
   if (!aUnePartie() || !Array.isArray(equipe) || equipe.length !== 5 || equipe.some((id) => !PERSOS_PAR_ID[id])) {
     naviguer("equipe");
     return;
+  }
+
+  // ---------- Energie : il en faut assez pour tenter le combat (payee a la victoire) ----------
+  const modeEnergie = tour ? "tour" : campagne ? (campagne.deluxe ? "deluxe" : "campagne") : chasse ? "chasse" : "palier";
+  if (!assezDEnergie(modeEnergie)) {
+    afficherManqueEnergie();
+    return;
+  }
+
+  function afficherManqueEnergie(message = "") {
+    const e = etatEnergie();
+    const minutes = e.prochain ? Math.max(1, Math.ceil((e.prochain - Date.now()) / 60000)) : 0;
+    conteneur.innerHTML = `
+      <main class="manque-energie">
+        <div class="manque-energie__case" role="dialog" aria-labelledby="titre-energie">
+          <h1 id="titre-energie" class="manque-energie__titre">Plus assez d'énergie</h1>
+          <p class="manque-energie__jauge"><strong>${e.valeur}</strong> / ${e.max} d'énergie · ce combat en demande ${coutEnergie(modeEnergie)} (payée seulement si tu gagnes).</p>
+          <p class="case__aide">Elle remonte toute seule : +1 toutes les 3 minutes${minutes ? ` (prochain point dans ${minutes} min)` : ""}. Les missions du jour, les événements et le calendrier en donnent aussi.</p>
+          <p class="case__message" role="status">${message}</p>
+          <div class="manque-energie__actions">
+            <button type="button" class="bouton bouton--principal" data-action="recharger-energie" ${e.achatsRestants > 0 && encreJoueur() >= e.recharge.prix ? "" : "disabled"}>+${e.recharge.energie} énergie · ${e.recharge.prix} d'encre (${e.achatsRestants} restante${e.achatsRestants > 1 ? "s" : ""} aujourd'hui)</button>
+            <button type="button" class="bouton bouton--clair" data-action="retour-energie">Retour</button>
+          </div>
+        </div>
+      </main>`;
+    conteneur.onclick = (ev) => {
+      const b = ev.target.closest("[data-action]");
+      if (!b || b.disabled) return;
+      if (b.dataset.action === "retour-energie") naviguer(retour === "equipe" || retour === "qg" ? retour : "aventure");
+      if (b.dataset.action === "recharger-energie") {
+        const r = rechargerEnergie();
+        if (r.ok && assezDEnergie(modeEnergie)) naviguer("combat", { equipe, palier, chasse, campagne, tour, retour });
+        else afficherManqueEnergie(r.ok ? "Recharge faite, mais il en manque encore." : r.erreur);
+      }
+    };
   }
 
   // ---------- Etat de l'ecran ----------
@@ -663,6 +699,18 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
       : adversaire.chasse
       ? appliquerResultatChasse({ zoneId: chasse.zoneId, index: chasse.index, dore: adversaire.dore, victoire, ids: equipe, duree, ultimesManuels, koAllies })
       : appliquerResultatCombat({ palier: adversaire.palier, victoire, ids: equipe, duree, ultimesManuels });
+
+    // Energie payee a la victoire, et bonus de l'heure folle
+    if (victoire) {
+      const cout = payerEnergie(modeEnergie);
+      const bonus = bonusDerniereVictoire();
+      const morceaux = [`Énergie −${cout}`];
+      if (bonus) {
+        const gains = [bonus.encre && `+${bonus.encre} encre`, bonus.poussiere && `+${bonus.poussiere} poussière`, bonus.eclats && `+${bonus.eclats} éclats`, bonus.energie && `+${bonus.energie} énergie`, bonus.tickets && "+1 booster !"].filter(Boolean);
+        if (gains.length) morceaux.push(`${bonus.nom} : ${gains.join(", ")}`);
+      }
+      if (!enBoucle || bonus?.tickets) afficherToast(`<span>${morceaux.join(" · ")}</span>`, { duree: 2600 });
+    }
 
     // Les vainqueurs encore debout sautent de joie
     if (!mouvementReduit) {

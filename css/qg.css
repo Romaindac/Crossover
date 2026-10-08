@@ -530,6 +530,7 @@
   grid-template-areas:
     "vedette vedette vedette vedette combat combat combat combat combat combat combat combat"
     "vedette vedette vedette vedette exped exped exped exped equipe equipe equipe equipe"
+    "events events events events events events events events events events events events"
     "missions missions missions missions missions missions tirages tirages tirages collec collec collec"
     "bientot bientot bientot bientot bientot bientot bientot bientot stats stats stats stats";
 }
@@ -544,6 +545,7 @@
       "combat combat"
       "vedette exped"
       "vedette equipe"
+      "events events"
       "missions missions"
       "tirages collec"
       "stats stats"
@@ -553,7 +555,7 @@
 
 @media (max-width: 38rem) {
   .planche {
-    grid-template-areas: "combat" "vedette" "exped" "missions" "equipe" "tirages" "collec" "stats" "bientot";
+    grid-template-areas: "combat" "vedette" "events" "exped" "missions" "equipe" "tirages" "collec" "stats" "bientot";
   }
 
   .case--vedette {
@@ -814,4 +816,132 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--encre-douce);
+}
+
+/* ---------- Evenements ---------- */
+
+.case--evenements {
+  grid-area: events;
+  display: grid;
+  gap: 0.75rem;
+}
+
+#evenements {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem;
+}
+
+#evenements > .case__aide,
+#evenements > .case__message {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.evenement {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--papier) 70%, var(--fond));
+}
+
+.evenement--heure {
+  color: var(--papier);
+  background:
+    radial-gradient(color-mix(in srgb, var(--obi) 25%, transparent) 0.8px, transparent 1.2px) 0 0 / 6px 6px,
+    var(--encre);
+}
+
+.evenement--heure .case__aide {
+  color: color-mix(in srgb, var(--papier) 80%, transparent);
+}
+
+.evenement__quand {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sceau);
+}
+
+.evenement--heure .evenement__quand {
+  color: var(--obi);
+}
+
+.evenement__nom {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.02rem;
+}
+
+.evenement .bouton {
+  justify-self: start;
+}
+
+.calendrier {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendrier__case {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.25rem 0.15rem;
+  font-size: 0.7rem;
+  line-height: 1.15;
+  text-align: center;
+  border: 1.5px solid var(--encre);
+  border-radius: 3px;
+  background: var(--papier);
+}
+
+.calendrier__case span {
+  font-family: var(--police-titre);
+  font-size: 0.75rem;
+}
+
+.calendrier__case--prise {
+  opacity: 0.45;
+}
+
+.calendrier__case--jour {
+  background: var(--obi);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.tournoi__paliers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tournoi__palier {
+  padding: 0.15rem 0.45rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--encre);
+  background: var(--obi);
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tournoi__palier:disabled {
+  cursor: default;
+  background: var(--papier);
+  opacity: 0.6;
+}
+
+.tournoi__palier--pris {
+  background: color-mix(in srgb, var(--encre) 12%, var(--papier));
+  text-decoration: line-through;
 }

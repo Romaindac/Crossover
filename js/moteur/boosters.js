@@ -52,10 +52,10 @@ function tirerVariante(aleatoire) {
 
 // Ouvre un booster. pitie : boosters ouverts depuis le dernier Legendaire.
 // Renvoie { cartes: [{ id, rarete, variante }], pitie, dore }
-export function ouvrirBooster(aleatoire, editionId, { pitie = 0, serieVedette = null, pitieMax = PITIE_BOOSTER } = {}) {
+export function ouvrirBooster(aleatoire, editionId, { pitie = 0, serieVedette = null, pitieMax = PITIE_BOOSTER, forcerDore = false } = {}) {
   const edition = EDITIONS_PAR_ID[editionId];
   if (!edition) throw new Error(`Édition inconnue : ${editionId}`);
-  const dore = aleatoire() < CHANCE_BOOSTER_DORE;
+  const dore = aleatoire() < CHANCE_BOOSTER_DORE || forcerDore;
   const tables = dore ? CASES_BOOSTER.map(() => CASE_DOREE) : CASES_BOOSTER;
   const cartes = tables.map((table, i) => {
     const garantie = !dore && i === tables.length - 1 && pitie + 1 >= pitieMax;
