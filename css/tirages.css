@@ -1,0 +1,493 @@
+/* ==========================================================
+   TIRAGES : la pile de tomes et la revelation
+   ========================================================== */
+
+.tirages {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.entete-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bouton--obi-petit {
+  font-size: 1rem;
+  padding: 0.4em 1.2em 0.45em;
+  background: var(--obi);
+  color: var(--encre);
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.bouton--obi-petit:hover {
+  transform: translate(-2px, -2px);
+}
+
+/* Couleurs des raretes, partagees par les tomes */
+.tome--commun,
+.obi-rarete--commun     { --couleur-rarete: #cdcbc3; }
+.tome--peu_commun       { --couleur-rarete: #a8cdb1; }
+.tome--rare             { --couleur-rarete: #a7c2e2; }
+.tome--epique           { --couleur-rarete: #c4b2e6; }
+.tome--legendaire       { --couleur-rarete: linear-gradient(100deg, #e9b526 0%, #f8e6a6 45%, #e9b526 60%, #d29b12 100%); }
+
+/* ---------- L'etal : la pile et les boutons ---------- */
+
+.etal {
+  background: var(--papier);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 2rem;
+  padding: 1.75rem;
+  border: 3px solid var(--encre);
+  border-radius: 18px;
+}
+
+/* Une pile de tomes vus par la tranche */
+.pile {
+  position: relative;
+  height: 15rem;
+}
+
+.pile__tome {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--i) * 2.35rem);
+  width: min(17rem, 90%);
+  height: 2.35rem;
+  translate: -50% 0;
+  rotate: calc((var(--i) - 2.5) * 1.2deg);
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.pile__tome:nth-child(odd) {
+  margin-left: 0.6rem;
+}
+
+.pile__tome .obi-rarete {
+  top: 0;
+  bottom: 0;
+  left: auto;
+  right: 14%;
+  width: 28%;
+  padding: 0;
+  border-top: 0;
+  border-inline: 2px solid var(--encre);
+}
+
+.etal__contenu {
+  display: grid;
+  gap: 1rem;
+}
+
+.etal__texte {
+  color: var(--encre-douce);
+}
+
+/* La serie a l'honneur : un bandeau or, comme l'obi d'une edition speciale */
+.etal__honneur {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--obi);
+  background: color-mix(in srgb, var(--obi) 14%, transparent);
+  color: var(--encre);
+}
+
+.taux__honneur {
+  font-weight: 700;
+}
+
+.etal__boutons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.bouton-tirage {
+  display: grid;
+  justify-items: center;
+  line-height: 1.15;
+  padding: 0.55em 1.6em 0.6em;
+}
+
+.bouton-tirage__prix {
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.etal__manque {
+  min-height: 1.5em;
+  font-weight: 700;
+  color: #b0305a;
+}
+
+.pitie {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.barre-pitie {
+  background: var(--obi);
+}
+
+.taux summary {
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.taux table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.taux th,
+.taux td {
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid #d9d9e3;
+}
+
+.taux .nombre {
+  text-align: right;
+}
+
+.taux p {
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}
+
+.obi-rarete--pastille {
+  position: static;
+  display: inline-block;
+  padding: 0.05rem 0.6rem;
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+}
+
+/* ---------- La revelation ---------- */
+
+/* Flex + marges automatiques : centre quand il y a la place,
+   et laisse defiler sans couper le haut quand il n'y en a pas */
+.revelation {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 45%, color-mix(in srgb, var(--encre) 7%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    var(--fond);
+}
+
+.revelation__tomes {
+  margin-top: auto;
+  display: grid;
+  justify-content: center;
+  gap: 1.25rem 1rem;
+  width: 100%;
+}
+
+.revelation__tomes--un {
+  grid-template-columns: min(17rem, 62vw);
+}
+
+.revelation__tomes--dix {
+  max-width: 52rem;
+  grid-template-columns: repeat(auto-fit, minmax(6.2rem, 8.8rem));
+}
+
+.revelation__resume {
+  min-height: 1.5em;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.revelation__barre {
+  margin-bottom: auto;
+}
+
+.revelation__barre,
+.revelation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.revelation__actions[hidden],
+.revelation__barre [hidden] {
+  display: none;
+}
+
+/* Un tome */
+.tome {
+  position: relative;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  perspective: 1000px;
+  animation: tome-arrivee 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+@keyframes tome-arrivee {
+  from { opacity: 0; transform: translateY(40px) rotate(-4deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+.tome__interieur {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  transform-style: preserve-3d;
+  transition: transform 560ms cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+.tome--revele .tome__interieur {
+  transform: rotateY(180deg);
+}
+
+.tome__face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-left-width: 7px;            /* la tranche du livre */
+  border-radius: 3px 10px 10px 3px;
+  box-shadow: 4px 4px 0 var(--encre);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Dos du tome : trame et logo */
+.tome__face--dos {
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--encre) 18%, transparent) 0 1.4px, transparent 1.8px) 0 0 / 9px 9px,
+    var(--papier);
+}
+
+.tome__logo {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  translate: -50% -50%;
+  rotate: -8deg;
+  font-family: var(--police-titre);
+  font-size: clamp(0.9rem, 2.4vw, 1.5rem);
+  color: var(--papier);
+  text-shadow:
+    0.05em 0 var(--encre), -0.05em 0 var(--encre), 0 0.05em var(--encre), 0 -0.05em var(--encre),
+    0.07em 0.07em 0 var(--rose);
+}
+
+.revelation__tomes--un .tome__logo {
+  font-size: 2rem;
+}
+
+/* L'obi : neutre au depart, puis la couleur de la rarete glisse dessus */
+.tome__obi {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 26%;
+  display: grid;
+  place-items: center;
+  background: #e4e4ec;
+  border-top: 3px solid var(--encre);
+}
+
+.tome__obi::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--couleur-rarete);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 380ms ease-out;
+}
+
+.tome--obi .tome__obi::before {
+  transform: scaleX(1);
+}
+
+.tome__obi-texte {
+  position: relative;
+  font-weight: 800;
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity 200ms 250ms;
+}
+
+.revelation__tomes--un .tome__obi-texte {
+  font-size: 1.1rem;
+}
+
+.tome--obi .tome__obi-texte {
+  opacity: 1;
+}
+
+/* Legendaire : l'obi brille et le tome rayonne */
+.tome--legendaire.tome--obi .tome__face {
+  box-shadow: 4px 4px 0 var(--encre), 0 0 22px 6px rgba(255, 208, 46, 0.85);
+}
+
+.tome--legendaire.tome--obi .tome__obi::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.85) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: brillance 1.1s linear infinite;
+}
+
+@keyframes brillance {
+  from { background-position: 150% 0; }
+  to   { background-position: -100% 0; }
+}
+
+/* Couverture : le portrait en pleine page, le nom en haut, l'obi en bas */
+.tome__face--avant {
+  transform: rotateY(180deg);
+}
+
+.tome__face--avant .portrait {
+  position: absolute;
+  inset: 0;
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+.tome__titre {
+  position: absolute;
+  top: 0.4rem;
+  left: 0;
+  right: 0;
+  font-family: var(--police-titre);
+  font-size: clamp(0.85rem, 2vw, 1.2rem);
+  color: var(--papier);
+  text-shadow:
+    0.06em 0 var(--encre), -0.06em 0 var(--encre), 0 0.06em var(--encre), 0 -0.06em var(--encre),
+    0.05em 0.05em var(--encre), -0.05em -0.05em var(--encre);
+}
+
+.revelation__tomes--un .tome__titre {
+  font-size: 1.9rem;
+}
+
+.tome__face--avant .obi-rarete {
+  font-size: 0.75rem;
+  padding: 0.2rem;
+}
+
+/* Tampon rouge "Nouveau" */
+.tampon {
+  position: absolute;
+  bottom: 18%;
+  right: 5%;
+  padding: 0.25rem 0.45rem;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: #c8372d;
+  background: color-mix(in srgb, var(--papier) 85%, transparent);
+  border: 3px solid #c8372d;
+  border-radius: 50%;
+  rotate: -14deg;
+}
+
+.revelation__tomes--un .tampon {
+  font-size: 1rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.tome__resultat {
+  min-height: 2.4em;
+  font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  opacity: 0;
+  transition: opacity 250ms 350ms;
+}
+
+.revelation__tomes--un .tome__resultat {
+  font-size: 1rem;
+}
+
+.tome--revele .tome__resultat {
+  opacity: 1;
+}
+
+.onomatopee--tome {
+  left: 85%;
+  top: 6%;
+  z-index: 2;
+  font-size: 2.2rem;
+  animation: ono-pop 700ms ease-out both;
+}
+
+@keyframes ono-pop {
+  0%   { opacity: 0; transform: scale(0.3) rotate(10deg); }
+  40%  { opacity: 1; transform: scale(1.2) rotate(10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(10deg); }
+}
+
+.flash-legendaire {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: #fff6c2;
+  pointer-events: none;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 44rem) {
+  .etal {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+
+  .pile {
+    height: 10rem;
+    transform: scale(0.75);
+    transform-origin: bottom center;
+  }
+
+  .revelation__tomes--dix {
+    grid-template-columns: repeat(3, minmax(0, 6.4rem));
+  }
+
+  .tome__resultat {
+    font-size: 0.7rem;
+  }
+
+  .revelation__tomes--dix .obi-rarete,
+  .revelation__tomes--dix .tome__obi-texte {
+    font-size: 0.6rem;
+  }
+}
