@@ -8,7 +8,7 @@ export function brancherInclinaison() {
   const reduit = matchMedia("(prefers-reduced-motion: reduce)");
   document.addEventListener("pointermove", (e) => {
     if (reduit.matches || e.pointerType === "touch") return;
-    const carte = e.target.closest?.(".carte");
+    const carte = e.target.closest?.(".carte, .sachet");
     if (!carte) return;
     const r = carte.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
@@ -19,7 +19,7 @@ export function brancherInclinaison() {
     carte.style.setProperty("--my", `${y * 100}%`);
   }, { passive: true });
   document.addEventListener("pointerout", (e) => {
-    const carte = e.target.closest?.(".carte");
+    const carte = e.target.closest?.(".carte, .sachet");
     if (!carte || carte.contains(e.relatedTarget)) return;
     for (const v of ["--rx", "--ry", "--mx", "--my"]) carte.style.removeProperty(v);
   });

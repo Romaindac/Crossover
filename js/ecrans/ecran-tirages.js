@@ -81,27 +81,43 @@ export function afficherTirages(conteneur, { naviguer }) {
 
   // ---------- Boutique : une edition = un booster ----------
 
+  // Le sachet d'un booster : feuille metallisee aux couleurs de l'edition,
+  // bords soudes, et ses 3 vedettes en eventail dans la fenetre
+  function htmlSachet(edition, { attributs = "" } = {}) {
+    const [c1, c2, c3] = edition.couleurs;
+    return `
+      <span class="sachet" style="--p1: ${c1}; --p2: ${c2}; --p3: ${c3}" ${attributs}>
+        <span class="sachet__soudure sachet__soudure--haut" aria-hidden="true"></span>
+        <span class="sachet__logo">Crossover</span>
+        <span class="sachet__edition">Édition ${edition.numero}</span>
+        <span class="sachet__fenetre" aria-hidden="true">
+          ${edition.vedettes.map((id, i) => `<span class="sachet__vedette sachet__vedette--${i}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}
+        </span>
+        <span class="sachet__nom">${edition.nom}</span>
+        <span class="sachet__badge">5 cartes</span>
+        <span class="sachet__reflet" aria-hidden="true"></span>
+        <span class="sachet__soudure sachet__soudure--bas" aria-hidden="true"></span>
+      </span>`;
+  }
+
   function htmlBooster(edition) {
     const persos = persosEdition(edition);
     const obtenus = persos.filter((p) => possede(p.id)).length;
     const b = etatBoosters();
-    const payer = b.tickets > 0 ? "Ouvrir (1 ticket)" : `Ouvrir (${nombre(b.prix)} d'encre)`;
+    const payer = b.tickets > 0 ? "Ouvrir · 1 ticket" : `Ouvrir · ${nombre(b.prix)} d'encre`;
     const peutOuvrir = b.tickets > 0 || encre() >= b.prix;
-    const s = styleSerie(edition.series[0]);
     return `
-      <article class="booster" style="--s1: ${s.c1}; --s2: ${s.c2}">
-        <div class="booster__paquet" aria-hidden="true">
-          <span class="booster__numero">Édition ${edition.numero}</span>
-          <span class="booster__nom">${edition.nom}</span>
-          <span class="booster__bandes">${edition.series.map((x) => `<span class="serie-bande-mini" data-motif="${motifSerie(x)}" style="${varsSerie(x)}"></span>`).join("")}</span>
-        </div>
+      <article class="booster">
+        <button type="button" class="booster__bouton-sachet" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}
+          aria-label="Ouvrir un booster ${edition.nom} (${b.tickets > 0 ? "1 ticket" : `${nombre(b.prix)} d'encre`})">
+          ${htmlSachet(edition)}
+        </button>
         <div class="booster__texte">
-          <h2 class="booster__titre">${edition.nom}</h2>
-          <p class="case__aide">${edition.texte}</p>
-          <p class="booster__series">${edition.series.join(" · ")}</p>
-          <p class="booster__progression"><strong>${obtenus}</strong> sur ${persos.length} persos</p>
+          <p class="booster__accroche">${edition.texte}</p>
+          <p class="booster__series">${edition.series.map((x) => `<span class="sigle" style="${varsSerie(x)}">${styleSerie(x).abrege}</span>`).join("")}</p>
+          <p class="booster__progression"><strong>${obtenus}</strong> / ${persos.length} persos</p>
           <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" style="--xp: ${obtenus / persos.length}"></span></span>
-          <button type="button" class="bouton bouton--principal" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}>${payer}</button>
+          <button type="button" class="bouton bouton--principal booster__ouvrir" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}>${payer}</button>
         </div>
       </article>`;
   }
@@ -257,7 +273,8 @@ export function afficherTirages(conteneur, { naviguer }) {
     $("#revelation").innerHTML = `
       <div class="revelation ${r.dore ? "revelation--doree" : ""}" role="dialog" aria-modal="true" aria-labelledby="titre-revelation">
         <h2 class="revelation__titre" id="titre-revelation">${r.dore ? "Booster doré !" : `Booster ${edition.nom}`}</h2>
-        <div class="revelation__tomes revelation__tomes--dix">
+        <div class="revelation__sachet" id="sachet-ouverture">${htmlSachet(edition, { attributs: r.dore ? 'data-dore="1"' : "" })}</div>
+        <div class="revelation__tomes revelation__tomes--dix" id="cartes-booster" hidden>
           ${r.cartes.map(htmlCarteRevelee).join("")}
         </div>
         <p class="revelation__resume" id="revelation-resume" role="status" aria-live="polite"></p>
@@ -272,7 +289,18 @@ export function afficherTirages(conteneur, { naviguer }) {
     chargerPortraits((id) => rafraichirPortrait(conteneur, id));
     $("#tout-reveler").focus({ preventScroll: true });
     const etat = revelation;
-    await pause(mouvementReduit ? 100 : 600);
+    // Le sachet tremble, se dechire, puis les cartes sortent
+    if (!mouvementReduit) {
+      const sachet = $("#sachet-ouverture .sachet");
+      sachet.classList.add("sachet--tremble");
+      await pause(650);
+      sachet.classList.add("sachet--dechire");
+      await pause(550);
+    }
+    if (revelation !== etat) return;
+    $("#sachet-ouverture").hidden = true;
+    $("#cartes-booster").hidden = false;
+    await pause(mouvementReduit ? 100 : 450);
     for (let i = 0; i < r.cartes.length; i++) {
       if (revelation !== etat) return;
       await reveler(i);
@@ -293,7 +321,11 @@ export function afficherTirages(conteneur, { naviguer }) {
     if (action === "vue") { vue = cible.dataset.vue; messageAtelier = ""; rendre(); }
     if (action === "ouvrir") ouvrir(cible.dataset.edition);
     if (action === "reveler") reveler(Number(cible.dataset.index), true);
-    if (action === "tout-reveler" && revelation) revelation.cartes.forEach((_, i) => reveler(i, true));
+    if (action === "tout-reveler" && revelation) {
+      $("#sachet-ouverture").hidden = true;
+      $("#cartes-booster").hidden = false;
+      revelation.cartes.forEach((_, i) => reveler(i, true));
+    }
     if (action === "fermer") fermer();
     if (action === "filtre-atelier") { filtreAtelier = cible.dataset.valeur; rendreAtelier(); }
     if (action === "fabriquer") {

@@ -548,111 +548,297 @@
 /* Une edition = un booster */
 .boosters__grille {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr));
+  gap: 1.5rem 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .booster {
   display: grid;
-  grid-template-columns: 7.5rem 1fr;
-  gap: 1rem;
-  padding: 0.9rem;
-  background: var(--papier);
-  border: 2px solid var(--encre);
-  border-radius: 4px;
+  gap: 0.75rem;
+  align-content: start;
+  max-width: 17rem;
 }
 
-/* Le paquet : sachet scelle aux couleurs de l'edition */
-.booster__paquet {
-  position: relative;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 0.4rem;
-  aspect-ratio: 5 / 8;
-  padding: 0.5rem;
-  text-align: center;
-  color: var(--papier);
-  background:
-    radial-gradient(color-mix(in srgb, var(--papier) 22%, transparent) 0.8px, transparent 1.2px) 0 0 / 5px 5px,
-    linear-gradient(160deg, var(--s1), color-mix(in srgb, var(--s1) 55%, var(--encre)));
-  border: 3px solid var(--encre);
-  border-radius: 4px;
-  box-shadow: 4px 4px 0 var(--encre);
-  transition: transform 160ms ease-out;
-}
-
-/* Les bords dentelés du sachet */
-.booster__paquet::before,
-.booster__paquet::after {
-  content: "";
-  position: absolute;
-  left: -3px;
-  right: -3px;
-  height: 7px;
-  background: linear-gradient(135deg, var(--fond) 50%, transparent 0) 0 0 / 8px 7px, linear-gradient(225deg, var(--fond) 50%, transparent 0) 0 0 / 8px 7px;
-}
-
-.booster__paquet::before { top: -4px; }
-.booster__paquet::after { bottom: -4px; rotate: 180deg; }
-
-.booster:hover .booster__paquet {
-  transform: rotate(-3deg) translateY(-3px);
-}
-
-.booster__numero {
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.booster__nom {
-  font-family: var(--police-titre);
-  font-size: 1.05rem;
-  line-height: 1.1;
-  text-shadow: 0.06em 0.06em 0 var(--encre);
-}
-
-.booster__bandes {
-  display: grid;
-  gap: 3px;
-  width: 100%;
-}
-
-.serie-bande-mini {
+.booster__bouton-sachet {
   display: block;
-  height: 0.45rem;
-  background: var(--motif);
-  border: 1.5px solid var(--encre);
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  perspective: 900px;
+}
+
+.booster__bouton-sachet:disabled {
+  cursor: default;
+  filter: grayscale(0.6) brightness(0.9);
 }
 
 .booster__texte {
   display: grid;
-  align-content: start;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
-.booster__titre {
-  margin: 0;
-  font-family: var(--police-mincho);
-  font-size: 1.25rem;
-}
-
-.booster__series,
+.booster__accroche,
 .booster__progression {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+}
+
+.booster__accroche {
+  color: var(--encre-douce);
 }
 
 .booster__series {
-  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
 }
 
-.booster .bouton {
-  justify-self: start;
-  margin-top: 0.3rem;
+.sigle {
+  padding: 0.05rem 0.4rem;
+  font-family: var(--police-titre);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow: 1px 1px 0 var(--encre), -1px 0 0 var(--encre), 0 -1px 0 var(--encre);
+  background: var(--s1);
+  border: 1.5px solid var(--encre);
+  border-radius: 3px;
+}
+
+.booster__ouvrir {
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/* ---------- Le sachet ---------- */
+
+.sachet {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 30%;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  justify-items: center;
+  aspect-ratio: 5 / 7.4;
+  padding: 1.35rem 0.9rem 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+  text-align: center;
+  /* feuille metallisee : degrade, lignes de lumiere et grain */
+  background:
+    linear-gradient(115deg, transparent 0 38%, rgb(255 255 255 / 0.28) 46%, transparent 54%),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.05) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--p3) 55%, var(--p1)), transparent 60%),
+    linear-gradient(165deg, var(--p1) 0%, color-mix(in srgb, var(--p1) 60%, var(--p2)) 55%, var(--p2) 100%);
+  border: 3px solid var(--encre);
+  border-radius: 10px 10px 8px 8px;
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 0.18),
+    inset 0 -40px 60px -30px rgb(0 0 0 / 0.45),
+    6px 8px 0 -1px var(--encre);
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.booster__bouton-sachet:hover .sachet,
+.booster__bouton-sachet:focus-visible .sachet {
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) translateY(-6px);
+  box-shadow:
+    inset 0 0 0 2px rgb(255 255 255 / 0.18),
+    inset 0 -40px 60px -30px rgb(0 0 0 / 0.45),
+    8px 14px 0 -1px var(--encre);
+}
+
+/* Bords soudes du sachet, avec leurs crans */
+.sachet__soudure {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 0.9rem;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.28) 0 2px, rgb(255 255 255 / 0.12) 2px 3px, transparent 3px 6px),
+    color-mix(in srgb, var(--p2) 70%, #000);
+}
+
+.sachet__soudure--haut {
+  top: 0;
+  border-bottom: 2px solid var(--encre);
+  -webkit-mask: linear-gradient(#000 0 0) 0 4px / 100% 100% no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, transparent 0) 0 0 / 8px 4px repeat-x;
+  mask: linear-gradient(#000 0 0) 0 4px / 100% 100% no-repeat, conic-gradient(from -45deg at 50% 100%, #000 90deg, transparent 0) 0 0 / 8px 4px repeat-x;
+}
+
+.sachet__soudure--bas {
+  bottom: 0;
+  border-top: 2px solid var(--encre);
+}
+
+.sachet__logo {
+  z-index: 2;
+  font-family: var(--police-titre);
+  font-size: clamp(1rem, 4.2vw, 1.35rem);
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow:
+    2px 0 var(--encre), -2px 0 var(--encre), 0 2px var(--encre), 0 -2px var(--encre),
+    2px 2px var(--encre), -2px -2px var(--encre), 2px -2px var(--encre), -2px 2px var(--encre),
+    3px 4px 0 var(--p2);
+  rotate: -4deg;
+}
+
+.sachet__edition {
+  z-index: 2;
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--encre);
+  background: var(--p3);
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+}
+
+/* La fenetre : les 3 vedettes en eventail */
+.sachet__fenetre {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-block: 0.4rem 0.3rem;
+}
+
+.sachet__vedette {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46%;
+  border: 2.5px solid var(--encre);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--papier);
+  box-shadow: 3px 4px 0 rgb(0 0 0 / 0.35);
+}
+
+.sachet__vedette .portrait {
+  border-radius: 0;
+}
+
+.sachet__vedette--0 { translate: -108% -46%; rotate: -14deg; }
+.sachet__vedette--1 { z-index: 2; width: 54%; translate: -50% -54%; }
+.sachet__vedette--2 { translate: 8% -46%; rotate: 14deg; }
+
+.sachet__nom {
+  z-index: 2;
+  padding: 0.2rem 0.6rem;
+  font-family: var(--police-titre);
+  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
+  line-height: 1.1;
+  color: var(--encre);
+  background: #fff;
+  border: 2px solid var(--encre);
+  box-shadow: 3px 3px 0 var(--encre);
+  rotate: -2deg;
+}
+
+.sachet__badge {
+  z-index: 2;
+  margin-top: 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.9);
+}
+
+/* Le reflet qui suit la souris et balaie le sachet au survol */
+.sachet__reflet {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgb(255 255 255 / 0.35), transparent 45%),
+    linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.4) 50%, transparent 65%) -150% 0 / 60% 100% no-repeat;
+  mix-blend-mode: soft-light;
+}
+
+.booster__bouton-sachet:hover .sachet__reflet {
+  animation: balayage 900ms ease-out;
+}
+
+@keyframes balayage {
+  to { background-position: center, 250% 0; }
+}
+
+/* Booster dore */
+.sachet[data-dore] {
+  --p1: #e9b526;
+  --p2: #8a5a00;
+  --p3: #fff3c4;
+}
+
+/* ---------- Ouverture : le sachet tremble, puis se dechire ---------- */
+
+.revelation__sachet {
+  width: min(16rem, 62vw);
+  margin-block: auto 1rem;
+}
+
+.revelation__sachet[hidden],
+.revelation__tomes[hidden] {
+  display: none;
+}
+
+.sachet--tremble {
+  animation: tremble 650ms ease-in-out;
+}
+
+@keyframes tremble {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  15% { translate: -6px 0; rotate: -3deg; }
+  30% { translate: 6px 0; rotate: 3deg; }
+  45% { translate: -5px 0; rotate: -2deg; }
+  60% { translate: 5px 0; rotate: 2deg; }
+  75% { translate: -2px 0; rotate: -1deg; }
+}
+
+.sachet--dechire .sachet__soudure--haut {
+  animation: dechirure 550ms ease-in forwards;
+}
+
+.sachet--dechire {
+  animation: ouvert 550ms ease-in forwards;
+}
+
+@keyframes dechirure {
+  to { translate: 40px -120px; rotate: 25deg; opacity: 0; }
+}
+
+@keyframes ouvert {
+  60% { scale: 1.04; filter: brightness(1.3); }
+  100% { scale: 0.9; translate: 0 30px; opacity: 0; filter: brightness(2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sachet,
+  .booster__bouton-sachet:hover .sachet {
+    transform: none;
+  }
+  .booster__bouton-sachet:hover .sachet__reflet {
+    animation: none;
+  }
 }
 
 /* Revelation d'un booster */
@@ -729,12 +915,21 @@
     font-size: 1.2rem;
   }
 
-  .booster {
-    grid-template-columns: 5.5rem 1fr;
-    gap: 0.7rem;
+  .boosters__grille {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 0.75rem;
   }
 
-  .booster__nom {
-    font-size: 0.85rem;
+  .booster__accroche {
+    display: none;
+  }
+
+  .booster__ouvrir {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.3rem;
+  }
+
+  .sachet {
+    padding: 1.1rem 0.5rem 1.2rem;
   }
 }

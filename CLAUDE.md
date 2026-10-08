@@ -11,6 +11,8 @@ Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 - Être honnête : dire ce qui n'est pas testé, ce qui est fragile, ce qui coûte.
 - Penser comme un développeur de jeu complet (game design, équilibrage, UX, performance).
 - Après chaque étape : vérifier, puis livrer un jeu qui marche.
+- Mise en ligne automatique : une fois les changements vérifiés, ouvrir la pull request et la fusionner sur `main`
+  sans attendre (le créateur veut voir chaque modification sur le site, GitHub Pages se met à jour en 1 à 2 min).
 
 ## Pile technique
 
