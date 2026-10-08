@@ -12,6 +12,7 @@ import { ZONES } from "../donnees/zones.js";
 import { objetDe, nomPiece, valeurLigne, comptesPanoplies, qualiteJet, ligneParfaite, pieceParfaite } from "../moteur/equipement.js";
 import { inventaire, piecesDe, equiperPiece, retirerPiece, peutPorter, progressionDe } from "../services/partie.js";
 import { htmlPortrait } from "./cartes.js";
+import { iconeObjet } from "./icones-objets.js";
 
 const ICONES = {
   arme: '<path d="M14 4h6v6l-9 9-6-6z"/><path d="M4 20l3-3"/>',
@@ -29,7 +30,7 @@ export function htmlTuilePiece(p, { niveau = p.niveau ?? 0 } = {}) {
   return `
     <span class="tuile-piece tuile-piece--${p.rarete}" aria-hidden="true">
       <span class="tuile-piece__rayons"></span>
-      ${iconeEmplacement(p.emplacement)}
+      ${iconeObjet(p.objet) ?? iconeEmplacement(p.emplacement)}
       ${niveau ? `<span class="tuile-piece__niveau">+${niveau}</span>` : ""}
     </span>`;
 }
@@ -126,7 +127,7 @@ export function htmlDetailsPiece(piece, { comparaison = null, objet = null } = {
   return `
     <div class="piece-details piece-details--${o.rarete} ${piece && pieceParfaite(piece) ? "piece-details--parfaite" : ""}">
       <div class="piece-details__tete">
-        ${htmlTuilePiece({ rarete: o.rarete, emplacement: o.emplacement }, { niveau: piece?.niveau ?? 0 })}
+        ${htmlTuilePiece({ objet: o.id, rarete: o.rarete, emplacement: o.emplacement }, { niveau: piece?.niveau ?? 0 })}
         <div>
           <p class="piece-details__nom">${o.nom}${piece?.niveau ? ` <span>+${piece.niveau}</span>` : ""}${piece && pieceParfaite(piece) ? ' <span class="tampon-parfait" title="Objet parfait">完璧</span>' : ""}</p>
           <p class="piece-details__meta">
