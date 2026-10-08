@@ -865,3 +865,30 @@ input[type="number"] {
     font-size: 0.85rem;
   }
 }
+
+/* Pastilles de notification : la rangee d'onglets defile et coupe ce qui
+   depasse, on leur garde donc de la place a l'interieur */
+.navigation__onglets {
+  padding: 0.5rem 0.5rem 0.15rem;
+}
+
+.navigation__onglet {
+  position: relative;
+}
+
+.pastille-tirage {
+  top: -0.4rem;
+  right: -0.3rem;
+  z-index: 1;
+}
+
+@media (max-width: 40rem) {
+  .navigation__onglets {
+    padding-top: 0.6rem;
+  }
+
+  .pastille-tirage {
+    top: -0.45rem;
+    right: 0;
+  }
+}
