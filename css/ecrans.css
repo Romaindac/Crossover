@@ -1493,3 +1493,46 @@ button.etagere__tome:hover .etagere__couverture {
     animation: none;
   }
 }
+
+/* Bouton d'aide et lexique des ressources */
+.navigation__aide {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  font-weight: 800;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.voile--lexique {
+  z-index: 40;
+}
+
+.lexique {
+  width: min(36rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.lexique__liste {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.lexique__ligne dt {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-weight: 800;
+}
+
+.lexique__ligne dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}

@@ -10,6 +10,7 @@ import {
 } from "../services/enligne.js";
 import { idsVitrine, basculerVitrine, meilleuresCartes, vitrineCompacte, lienVitrine, TAILLE_VITRINE } from "../services/vitrine.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
+import { numeroSemaine } from "../donnees/tour.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlCarte, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
@@ -30,12 +31,13 @@ export function htmlResume(r = {}) {
     <li><strong>${r.etoiles ?? 0}</strong> étoiles</li>
     <li>Tour : <strong>étage ${r.tour ?? 0}</strong></li>
     <li>Boss : <strong>${(r.raid ?? 0).toLocaleString("fr-FR")}</strong></li>
+    ${r.boss_semaine && r.semaine === numeroSemaine() ? `<li>Boss cette semaine : <strong>${r.boss_semaine.toLocaleString("fr-FR")}</strong></li>` : ""}
   </ul>`;
 }
 
 export function afficherSocial(conteneur, { naviguer }) {
   let edition = false;
-  let ongletClassement = "tour";
+  let ongletClassement = "semaine";
   let joueurs = null;
 
   conteneur.innerHTML = `
@@ -45,7 +47,7 @@ export function afficherSocial(conteneur, { naviguer }) {
 
       <section class="carte-reglage" aria-labelledby="titre-vitrine">
         <h2 id="titre-vitrine">Ma vitrine</h2>
-        <p class="reglage__aide">Tes ${TAILLE_VITRINE} plus belles cartes. Envoie le lien à tes potes : ils voient ta vitrine sans rien installer.</p>
+        <p class="reglage__aide">Tes ${TAILLE_VITRINE} plus belles cartes. Envoie le lien à tes potes : ils voient ta vitrine sans rien installer, et ton score au boss de la semaine devient un défi à battre.</p>
         <div id="vitrine"></div>
       </section>
 
@@ -266,6 +268,7 @@ export function afficherSocial(conteneur, { naviguer }) {
 
 // ---------- Vitrine recue par lien (sans compte) ----------
 export function afficherVitrinePartagee(conteneur, { naviguer, vitrine }) {
+  const defiActif = vitrine.resume.boss_semaine > 0 && vitrine.resume.semaine === numeroSemaine();
   conteneur.innerHTML = `
     <main class="reglages-page social social--partage">
       <p class="accueil__tranche">Crossover</p>
@@ -273,12 +276,15 @@ export function afficherVitrinePartagee(conteneur, { naviguer, vitrine }) {
         <h1 class="equipe__titre">Vitrine de ${echapper(vitrine.pseudo)}</h1>
         ${htmlResume(vitrine.resume)}
         <div class="vitrine-grille">${vitrine.cartes.map(htmlCarteVitrine).join("")}</div>
+        ${defiActif ? `<p class="defi-ami">Défi : bats les <strong>${vitrine.resume.boss_semaine.toLocaleString("fr-FR")} dégâts</strong> de ${echapper(vitrine.pseudo)} au boss de la semaine avant lundi !</p>` : ""}
         <p class="reglage__aide">Crossover, c'est les héros de tous les mangas dans la même équipe. Ouvre des boosters, monte ton équipe et bats ce score !</p>
-        <div class="reglage__boutons"><button type="button" class="bouton bouton--obi" data-action="jouer">Jouer à Crossover</button></div>
+        <div class="reglage__boutons"><button type="button" class="bouton bouton--obi" data-action="jouer">${defiActif ? "Relever le défi" : "Jouer à Crossover"}</button></div>
       </section>
     </main>`;
   conteneur.addEventListener("click", (e) => {
     if (e.target.closest("[data-action='jouer']")) {
+      // Le defi est garde : l'ecran du boss de la semaine l'affichera
+      if (defiActif) ecrire("defi-ami", { pseudo: vitrine.pseudo, score: vitrine.resume.boss_semaine, semaine: vitrine.resume.semaine });
       history.replaceState(null, "", location.pathname);
       naviguer("accueil");
     }

@@ -19,7 +19,7 @@ import { simulerCombat } from "../moteur/simulation.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../moteur/boosters.js";
 import { EDITIONS, PRIX_BOOSTER, TICKETS_DEPART, TICKETS_CHAPITRE, STOCK_GRATUIT_MAX } from "../donnees/boosters.js";
 
-const TICKETS_GRATUITS_PAR_JOUR = 3 * STOCK_GRATUIT_MAX;
+const TICKETS_GRATUITS_PAR_JOUR = 2 * STOCK_GRATUIT_MAX;
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { composerEquipe } from "../moteur/composition.js";
@@ -180,7 +180,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
   for (jour = 1; jour <= jours && prochaineEtape(); jour++) {
     // L'expedition pendant l'absence
     const etapeExp = meilleureEtape();
-    if (jour > 1) j.tickets += TICKETS_GRATUITS_PAR_JOUR;   // un ticket toutes les 15 min, reserve de 8 : environ 3 visites par jour
+    if (jour > 1) j.tickets += TICKETS_GRATUITS_PAR_JOUR;   // un ticket toutes les 30 min, reserve de 16 (8 h) : un joueur qui passe matin et soir
     if (jour > 1 && etapeExp) {
       const combats = Math.floor(Math.min(24 - minutesParJour / 60, EXPEDITION_HEURES_MAX) * EXPEDITION_COMBATS_PAR_HEURE);
       j.encre += combats * encreEtape(etapeExp, false);

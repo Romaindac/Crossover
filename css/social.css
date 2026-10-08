@@ -158,3 +158,16 @@
 #voile-social .voile {
   z-index: 30;
 }
+
+.defi-ami {
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--obi) 25%, var(--papier));
+  border: 2px solid var(--encre);
+  border-left: 8px solid var(--sceau, #c8372d);
+  border-radius: 6px;
+}
+
+.defi-ami--battu {
+  border-left-color: #1f7a5a;
+}

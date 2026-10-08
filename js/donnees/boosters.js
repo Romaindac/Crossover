@@ -36,7 +36,7 @@ export const EDITIONS = [
 export const EDITIONS_PAR_ID = Object.fromEntries(EDITIONS.map((e) => [e.id, e]));
 export const editionDeSerie = (serie) => EDITIONS.find((e) => e.series.includes(serie)) ?? null;
 
-// Un booster gratuit toutes les 15 minutes : chaque booster est donc petit
+// Un booster gratuit toutes les 30 minutes (reserve de 8 h) : chaque booster est donc petit
 // (3 cartes) et les grosses raretes sont rares. Simulation (200 joueurs) :
 // 36 persos apres 25 boosters, 56 apres 100, la collection complete vers
 // 1 000 boosters (environ 5 semaines pour un joueur regulier).
@@ -66,8 +66,8 @@ export const VARIANTES = {
 
 // Prix et booster gratuit
 export const PRIX_BOOSTER = 100;                   // encre
-export const MINUTES_BOOSTER_GRATUIT = 15;         // un ticket gratuit toutes les 15 minutes...
-export const STOCK_GRATUIT_MAX = 8;                // ...tant qu'on en a moins de 8 en reserve (2 h)
+export const MINUTES_BOOSTER_GRATUIT = 30;         // un ticket gratuit toutes les 30 minutes...
+export const STOCK_GRATUIT_MAX = 16;               // ...tant qu'on en a moins de 16 en reserve (8 h)
 export const TICKETS_DEPART = 3;                   // de quoi ouvrir 3 boosters apres le booster de depart
 export const TICKETS_CHAPITRE = 3;                 // offerts a chaque chapitre de campagne fini
 // (le bonus des 3 missions du jour reclamees donne aussi 1 ticket)

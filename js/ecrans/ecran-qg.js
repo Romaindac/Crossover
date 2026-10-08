@@ -16,7 +16,7 @@ import {
   etatBoosters, statistiques, etatEvenements, reclamerDefi, reclamerCalendrier, reclamerPalierTournoi, etatEnergie, missionsDuJour, reclamerMission,
   reclamerBonusMissions, etatExpedition, recupererExpedition, vedette, entreeCombat, prochaineEtape, etapeBattue,
   missionsDeLaSemaine, reclamerMissionSemaine, chapitreTermine,
-  cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes,
+  cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes, etatGuide, reclamerGuide,
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
 } from "../services/partie.js";
@@ -72,6 +72,7 @@ export function afficherQg(conteneur, { naviguer }) {
     <main class="qg">
       <h1 class="visuellement-cache">Ton QG</h1>
       <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
+      <div id="guide"></div>
       <div class="planche">
 
         ${star ? `
@@ -272,6 +273,30 @@ export function afficherQg(conteneur, { naviguer }) {
       <p class="case__message" role="status" aria-live="polite">${message}</p>`;
   }
 
+  // ---------- Guide du debutant ----------
+  function texteRecompense(r) {
+    return [r.encre && `${r.encre} d'encre`, r.tickets && `${r.tickets} booster${r.tickets > 1 ? "s" : ""}`, r.energie && `${r.energie} d'énergie`].filter(Boolean).join(" + ");
+  }
+
+  function rendreGuide(message = "") {
+    const g = etatGuide();
+    const zone = $("#guide");
+    if (!g) { zone.innerHTML = message ? `<p class="guide guide--fini">${message}</p>` : ""; return; }
+    const o = g.objectif;
+    zone.innerHTML = `
+      <section class="guide ${g.atteint ? "guide--pret" : ""}" aria-labelledby="titre-guide">
+        <p class="guide__numero" id="titre-guide">Guide du débutant · ${g.numero} / ${g.total}</p>
+        <p class="guide__objectif">${o.texte}</p>
+        <p class="guide__aide">${o.aide}</p>
+        <div class="guide__actions">
+          ${g.atteint
+            ? `<button type="button" class="bouton bouton--obi-petit" data-action="guide">Réclamer : ${texteRecompense(o.recompense)}</button>`
+            : `<span class="guide__gain">Récompense : ${texteRecompense(o.recompense)}</span>${o.nav !== "qg" ? `<button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="aller" data-nav="${o.nav}" data-onglet="${o.onglet ?? ""}">Y aller</button>` : ""}`}
+        </div>
+        ${message ? `<p class="case__message" role="status">${message}</p>` : ""}
+      </section>`;
+  }
+
   function rendreMissions(message = "") {
     const m = missionsDuJour();
     const toutes = m.liste.every((x) => x.reclamee);
@@ -419,6 +444,14 @@ export function afficherQg(conteneur, { naviguer }) {
       rendreEncre();
       return;
     }
+    if (action === "guide") {
+      const o = reclamerGuide();
+      if (o) {
+        rendreGuide(etatGuide() ? `Bravo ! Objectif suivant débloqué.` : "Guide terminé : tu connais tout le jeu. À toi de jouer !");
+        rendreEncre(); rendreNouveautes();
+      }
+      return;
+    }
     if (action === "defi") {
       if (reclamerDefi()) { rendreEvenements("Défi du jour réussi : boosters et énergie ajoutés !"); rendreEncre(); rendreNouveautes(); }
       return;
@@ -449,6 +482,7 @@ export function afficherQg(conteneur, { naviguer }) {
   rendreNouveautes();
   rendreEncre();
   rendreExpedition();
+  rendreGuide();
   rendreMissions();
   rendreEvenements();
   rendreStats();

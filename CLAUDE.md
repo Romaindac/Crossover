@@ -65,12 +65,15 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   refonte « Boosters » : 78 persos (6 nouvelles séries), obtention par boosters de 4 éditions à thème, tickets gratuits,
   atelier à la poussière, variantes Holo et Dorée, cadre de carte propre à chaque manga ;
   début de partie par un booster offert (5 persos, un par rôle) ; boosters de 3 cartes, un gratuit toutes les 15 min
-  (réserve de 8), collection complète vers 1 000 boosters (environ 5 semaines) ;
+  (réserve de 8, passée ensuite à un toutes les 30 min avec une réserve de 16, soit 8 h), collection complète vers 1 000 boosters (environ 5 semaines) ;
   énergie pour les combats (150 max, +1/3 min, payée seulement à la victoire, recharge à l'encre 3 fois par jour) ;
   événements : heure folle (bonus horaire), défi du jour, calendrier de connexion 7 jours, tournoi de la semaine
   (`js/donnees/evenements.js`, calendrier déterministe dans `js/moteur/evenements.js`).
 - Mise en ligne : GitHub Pages sur la branche `main` (https://romaindac.github.io/Crossover/), mise à jour automatique à chaque fusion.
 - Fait : Volume 4, 160 persos (40 par extension, 5 séries de 8 par extension). Nouvelles séries : Saint Seiya, Black Clover, Solo Leveling, Fullmetal Alchemist, Tokyo Ghoul, JoJo. Fiches dans `js/donnees/persos-v4.js`.
+- Fait : boucle de jeu. Première victoire d'une étape de campagne et étages de la Tour pas encore battus cette semaine : gratuits en énergie (`combatGratuit`).
+  Guide du débutant au QG (`js/donnees/guide.js`, 12 objectifs récompensés), lexique des ressources (bouton « ? » de la barre),
+  défi entre amis : le score au boss de la semaine voyage dans le lien de vitrine, plus un classement « Boss cette semaine ».
 - Fait : écran Social. Vitrine de 6 cartes partageable par lien (`#vitrine=…`, sans serveur) ; comptes pseudo + mot de passe, sauvegarde en ligne (auto toutes les 5 min) et classements Tour / Boss / Collection via Supabase (`js/services/enligne.js`, appels REST sans bibliothèque).
   Pour activer : coller `supabase/schema.sql` dans le SQL Editor de Supabase, désactiver « Confirm email », puis mettre l'URL du projet et la clé « anon public » dans `js/donnees/config-enligne.js`. Jamais la clé service_role.
 - À venir : retours de test et corrections, roguelite (V0.4), PvP (V0.5).
