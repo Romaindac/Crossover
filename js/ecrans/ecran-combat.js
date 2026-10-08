@@ -16,7 +16,7 @@ import { etageTour, arcDeLaSemaine } from "../donnees/tour.js";
 import { sceneAvantEtape, MOMENTS } from "../donnees/histoire.js";
 import { jouerScene } from "../ui/scene.js";
 import { annoncerTampons } from "../ui/toast.js";
-import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres, assezDEnergie, payerEnergie, coutEnergie, etatEnergie, rechargerEnergie, bonusDerniereVictoire, encre as encreJoueur } from "../services/partie.js";
+import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres, assezDEnergie, payerEnergie, combatGratuit, coutEnergie, etatEnergie, rechargerEnergie, bonusDerniereVictoire, encre as encreJoueur } from "../services/partie.js";
 import { afficherToast } from "../ui/toast.js";
 import { CHAPITRES, etapeDe, nombreEtoiles, ETOILE_VICTOIRE, ETOILE_SANS_KO, ETOILE_RAPIDE, SECONDES_RAPIDE } from "../donnees/campagne.js";
 import { ZONES, MULT_SOUS_ZONE, MULT_BOSS, CHANCE_DORE, BONUS_DORE } from "../donnees/zones.js";
@@ -50,7 +50,8 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
 
   // ---------- Energie : il en faut assez pour tenter le combat (payee a la victoire) ----------
   const modeEnergie = tour ? "tour" : campagne ? (campagne.deluxe ? "deluxe" : "campagne") : chasse ? "chasse" : "palier";
-  if (!assezDEnergie(modeEnergie)) {
+  const gratuit = combatGratuit({ campagne, tour });
+  if (!gratuit && !assezDEnergie(modeEnergie)) {
     afficherManqueEnergie();
     return;
   }
@@ -63,7 +64,7 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
         <div class="manque-energie__case" role="dialog" aria-labelledby="titre-energie">
           <h1 id="titre-energie" class="manque-energie__titre">Plus assez d'énergie</h1>
           <p class="manque-energie__jauge"><strong>${e.valeur}</strong> / ${e.max} d'énergie · ce combat en demande ${coutEnergie(modeEnergie)} (payée seulement si tu gagnes).</p>
-          <p class="case__aide">Elle remonte toute seule : +1 toutes les 3 minutes${minutes ? ` (prochain point dans ${minutes} min)` : ""}. Les missions du jour, les événements et le calendrier en donnent aussi.</p>
+          <p class="case__aide">Elle remonte toute seule : +1 toutes les 3 minutes${minutes ? ` (prochain point dans ${minutes} min)` : ""}. Les missions du jour, les événements et le calendrier en donnent aussi. En attendant, la première victoire d'une étape de campagne et les étages de la Tour pas encore battus cette semaine sont gratuits.</p>
           <p class="case__message" role="status">${message}</p>
           <div class="manque-energie__actions">
             <button type="button" class="bouton bouton--principal" data-action="recharger-energie" ${e.achatsRestants > 0 && encreJoueur() >= e.recharge.prix ? "" : "disabled"}>+${e.recharge.energie} énergie · ${e.recharge.prix} d'encre (${e.achatsRestants} restante${e.achatsRestants > 1 ? "s" : ""} aujourd'hui)</button>
@@ -702,9 +703,9 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
 
     // Energie payee a la victoire, et bonus de l'heure folle
     if (victoire) {
-      const cout = payerEnergie(modeEnergie);
+      const cout = gratuit ? 0 : payerEnergie(modeEnergie);
       const bonus = bonusDerniereVictoire();
-      const morceaux = [`Énergie −${cout}`];
+      const morceaux = [gratuit ? (tour ? "Nouvel étage : énergie offerte" : "Première victoire : énergie offerte") : `Énergie −${cout}`];
       if (bonus) {
         const gains = [bonus.encre && `+${bonus.encre} encre`, bonus.poussiere && `+${bonus.poussiere} poussière`, bonus.eclats && `+${bonus.eclats} éclats`, bonus.energie && `+${bonus.energie} énergie`, bonus.tickets && "+1 booster !"].filter(Boolean);
         if (gains.length) morceaux.push(`${bonus.nom} : ${gains.join(", ")}`);

@@ -63,7 +63,8 @@ export function vitrineDuLien(hash = location.hash) {
     return {
       pseudo: String(c.p ?? "Un joueur").slice(0, 20),
       cartes: (Array.isArray(c.c) ? c.c : []).filter((x) => PERSOS_PAR_ID[x?.id]).slice(0, TAILLE_VITRINE),
-      resume: c.s ?? {},
+      resume: Object.fromEntries(["collection", "etoiles", "tour", "raid", "boss_semaine", "semaine"]
+        .map((k) => [k, Math.max(0, Math.floor(Number(c.s?.[k]) || 0))])),
     };
   } catch {
     return null;

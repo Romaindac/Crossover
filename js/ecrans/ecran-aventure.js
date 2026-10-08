@@ -19,7 +19,7 @@ import {
 } from "../services/partie.js";
 import { reglage, changerReglage } from "../services/reglages.js";
 import { PALIERS_RAID, NIVEAU_BOSS_RAID } from "../donnees/raid.js";
-import { etageTour, estBoss, finDeSemaine, COFFRES_SEMAINE } from "../donnees/tour.js";
+import { etageTour, estBoss, finDeSemaine, COFFRES_SEMAINE, numeroSemaine } from "../donnees/tour.js";
 import { MOMENTS, ORDRE_MOMENTS } from "../donnees/histoire.js";
 import { jouerScene } from "../ui/scene.js";
 import { CHAPITRES, COFFRES, encreEtape, nombreEtoiles } from "../donnees/campagne.js";
@@ -37,6 +37,8 @@ const KANJI = { terrain: "修行", forteresse: "鉄壁", toits: "暗殺", domain
 const pourcent = (x) => `${String(Math.round(x * 1000) / 10).replace(".", ",")} %`;
 
 const ETOILE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.5 1.3 6.6L12 17.3l-5.9 3.2 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+
+const echapperTexte = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre = null, zoneId = null, index = 0, deluxe = false }) {
   const equipe = equipeSauvee();
@@ -251,7 +253,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
                 <ul class="etape__etoiles" aria-label="${nombreEtoiles(masque)} étoile${nombreEtoiles(masque) > 1 ? "s" : ""} sur 3">
                   ${[1, 2, 4].map((bit) => `<li class="${masque & bit ? "obtenue" : ""}">${ETOILE}</li>`).join("")}
                 </ul>
-                <p class="etape__gain">${battue ? `Rejouer : ${encreEtape(et, false)} d'encre` : `Première victoire : ${encreEtape(et, true)} d'encre`}</p>
+                <p class="etape__gain">${battue ? `Rejouer : ${encreEtape(et, false)} d'encre` : `Première victoire : ${encreEtape(et, true)} d'encre, sans dépenser d'énergie`}</p>
                 <p class="groupe__chances" data-chances-etape="${et.numero}"></p>
                 <button type="button" class="bouton ${estProchaine ? "bouton--principal" : "bouton--clair"} bouton--petit-texte" data-action="jouer-etape" data-numero="${et.numero}" ${equipeComplete ? "" : "disabled"}>${battue ? "Rejouer" : "Jouer"}</button>`
                 : `<p class="case__aide">Bats l'étape précédente pour l'ouvrir.</p>`}
@@ -397,7 +399,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
               <h3 class="groupe__nom">${prochain.nom}</h3>
               ${prochain.boss ? '<span class="badge-boss">Boss</span>' : ""}
             </div>
-            <p class="case__aide">Prochain étage, niveau ${prochain.niveau}${prochain.boss ? ", donne des fragments d'éveil" : ""}</p>
+            <p class="case__aide">Prochain étage, niveau ${prochain.niveau}${prochain.boss ? ", donne des fragments d'éveil" : ""}. Les étages pas encore battus cette semaine ne coûtent pas d'énergie.</p>
             <div class="mini-equipe">${prochain.equipe.map((id) => `<span class="mini-equipe__perso" title="${PERSOS_PAR_ID[id].nom}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}</div>
             <p class="groupe__chances" data-chances-tour></p>
             <button type="button" class="bouton bouton--principal bouton--petit-texte" data-action="tour-combat" data-etage="${t.prochain}" ${equipeComplete ? "" : "disabled"}>Combattre</button>
@@ -477,6 +479,12 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
           <div><span>Meilleur score cette semaine</span><strong>${nombreFr(r.meilleur)}</strong></div>
           <div><span>Ton record contre lui</span><strong>${nombreFr(r.record)}</strong></div>
         </div>
+        ${(() => {
+          const d = lire("defi-ami", null);
+          if (!d || d.semaine !== numeroSemaine() || !(d.score > 0)) return "";
+          const battu = r.meilleur > d.score;
+          return `<p class="defi-ami ${battu ? "defi-ami--battu" : ""}">Défi de <strong>${echapperTexte(d.pseudo)}</strong> : ${nombreFr(d.score)} dégâts. ${battu ? "Battu ! Envoie-lui ta vitrine depuis l'onglet Social pour le lui prouver." : `Il te manque ${nombreFr(d.score - r.meilleur)} dégâts.`}</p>`;
+        })()}
 
         <section class="raid__equipes">
           <h3 class="case__titre">Tes trois équipes</h3>

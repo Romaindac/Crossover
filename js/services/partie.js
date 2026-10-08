@@ -34,6 +34,7 @@ import {
   ENERGIE_MAX, MINUTES_PAR_ENERGIE, ENERGIE_PLAFOND, COUT_ENERGIE, RECHARGE_ENCRE, ENERGIE_BONUS_MISSIONS,
   DEFI_DU_JOUR, CALENDRIER, PALIERS_TOURNOI,
 } from "../donnees/evenements.js";
+import { GUIDE } from "../donnees/guide.js";
 import { heureFolle, serieDuDefi } from "../moteur/evenements.js";
 import { RANGS, saisonActuelle, pointsSaison, detailPointsSaison, rangDe, CADRES } from "../donnees/saisons.js";
 import { pieceParfaite, nomPiece } from "../moteur/equipement.js";
@@ -110,6 +111,7 @@ function valider(p) {
     raid: p.raid ?? null,
     liens: p.liens && typeof p.liens === "object" ? p.liens : {},
     tampons: Array.isArray(p.tampons) ? p.tampons : [],
+    guide: Array.isArray(p.guide) ? p.guide : [],
     tamponsNouveaux: Array.isArray(p.tamponsNouveaux) ? p.tamponsNouveaux : [],
     titre: p.titre ?? TITRE_DE_DEPART,
     tour: {
@@ -330,7 +332,7 @@ function ajouterCarte({ id, rarete, variante = null }) {
 
 // ---------- Boosters ----------
 
-// Les tickets gratuits arrivent avec le temps (un toutes les 15 min tant qu'on en a moins de 8)
+// Les tickets gratuits arrivent avec le temps (un toutes les 30 min, reserve de 16 : 8 h d'absence)
 function assurerTickets(maintenant = Date.now()) {
   const b = partie.boosters;
   const periode = MINUTES_BOOSTER_GRATUIT * 60000;
@@ -439,6 +441,15 @@ export function etatEnergie(maintenant = Date.now()) {
 export function coutEnergie(mode) {
   const base = COUT_ENERGIE[mode] ?? 0;
   return Math.ceil(base * (heureFolle().coutEnergie ?? 1));
+}
+
+// Gratuit : la premiere victoire d'une etape de campagne et les etages de la Tour
+// pas encore battus cette semaine. Progresser ne coute rien, seul le farm coute.
+export function combatGratuit({ campagne = null, tour = null } = {}) {
+  if (!partie) return false;
+  if (campagne && !campagne.deluxe) return !etapeBattue(campagne.chapitre, campagne.numero);
+  if (tour) return !assurerSemaine().etagesSemaine.includes(tour.etage);
+  return false;
 }
 
 export const assezDEnergie = (mode) => Boolean(partie) && assurerEnergie().valeur >= coutEnergie(mode);
@@ -752,7 +763,7 @@ export function quelqueChoseAReclamer() {
   const mission = missions.liste.some((m) => !m.reclamee && m.progres >= m.cible)
     || (!missions.bonusReclame && missions.liste.every((m) => m.reclamee));
   const expedition = etatExpedition();
-  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0;
+  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0 || Boolean(etatGuide()?.atteint);
 }
 
 // ---------- Equipement ----------
@@ -1779,9 +1790,12 @@ export function nouveautes() {
 
 // Les chiffres montres au classement et sur la vitrine
 export function resumeJoueur() {
-  if (!partie) return { collection: 0, etoiles: 0, tour: 0, raid: 0 };
+  if (!partie) return { collection: 0, etoiles: 0, tour: 0, raid: 0, boss_semaine: 0, semaine: numeroSemaine() };
   const progs = Object.values(partie.collection);
+  const r = partie.raid;
   return {
+    boss_semaine: r && r.semaine === numeroSemaine() ? r.meilleur : 0,
+    semaine: numeroSemaine(),
     collection: progs.length,
     etoiles: progs.reduce((s, p) => s + (p.etoiles ?? 0), 0),
     tour: partie.tour.record,
@@ -1798,4 +1812,47 @@ export function remplacerPartie(brut) {
   partie = nouvelle;
   sauver();
   return true;
+}
+
+// ---------- Guide du debutant ----------
+
+function objectifAtteint(si) {
+  const progs = Object.values(partie.collection);
+  const ev = assurerEvenements();
+  switch (si) {
+    case "etape1": return etapeBattue(1, 1);
+    case "booster": return (partie.stats.boosters ?? 0) >= 1;
+    case "niveau5": return progs.some((p) => p.niveau >= 5);
+    case "mission": return (partie.stats.missions ?? 0) >= 1;
+    case "chapitre1": return chapitreTermine(1);
+    case "chasse": return (partie.stats.victoiresChasse ?? 0) >= 1;
+    case "equiper": return partie.equipement.pieces.some((p) => p.porteur);
+    case "etoile2": return progs.some((p) => p.etoiles >= 2);
+    case "chapitre2": return chapitreTermine(2);
+    case "tour5": return partie.tour.record >= 5;
+    case "raid": return (partie.stats.raids ?? 0) >= 1;
+    case "chapitre3": return chapitreTermine(3);
+    case "calendrier": return ev.calendrier.case >= 0;
+    default: return false;
+  }
+}
+
+// Le premier objectif pas encore reclame (ou null quand le guide est fini)
+export function etatGuide() {
+  if (!partie) return null;
+  const i = GUIDE.findIndex((o) => !partie.guide.includes(o.id));
+  if (i < 0) return null;
+  return { objectif: GUIDE[i], numero: i + 1, total: GUIDE.length, atteint: objectifAtteint(GUIDE[i].si) };
+}
+
+export function reclamerGuide() {
+  const e = etatGuide();
+  if (!e?.atteint) return null;
+  const r = e.objectif.recompense;
+  partie.encre += r.encre ?? 0;
+  if (r.tickets) donnerTickets(r.tickets);
+  if (r.energie) donnerEnergie(r.energie);
+  partie.guide.push(e.objectif.id);
+  sauver();
+  return e.objectif;
 }

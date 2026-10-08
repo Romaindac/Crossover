@@ -12,6 +12,8 @@ create table if not exists public.joueurs (
   raid integer not null default 0,
   collection integer not null default 0,
   etoiles integer not null default 0,
+  boss_semaine integer not null default 0,
+  semaine integer not null default 0,
   vitrine jsonb not null default '[]'::jsonb,
   maj timestamptz not null default now()
 );
@@ -43,4 +45,9 @@ create policy "sauvegarde privee modification" on public.sauvegardes for update 
 
 create index if not exists joueurs_tour on public.joueurs (tour desc);
 create index if not exists joueurs_raid on public.joueurs (raid desc);
+-- Si la table existait deja avant le defi de la semaine
+alter table public.joueurs add column if not exists boss_semaine integer not null default 0;
+alter table public.joueurs add column if not exists semaine integer not null default 0;
+
+create index if not exists joueurs_semaine on public.joueurs (semaine, boss_semaine desc);
 create index if not exists joueurs_collection on public.joueurs (collection desc, etoiles desc);

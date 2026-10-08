@@ -7,6 +7,7 @@
 
 import { SUPABASE_URL, SUPABASE_CLE, enLigneDisponible } from "../donnees/config-enligne.js";
 import { lire, ecrire } from "./sauvegarde.js";
+import { numeroSemaine } from "../donnees/tour.js";
 
 export { enLigneDisponible };
 
@@ -124,11 +125,14 @@ export async function publierProfil(resume, vitrine) {
 }
 
 export const CLASSEMENTS = {
+  semaine: { nom: "Boss cette semaine", ordre: "boss_semaine.desc", semaine: true, valeur: (j) => `${j.boss_semaine.toLocaleString("fr-FR")} dégâts` },
   tour: { nom: "Tour", ordre: "tour.desc", valeur: (j) => `étage ${j.tour}` },
-  raid: { nom: "Boss de la semaine", ordre: "raid.desc", valeur: (j) => `${j.raid.toLocaleString("fr-FR")} dégâts` },
+  raid: { nom: "Record au boss", ordre: "raid.desc", valeur: (j) => `${j.raid.toLocaleString("fr-FR")} dégâts` },
   collection: { nom: "Collection", ordre: "collection.desc,etoiles.desc", valeur: (j) => `${j.collection} persos, ${j.etoiles} étoiles` },
 };
 
 export async function classement(cle, limite = 50) {
-  return appel(`/rest/v1/joueurs?select=pseudo,tour,raid,collection,etoiles,vitrine&order=${CLASSEMENTS[cle].ordre}&limit=${limite}`);
+  const c = CLASSEMENTS[cle];
+  const filtre = c.semaine ? `&semaine=eq.${numeroSemaine()}&boss_semaine=gt.0` : "";
+  return appel(`/rest/v1/joueurs?select=pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine&order=${c.ordre}${filtre}&limit=${limite}`);
 }
