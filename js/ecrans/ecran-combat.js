@@ -20,7 +20,7 @@ import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, rec
 import { CHAPITRES, etapeDe, nombreEtoiles, ETOILE_VICTOIRE, ETOILE_SANS_KO, ETOILE_RAPIDE, SECONDES_RAPIDE } from "../donnees/campagne.js";
 import { ZONES, MULT_SOUS_ZONE, MULT_BOSS, CHANCE_DORE, BONUS_DORE } from "../donnees/zones.js";
 import { nomPiece } from "../moteur/equipement.js";
-import { RARETES } from "../donnees/raretes.js";
+import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { iconeEffet } from "../ui/icones-effets.js";
@@ -691,7 +691,13 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
     }
 
     const miens = etat.equipes[0];
-    const meilleur = miens.reduce((a, b) => (b.bilan.inflige > a.bilan.inflige ? b : a));
+    // Une etiquette par meilleur dans chaque domaine : les tanks et les soigneurs comptent aussi
+    const premierPar = (champ) => {
+      const u = miens.reduce((a, b) => (b.bilan[champ] > a.bilan[champ] ? b : a));
+      return u.bilan[champ] > 0 ? u : null;
+    };
+    const etiquettes = [[premierPar("inflige"), "Bourreau"], [premierPar("encaisse"), "Mur"], [premierPar("soins"), "Soigneur"]];
+    const htmlEtiquettes = (u) => etiquettes.filter(([v]) => v === u).map(([, nom]) => ` <span class="etiquette-mvp">${nom}</span>`).join("");
     const restants = etat.equipes[1].filter((u) => u.pv > 0).length;
     const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
     const xpDe = (id) => recompenses.xp.find((x) => x.id === id);
@@ -727,16 +733,17 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
 
           <div class="defile">
             <table class="tableau-fin">
-              <thead><tr><th>Perso</th><th>État</th><th class="nombre">Dégâts</th><th class="nombre col-soins">Soins</th><th>XP</th></tr></thead>
+              <thead><tr><th>Perso</th><th>État</th><th class="nombre">Dégâts</th><th class="nombre col-soins">Encaissé</th><th class="nombre col-soins">Soins</th><th>XP</th></tr></thead>
               <tbody>
                 ${miens.map((u) => {
                   const x = xpDe(u.id);
                   const monte = x && x.niveauApres > x.niveauAvant;
                   return `
                   <tr class="${u.pv <= 0 ? "ko" : ""}">
-                    <td><strong>${u.nom}</strong>${u === meilleur ? ' <span class="etiquette-mvp">Meilleur</span>' : ""}</td>
+                    <td><strong>${u.nom}</strong>${htmlEtiquettes(u)}</td>
                     <td>${u.pv <= 0 ? "KO" : `${Math.round((u.pv / u.pvMax) * 100)} %`}</td>
                     <td class="nombre">${nombre(u.bilan.inflige)}</td>
+                    <td class="nombre col-soins">${nombre(u.bilan.encaisse)}</td>
                     <td class="nombre col-soins">${nombre(u.bilan.soins)}</td>
                     <td>${x && x.gain ? `+${x.gain}` : "Max"}${monte ? ` <span class="montee">Niv. ${x.niveauAvant} → ${x.niveauApres}</span>` : ""}</td>
                   </tr>`;
@@ -765,6 +772,21 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
 
   function htmlButin(liste) {
     return liste.map((p) => `<span class="obi-rarete obi-rarete--${p.rarete} obi-rarete--pastille">${p.nom}</span>`).join(" ");
+  }
+
+  // Bilan d'une boucle : du plus rare au plus commun, les memes objets regroupes (x3)
+  function htmlButinGroupe(liste) {
+    const resume = [];
+    const pastilles = [];
+    for (const r of ORDRE_RARETES) {
+      const objets = liste.filter((p) => p.rarete === r);
+      if (!objets.length) continue;
+      resume.push(`${objets.length} ${RARETES[r].nom}${objets.length > 1 ? "s" : ""}`);
+      const parNom = new Map();
+      for (const p of objets) parNom.set(p.nom, (parNom.get(p.nom) ?? 0) + 1);
+      for (const [nom, n] of parNom) pastilles.push(`<span class="obi-rarete obi-rarete--${r} obi-rarete--pastille">${nom}${n > 1 ? ` x${n}` : ""}</span>`);
+    }
+    return `<strong>${resume.join(", ")}</strong> ${pastilles.join(" ")}`;
   }
 
   async function finChasse(victoire, r) {
@@ -821,14 +843,12 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
   }
 
   function afficherBilanBoucle(suite, derniereVictoire, zone, zoneDebloquee = null) {
-    const parRarete = {};
-    for (const p of suite.butin) parRarete[p.rarete] = (parRarete[p.rarete] ?? 0) + 1;
     $("#fin").innerHTML = `
       <div class="voile">
         <div class="resultat resultat--combat" role="dialog" aria-modal="true" aria-labelledby="titre-fin">
           <h2 class="resultat__titre resultat__titre--${derniereVictoire ? "victoire" : "defaite"}" id="titre-fin">Fin de la boucle</h2>
           <p class="resultat__detail">${suite.fait} combat${suite.fait > 1 ? "s" : ""} joué${suite.fait > 1 ? "s" : ""} en ${zone.nom}, ${suite.victoires} victoire${suite.victoires > 1 ? "s" : ""}${derniereVictoire ? "" : " : arrêt après une défaite"}.</p>
-          <p class="gains__butin">${suite.butin.length ? `${suite.butin.length} objet${suite.butin.length > 1 ? "s" : ""} : ${htmlButin(suite.butin)}` : "Aucun objet trouvé pendant cette boucle."}</p>
+          <p class="gains__butin">${suite.butin.length ? `${suite.butin.length} objet${suite.butin.length > 1 ? "s" : ""} : ${htmlButinGroupe(suite.butin)}` : "Aucun objet trouvé pendant cette boucle."}</p>
           <p class="resultat__note">+${suite.eclats} éclats d'encre au total.</p>
           ${zoneDebloquee ? `<p class="gains__deblocage">Nouvelle zone ouverte : ${ZONES[zoneDebloquee - 1].nom}</p>` : ""}
           <div class="resultat__actions">

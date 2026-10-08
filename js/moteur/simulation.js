@@ -59,7 +59,7 @@ function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
     effets: [],
     immuniteEtourdiJusqua: 0,
     compteurs: { kos: 0, infiniPret: 0, concentration: 0 },
-    bilan: { inflige: 0, recu: 0, soins: 0 },
+    bilan: { inflige: 0, recu: 0, encaisse: 0, soins: 0 },
   };
 }
 

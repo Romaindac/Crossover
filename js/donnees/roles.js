@@ -11,6 +11,15 @@ export const ROLES = {
   controle:  { nom: "Contrôle",  pv: 1700, atq: 100, def: 35, vit: 110, crit: 0.10 },
 };
 
+// Ce que fait chaque role en combat, en une phrase (affiche dans la fiche du perso)
+export const REGLES_ROLES = {
+  tank: "Encaisse en ligne avant. Les attaques de base ennemies frappent d'abord la ligne avant en face d'elles.",
+  attaquant: "Frappe la ligne avant ennemie en face de lui. À placer devant ou derrière selon sa solidité.",
+  assassin: "Frappe directement la ligne arrière ennemie en face de lui. Fragile : à garder en ligne arrière.",
+  soutien: "Soigne et protège ses alliés. À l'abri en ligne arrière, seuls les assassins l'atteignent vite.",
+  controle: "Étourdit, ralentit et affaiblit l'adversaire. Frappe la ligne avant ennemie en face de lui.",
+};
+
 export const AFFINITES = {
   puissance: "Puissance",
   technique: "Technique",

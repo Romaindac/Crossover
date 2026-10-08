@@ -4,7 +4,7 @@
 // passif et ultime. Utilisee par l'equipe et la collection.
 // ==========================================================
 
-import { ROLES, AFFINITES, DOMINE } from "../donnees/roles.js";
+import { ROLES, AFFINITES, DOMINE, REGLES_ROLES } from "../donnees/roles.js";
 import { ETOILES_MAX, xpPourNiveau, doublonsPourEtoile } from "../donnees/progression.js";
 import { EVEILS, TALENTS, CHIFFRES_ROMAINS, niveauMaxDe, COUT_CHANGER_TALENT } from "../donnees/eveil.js";
 import { ressources, eclats } from "../services/partie.js";
@@ -39,6 +39,7 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
         <p class="detail__serie">${perso.serie}</p>
         <h2 class="detail__nom">${perso.nom}</h2>
         <p class="detail__role">${iconeRole(perso.role)} ${ROLES[perso.role].nom}</p>
+        <p class="detail__aide">${REGLES_ROLES[perso.role]}</p>
         <p class="detail__affinite"><span class="pastille"></span>${AFFINITES[perso.affinite]}</p>
         <p class="detail__aide">${texteAffinite(perso.affinite)}</p>
       </div>

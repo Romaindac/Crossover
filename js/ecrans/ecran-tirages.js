@@ -13,14 +13,26 @@ import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { annoncerTampons } from "../ui/toast.js";
 import { verifierTampons } from "../services/partie.js";
+import { serieDeLaSemaine } from "../donnees/hebdo.js";
+import { finDeSemaine } from "../donnees/tour.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const ONOMATOPEES_LEGENDAIRE = ["ゴゴゴ", "ドドド", "ズドン"];
 
+// Chance d'un perso precis par tirage (hors garanties) : la serie a l'honneur compte double dans sa rarete
+function chancePerso(perso, serie) {
+  const liste = PERSOS.filter((p) => p.rarete === perso.rarete);
+  const poids = (p) => (p.serie === serie ? 2 : 1);
+  return RARETES[perso.rarete].taux * poids(perso) / liste.reduce((t, p) => t + poids(p), 0);
+}
+const pourcent = (x) => `${(x * 100).toFixed(1).replace(".", ",")} %`;
+
 export function afficherTirages(conteneur, { naviguer }) {
   const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let revelationEnCours = null; // { tomes, resultats, passer }
+  const serie = serieDeLaSemaine();
+  const joursRestants = Math.max(0, Math.floor((finDeSemaine() - Date.now()) / 86400000));
 
   conteneur.innerHTML = `
     ${htmlNavigation("tirages")}
@@ -38,6 +50,7 @@ export function afficherTirages(conteneur, { naviguer }) {
 
         <div class="etal__contenu">
           <p class="etal__texte">Chaque tome cache un perso. Regarde bien l'obi : sa couleur annonce la rareté avant que la couverture ne se retourne.</p>
+          <p class="etal__honneur"><strong>À l'honneur cette semaine : ${serie}.</strong> Ses persos ont deux fois plus de chances de sortir dans leur rareté. Encore ${joursRestants} jour${joursRestants > 1 ? "s" : ""}.</p>
           <div class="etal__boutons">
             <button type="button" class="bouton bouton--clair bouton-tirage" data-action="tirer" data-nombre="1">
               1 tome <span class="bouton-tirage__prix">${coutTirage(1)} d'encre</span>
@@ -62,11 +75,11 @@ export function afficherTirages(conteneur, { naviguer }) {
                   <tr>
                     <td><span class="obi-rarete obi-rarete--${r} obi-rarete--pastille">${RARETES[r].nom}</span></td>
                     <td class="nombre">${Math.round(RARETES[r].taux * 100)} %</td>
-                    <td>${PERSOS.filter((p) => p.rarete === r).map((p) => p.nom).join(", ")}</td>
+                    <td>${PERSOS.filter((p) => p.rarete === r).map((p) => `<span class="${p.serie === serie ? "taux__honneur" : ""}">${p.nom} (${pourcent(chancePerso(p, serie))})</span>`).join(", ")}</td>
                   </tr>`).join("")}
               </tbody>
             </table>
-            <p>Dans chaque tirage de 10 tomes, au moins un perso Rare ou mieux. Un Légendaire est garanti au ${PITIE_LEGENDAIRE}e tirage sans Légendaire. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en encre.</p>
+            <p>Entre parenthèses, la chance de chaque perso par tome ; en gras, la série à l'honneur. Dans chaque tirage de 10 tomes, au moins un perso Rare ou mieux. Un Légendaire est garanti au ${PITIE_LEGENDAIRE}e tirage sans Légendaire. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en encre.</p>
           </details>
         </div>
       </section>

@@ -176,6 +176,7 @@ function retirerPv(cible, montant) {
 // Ce qui se passe apres une perte de PV : energie, passifs, KO
 function apresPerte(etat, cible, source, resultat) {
   cible.bilan.recu += resultat.perte;
+  cible.bilan.encaisse += resultat.perte + (resultat.absorbe ?? 0);   // y compris ce que le bouclier a pris
   if (source) source.bilan.inflige += resultat.perte;
 
   if (resultat.survie) {

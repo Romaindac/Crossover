@@ -92,6 +92,7 @@ app.innerHTML = `
         <button class="bouton bouton--principal" type="button" id="lancer">Lancer le combat</button>
         <button class="bouton bouton--obi" type="button" id="serie">500 combats contre ce palier</button>
         <button class="bouton bouton--obi" type="button" id="tournoi">Tournoi d'équilibrage</button>
+        <button class="bouton bouton--clair" type="button" id="tournoi-hasard">Tournoi, placement au hasard</button>
         <button class="bouton bouton--obi" type="button" id="economie">Simuler l'économie</button>
         <button class="bouton bouton--obi" type="button" id="quotidien">Simuler 2 semaines</button>
         <button class="bouton bouton--obi" type="button" id="v03">Simuler la V0.3 (30 jours)</button>
@@ -317,19 +318,34 @@ app.querySelector("#serie").addEventListener("click", async () => {
   `;
 });
 
-app.querySelector("#tournoi").addEventListener("click", async () => {
-  const total = 3000;
+// Tournoi d'equilibrage. Par defaut, les equipes sont rangees comme un joueur le ferait
+// (tanks et attaquants devant, assassins derriere) : sinon les assassins se retrouvent
+// souvent devant, meurent vite, et le desequilibre des roles ne se voit plus.
+async function tournoi({ realiste }) {
+  const total = realiste ? 6000 : 3000;
   const hasard = creerHasard(2026);
   const ids = PERSOS.map((p) => p.id);
   const stats = Object.fromEntries(ids.map((id) => [id, { matchs: 0, victoires: 0, degats: 0, soins: 0 }]));
   let duree = 0;
-
-  const tirerEquipe = (reserve) => Array.from({ length: 5 }, () => reserve.splice(Math.floor(hasard.nombre() * reserve.length), 1)[0]);
+  const ordreDevant = ["tank", "attaquant", "controle", "soutien", "assassin"];
+  const ranger = (equipe) => {
+    const avant = [...equipe].sort((a, b) => ordreDevant.indexOf(PERSOS_PAR_ID[a].role) - ordreDevant.indexOf(PERSOS_PAR_ID[b].role)).slice(0, 2);
+    return [...avant, ...equipe.filter((i) => !avant.includes(i))];
+  };
+  const tirerEquipe = (reserve) => {
+    const equipe = Array.from({ length: 5 }, () => reserve.splice(Math.floor(hasard.nombre() * reserve.length), 1)[0]);
+    return realiste ? ranger(equipe) : equipe;
+  };
+  const niveau = realiste ? 30 : 1;
 
   await enBoucle(total, (i) => {
     const reserve = [...ids];
-    // Tournoi a egalite : niveau 1, sans bonus de rarete, pour comparer les persos entre eux
-    const r = simulerCombat({ equipeA: tirerEquipe(reserve), equipeB: tirerEquipe(reserve), avecRarete: false, graine: i + 1, journal: false });
+    // Tournoi a egalite : sans bonus de rarete, pour comparer les kits entre eux
+    const r = simulerCombat({
+      equipeA: tirerEquipe(reserve).map((id) => ({ id, niveau })),
+      equipeB: tirerEquipe(reserve).map((id) => ({ id, niveau })),
+      avecRarete: false, graine: i + 1, journal: false,
+    });
     duree += r.duree;
     for (const u of r.unites) {
       const s = stats[u.id];
@@ -343,10 +359,17 @@ app.querySelector("#tournoi").addEventListener("click", async () => {
   const lignes = ids
     .map((id) => ({ perso: PERSOS_PAR_ID[id], ...stats[id], taux: stats[id].victoires / Math.max(1, stats[id].matchs) }))
     .sort((a, b) => b.taux - a.taux);
+  const parRole = Object.keys(ROLES).map((r) => {
+    const l = lignes.filter((x) => x.perso.role === r);
+    return { nom: ROLES[r].nom, taux: l.reduce((t, x) => t + x.taux, 0) / Math.max(1, l.length) };
+  }).sort((a, b) => b.taux - a.taux);
 
   zoneResultats.innerHTML = `
-    <h2>Tournoi d'équilibrage : 3 000 combats entre équipes tirées au hasard</h2>
-    <p class="resultat-detail">Durée moyenne d'un combat : ${secondes(duree / total)}. Les persos sont comparés à égalité (niveau 1, sans bonus de rareté). Un perso bien équilibré gagne autour de 50 % de ses combats. Le hasard fait varier chaque résultat d'environ 2 points.</p>
+    <h2>Tournoi d'équilibrage : ${nombre(total)} combats entre équipes tirées au hasard${realiste ? ", rangées comme un joueur" : ", placées au hasard"}</h2>
+    <p class="resultat-detail">Durée moyenne d'un combat : ${secondes(duree / total)}. Les persos sont comparés à égalité (niveau ${niveau}, sans bonus de rareté). ${realiste
+      ? "Chaque équipe est rangée comme dans le jeu : tanks et attaquants devant, assassins derrière."
+      : "Les places sont tirées au hasard : ce mode cache le poids des rôles, il sert seulement à tester la robustesse au placement."} Un perso bien équilibré gagne autour de 50 % de ses combats. Le hasard fait varier chaque résultat d'environ 2 points.</p>
+    <p class="resultat-detail">Par rôle : ${parRole.map((r) => `${r.nom} ${pourcent(r.taux)}`).join(", ")}.</p>
     <div class="defile">
       <table>
         <thead>
@@ -371,7 +394,10 @@ app.querySelector("#tournoi").addEventListener("click", async () => {
       </table>
     </div>
   `;
-});
+}
+
+app.querySelector("#tournoi").addEventListener("click", () => tournoi({ realiste: true }));
+app.querySelector("#tournoi-hasard").addEventListener("click", () => tournoi({ realiste: false }));
 
 // ---------- Simulateur d'economie : 20 joueurs virtuels ----------
 

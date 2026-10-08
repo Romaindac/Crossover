@@ -12,6 +12,7 @@ import { encreCombat } from "../donnees/progression.js";
 import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import { composerEquipe } from "../moteur/composition.js";
+import { cibleAvant, cibleArriere } from "../moteur/regles.js";
 import {
   possede, progressionDe, idsPossedes, equipeSauvee, palierSauve,
   definirEquipe, definirPalier, palierMaxDebloque, estBattu, entreeCombat, equiperMeilleur, equiperMeilleurEquipe, prochaineEtape,
@@ -112,8 +113,28 @@ export function afficherEquipe(conteneur, { naviguer }) {
       </span>`).join("");
   }
 
+  // Qui frappe qui au debut du prochain combat (attaques de base, sans Provocation) :
+  // les ennemis en face visent la ligne avant, leurs assassins la ligne arriere.
+  function visesParPlace() {
+    const et = prochaineEtape();
+    const miens = equipe.map((id, place) => (id ? { place } : null)).filter(Boolean);
+    const vises = [[], [], [], [], []];
+    if (!miens.length) return vises;
+    et.equipe.forEach((id, place) => {
+      const ennemi = PERSOS_PAR_ID[id];
+      if (!ennemi) return;
+      const cible = ennemi.role === "assassin" ? cibleArriere({ place }, miens) : cibleAvant({ place }, miens);
+      if (cible) vises[cible.place].push(ennemi.nom);
+    });
+    return vises;
+  }
+
   function rendreFormation() {
     rendreEquipesEnregistrees();
+    const vises = visesParPlace();
+    const htmlVise = (i) => (vises[i].length
+      ? `<span class="place__vise${vises[i].length >= 3 ? " place__vise--danger" : ""}" title="Visé au début du prochain combat par : ${vises[i].join(", ")}">Visé par ${vises[i].length}</span>`
+      : "");
     const place = (i) => {
       const id = equipe[i];
       const choisie = placeChoisie === i ? " place--choisie" : "";
@@ -132,17 +153,18 @@ export function afficherEquipe(conteneur, { naviguer }) {
           <span class="place__infos">
             <span class="place__perso">${perso.nom}</span>
             <span class="place__nom">Niv. ${prog.niveau}</span>
+            ${htmlVise(i)}
           </span>
         </button>`;
     };
 
     $("#formation").innerHTML = `
       <div class="ligne">
-        <span class="ligne__nom">Ligne avant</span>
+        <span class="ligne__nom" title="Les ennemis frappent d'abord le perso de la ligne avant en face d'eux">Ligne avant</span>
         <div class="ligne__places">${place(0)}${place(1)}</div>
       </div>
       <div class="ligne">
-        <span class="ligne__nom">Ligne arrière</span>
+        <span class="ligne__nom" title="Seuls les assassins ennemis (et certains ultimes) atteignent la ligne arrière">Ligne arrière</span>
         <div class="ligne__places">${place(2)}${place(3)}${place(4)}</div>
       </div>
     `;

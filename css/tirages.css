@@ -93,6 +93,19 @@
   color: var(--encre-douce);
 }
 
+/* La serie a l'honneur : un bandeau or, comme l'obi d'une edition speciale */
+.etal__honneur {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--obi);
+  background: color-mix(in srgb, var(--obi) 14%, transparent);
+  color: var(--encre);
+}
+
+.taux__honneur {
+  font-weight: 700;
+}
+
 .etal__boutons {
   display: flex;
   flex-wrap: wrap;

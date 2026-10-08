@@ -407,6 +407,23 @@
   color: var(--encre-douce);
 }
 
+/* « Visé par 3 » : combien d'ennemis frappent cette place au debut du prochain combat */
+.place__vise {
+  display: inline-block;
+  margin-top: 0.15rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--encre);
+  background: color-mix(in srgb, var(--obi) 35%, transparent);
+}
+
+.place__vise--danger {
+  color: var(--papier, #fff);
+  background: var(--sceau);
+}
+
 .formation__message {
   min-height: 1.5em;
   font-weight: 700;
