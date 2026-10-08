@@ -33,6 +33,7 @@ Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 - `js/ui/` : composants d'affichage partagés (cartes, fiche, équipement, scènes, décors, navigation).
 - `js/ecrans/` : un fichier par écran (accueil, qg, aventure, equipe, combat, tirages, collection, reglages...).
 - `css/premium.css` : la couche de finition « manga premium » ; `css/series.css` puis `css/cadres.css` (cadre métallisé par manga, médaillon de série) sont chargés après.
+  `css/finition.css` (chargé en dernier) : comptoir et vitrine des boosters, dos de carte et révélation, cartes manquantes et en-têtes de série de la Collection, cartes d'objet (`htmlPieceCarte`, `htmlTuilePiece` dans `js/ui/equipement-ui.js`). `htmlCarteStatique` (cartes.js) : la carte premium sans bouton.
 
 ## Direction artistique (manga premium)
 

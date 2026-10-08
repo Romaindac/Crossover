@@ -11,6 +11,7 @@ import { PANOPLIES } from "../donnees/panoplies.js";
 import { ZONES } from "../donnees/zones.js";
 import { objetDe, nomPiece, valeurLigne, comptesPanoplies, qualiteJet, ligneParfaite, pieceParfaite } from "../moteur/equipement.js";
 import { inventaire, piecesDe, equiperPiece, retirerPiece, peutPorter, progressionDe } from "../services/partie.js";
+import { htmlPortrait } from "./cartes.js";
 
 const ICONES = {
   arme: '<path d="M14 4h6v6l-9 9-6-6z"/><path d="M4 20l3-3"/>',
@@ -21,6 +22,42 @@ const ICONES = {
 
 export function iconeEmplacement(emplacement) {
   return `<svg class="icone-emplacement" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONES[emplacement]}</svg>`;
+}
+
+// La tuile d'un objet : grande icone sur un fond a la couleur de la rarete
+export function htmlTuilePiece(p, { niveau = p.niveau ?? 0 } = {}) {
+  return `
+    <span class="tuile-piece tuile-piece--${p.rarete}" aria-hidden="true">
+      <span class="tuile-piece__rayons"></span>
+      ${iconeEmplacement(p.emplacement)}
+      ${niveau ? `<span class="tuile-piece__niveau">+${niveau}</span>` : ""}
+    </span>`;
+}
+
+// Une carte d'objet (inventaire, hotel des ventes). options :
+// action / id (attributs de clic), prix, sousTexte, porteur (id de perso), verrou, parfaite
+export function htmlPieceCarte(p, { attributs = "", prix = null, sousTexte = "", porteur = null, verrou = false, parfaite = false, nom = null } = {}) {
+  const o = objetDe(p);
+  return `
+    <button type="button" class="carte-piece carte-piece--${p.rarete} ${parfaite ? "carte-piece--parfaite" : ""}" ${attributs}>
+      <span class="carte-piece__visuel">
+        ${htmlTuilePiece(p)}
+        ${verrou ? '<span class="carte-piece__verrou" title="Protégé"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2h1.5v11h-13V10zm2 0h6V8a3 3 0 00-6 0z" fill="currentColor"/></svg></span>' : ""}
+        ${parfaite ? '<span class="carte-piece__parfait" title="Objet parfait">完璧</span>' : ""}
+        ${porteur && PERSOS_PAR_ID[porteur] ? `<span class="carte-piece__porteur" title="Porté par ${PERSOS_PAR_ID[porteur].nom}">${htmlPortrait(PERSOS_PAR_ID[porteur])}</span>` : ""}
+      </span>
+      <span class="carte-piece__corps">
+        <span class="carte-piece__nom">${nom ?? nomPiece(p)}</span>
+        <span class="carte-piece__stat">${ligneTexte(p, p.lignes[0])}${p.lignes.length > 1 ? ` <em>+${p.lignes.length - 1} ligne${p.lignes.length > 2 ? "s" : ""}</em>` : ""}</span>
+        <span class="carte-piece__bas">
+          <span class="carte-piece__rarete">${RARETES[p.rarete]?.nom ?? ""}</span>
+          <span class="carte-piece__niv">niv. ${o?.niveau ?? "?"}</span>
+        </span>
+        ${o?.panoplie ? `<span class="carte-piece__panoplie">${PANOPLIES[o.panoplie].nom}</span>` : ""}
+        ${prix !== null ? `<span class="carte-piece__prix"><span class="compteur-encre__goutte" aria-hidden="true"></span>${Math.round(prix).toLocaleString("fr-FR")}</span>` : ""}
+        ${sousTexte ? `<span class="carte-piece__sous">${sousTexte}</span>` : ""}
+      </span>
+    </button>`;
 }
 
 // "+12" ou "+3,5 %"
@@ -87,13 +124,18 @@ export function htmlDetailsPiece(piece, { comparaison = null, objet = null } = {
   const qualite = piece ? Math.round(qualiteJet(piece) * 100) : null;
 
   return `
-    <div class="piece-details ${piece && pieceParfaite(piece) ? "piece-details--parfaite" : ""}">
-      <p class="piece-details__nom">${o.nom}${piece?.niveau ? ` <span>+${piece.niveau}</span>` : ""}${piece && pieceParfaite(piece) ? ' <span class="tampon-parfait" title="Objet parfait">完璧</span>' : ""}</p>
-      <p class="piece-details__meta">
-        <span class="obi-rarete obi-rarete--${o.rarete} obi-rarete--pastille">${RARETES[o.rarete].nom}</span>
-        <span>${EMPLACEMENTS[o.emplacement].nom}, niveau ${o.niveau}</span>
-        ${o.panoplie ? `<span>Panoplie ${PANOPLIES[o.panoplie].nom}</span>` : ""}
-      </p>
+    <div class="piece-details piece-details--${o.rarete} ${piece && pieceParfaite(piece) ? "piece-details--parfaite" : ""}">
+      <div class="piece-details__tete">
+        ${htmlTuilePiece({ rarete: o.rarete, emplacement: o.emplacement }, { niveau: piece?.niveau ?? 0 })}
+        <div>
+          <p class="piece-details__nom">${o.nom}${piece?.niveau ? ` <span>+${piece.niveau}</span>` : ""}${piece && pieceParfaite(piece) ? ' <span class="tampon-parfait" title="Objet parfait">完璧</span>' : ""}</p>
+          <p class="piece-details__meta">
+            <span class="obi-rarete obi-rarete--${o.rarete} obi-rarete--pastille">${RARETES[o.rarete].nom}</span>
+            <span>${EMPLACEMENTS[o.emplacement].nom}, niveau ${o.niveau}</span>
+            ${o.panoplie ? `<span>Panoplie ${PANOPLIES[o.panoplie].nom}</span>` : ""}
+          </p>
+        </div>
+      </div>
       <ul class="piece-details__stats">
         ${lignes.map((l, k) => {
           let diff = "";

@@ -20,7 +20,7 @@ import {
   verifierTampons,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
+import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { htmlSachet } from "../ui/sachet.js";
 import { annoncerTampons } from "../ui/toast.js";
@@ -72,11 +72,27 @@ export function afficherTirages(conteneur, { naviguer }) {
     const prochain = b.stockPlein
       ? `Réserve de tickets gratuits pleine (${STOCK_GRATUIT_MAX}) : ouvre-les !`
       : `Prochain ticket gratuit dans ${duree(b.prochainGratuit - Date.now())}.`;
+    const pitie = (PITIE_BOOSTER - b.avantLegendaire) / PITIE_BOOSTER;
     $("#reserve").innerHTML = `
-      <div class="reserve__case"><span class="reserve__chiffre">${b.tickets}${b.dores ? ` + ${b.dores} doré${b.dores > 1 ? "s" : ""}` : ""}</span><span class="reserve__nom">ticket${b.tickets > 1 ? "s" : ""} de booster</span></div>
-      <div class="reserve__case"><span class="reserve__chiffre">${nombre(encre())}</span><span class="reserve__nom">encre (${nombre(b.prix)} le booster)</span></div>
-      <div class="reserve__case"><span class="reserve__chiffre">${nombre(b.poussiere)}</span><span class="reserve__nom">poussière pour l'atelier</span></div>
-      <p class="reserve__aide">${prochain} Un Légendaire est garanti dans <strong>${b.avantLegendaire}</strong> booster${b.avantLegendaire > 1 ? "s" : ""} au plus. Des tickets se gagnent aussi en finissant un chapitre de campagne et avec le bonus des missions du jour ; l'encre se gagne en combattant.</p>
+      <div class="comptoir">
+        <div class="comptoir__case comptoir__case--tickets">
+          <span class="comptoir__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h18v3a2 2 0 000 4v3H3v-3a2 2 0 000-4z" fill="currentColor"/></svg></span>
+          <span><span class="comptoir__chiffre">${b.tickets}${b.dores ? `<em> + ${b.dores} doré${b.dores > 1 ? "s" : ""}</em>` : ""}</span><span class="comptoir__nom">ticket${b.tickets > 1 ? "s" : ""} gratuit${b.tickets > 1 ? "s" : ""}</span></span>
+        </div>
+        <div class="comptoir__case">
+          <span class="comptoir__icone comptoir__icone--encre" aria-hidden="true"><span class="compteur-encre__goutte"></span></span>
+          <span><span class="comptoir__chiffre">${nombre(encre())}</span><span class="comptoir__nom">encre · ${nombre(b.prix)} le booster</span></span>
+        </div>
+        <div class="comptoir__case">
+          <span class="comptoir__icone comptoir__icone--poussiere" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l2.2 6.8L21 11l-6.8 2.2L12 20l-2.2-6.8L3 11l6.8-2.2z" fill="currentColor"/></svg></span>
+          <span><span class="comptoir__chiffre">${nombre(b.poussiere)}</span><span class="comptoir__nom">poussière d'atelier</span></span>
+        </div>
+        <div class="comptoir__pitie">
+          <span class="comptoir__nom">Légendaire garanti dans <strong>${b.avantLegendaire}</strong> booster${b.avantLegendaire > 1 ? "s" : ""}</span>
+          <span class="comptoir__jauge"><span style="--v: ${pitie}"></span></span>
+        </div>
+      </div>
+      <p class="reserve__aide">${prochain} Les chapitres de campagne et les missions du jour donnent aussi des tickets.</p>
       <p class="etal__honneur"><strong>À l'honneur cette semaine : ${serie}.</strong> Ses persos ont deux fois plus de chances de sortir dans leur rareté.</p>`;
   }
 
@@ -89,7 +105,7 @@ export function afficherTirages(conteneur, { naviguer }) {
     const payer = b.dores > 0 ? "Ouvrir · booster doré !" : b.tickets > 0 ? "Ouvrir · 1 ticket" : `Ouvrir · ${nombre(b.prix)} d'encre`;
     const peutOuvrir = b.dores > 0 || b.tickets > 0 || encre() >= b.prix;
     return `
-      <article class="booster">
+      <article class="booster" style="--p1: ${edition.couleurs[0]}; --p3: ${edition.couleurs[2]}">
         <button type="button" class="booster__bouton-sachet" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}
           aria-label="Ouvrir un booster ${edition.nom} (${b.tickets > 0 ? "1 ticket" : `${nombre(b.prix)} d'encre`})">
           ${htmlSachet(edition)}
@@ -125,7 +141,7 @@ export function afficherTirages(conteneur, { naviguer }) {
 
   function rendreBoutique() {
     $("#vue-boosters").innerHTML = `
-      <div class="boosters__grille">${EDITIONS.map(htmlBooster).join("")}</div>
+      <div class="vitrine-boosters"><div class="boosters__grille">${EDITIONS.map(htmlBooster).join("")}</div></div>
       ${htmlTaux()}`;
   }
 
@@ -183,18 +199,18 @@ export function afficherTirages(conteneur, { naviguer }) {
   function htmlCarteRevelee(c, index) {
     const perso = PERSOS_PAR_ID[c.id];
     return `
-      <button type="button" class="tome tome--${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}" data-action="reveler" data-index="${index}"
-        aria-label="Carte ${index + 1}, à révéler" style="--i: ${index}">
+      <button type="button" class="tome tome--carte tome--${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}" data-action="reveler" data-index="${index}"
+        aria-label="Carte ${index + 1}, à révéler" style="--i: ${index}; --p1: ${revelation.edition.couleurs[0]}; --p2: ${revelation.edition.couleurs[1]}; --p3: ${revelation.edition.couleurs[2]}">
+        <span class="tome__halo" aria-hidden="true"></span>
         <span class="tome__interieur">
           <span class="tome__face tome__face--dos">
-            <span class="tome__logo">Crossover</span>
+            <span class="dos-carte__rayons" aria-hidden="true"></span>
+            <span class="dos-carte__cadre" aria-hidden="true"></span>
+            <span class="dos-carte__embleme"><span class="dos-carte__logo">Crossover</span><span class="dos-carte__edition">Édition ${revelation.edition.numero}</span></span>
             <span class="tome__obi"><span class="tome__obi-texte">${RARETES[c.rarete].nom}</span></span>
           </span>
-          <span class="tome__face tome__face--avant" data-motif="${motifSerie(perso.serie)}" style="${varsSerie(perso.serie)}">
-            ${htmlPortrait(perso)}
-            <span class="serie-bande" aria-hidden="true"></span>
-            <span class="tome__titre">${perso.nom}</span>
-            <span class="obi-rarete obi-rarete--${c.rarete}">${RARETES[c.rarete].nom}</span>
+          <span class="tome__face tome__face--avant">
+            ${htmlCarteStatique(perso, { progression: { ...progressionDe(c.id), variantes: c.variante ? [c.variante] : [] } })}
             ${c.nouveau ? '<span class="tampon">Nouveau</span>' : ""}
             ${c.variante ? `<span class="badge-variante badge-variante--${c.variante} tome__variante">${c.variante === "doree" ? "Dorée" : "Holo"}</span>` : ""}
           </span>
