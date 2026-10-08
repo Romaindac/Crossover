@@ -17,7 +17,7 @@ export function afficherDebut(conteneur, { naviguer }) {
     <main class="debut">
       <button type="button" class="lien-retour" data-action="accueil">Retour à l'accueil</button>
       <h1 class="debut__titre">Choisis ton premier héros</h1>
-      <p class="debut__intro">Il rejoint ton équipe pour toujours. Les autres se gagneront dans les tirages.</p>
+      <p class="debut__intro">Il rejoint ton équipe pour toujours. Les autres se trouvent dans les boosters.</p>
 
       <div class="heros">
         ${heros.map((p) => `
@@ -45,7 +45,7 @@ export function afficherDebut(conteneur, { naviguer }) {
             </li>
           `).join("")}
         </ul>
-        <p class="compagnons__cadeau">Et un cadeau de bienvenue : ${ENCRE_DE_DEPART.toLocaleString("fr-FR")} d'encre pour tes premiers tirages.</p>
+        <p class="compagnons__cadeau">Et un cadeau de bienvenue : 3 boosters à ouvrir et ${ENCRE_DE_DEPART.toLocaleString("fr-FR")} d'encre.</p>
       </section>
     </main>
   `;

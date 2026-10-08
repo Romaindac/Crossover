@@ -13,6 +13,7 @@ import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import { chercherEquipeConseillee } from "../moteur/composition.js";
 import { cibleAvant, cibleArriere } from "../moteur/regles.js";
+import { varsSerie, motifSerie } from "../donnees/series.js";
 import {
   possede, progressionDe, idsPossedes, equipeSauvee, palierSauve,
   definirEquipe, definirPalier, palierMaxDebloque, estBattu, entreeCombat, equiperMeilleur, equiperMeilleurEquipe, prochaineEtape,
@@ -81,7 +82,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
           <div class="filtres" role="group" aria-label="Filtrer par rôle" id="filtres"></div>
         </div>
         <div class="grille" id="grille"></div>
-        <p class="selection__aide">Les autres persos s'obtiennent dans les <button type="button" class="bouton-texte" data-action="tirages">tirages</button>.</p>
+        <p class="selection__aide">Les autres persos s'obtiennent dans les <button type="button" class="bouton-texte" data-action="tirages">boosters</button>.</p>
       </section>
 
       <section class="adversaire" aria-labelledby="titre-adversaire">
@@ -148,7 +149,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
       const prog = progressionDe(id);
       return `
         <button type="button" class="place${choisie}" data-action="place" data-place="${i}" draggable="true"
-          style="--aff: ${COULEURS_AFFINITE[perso.affinite]}" aria-label="${NOMS_PLACES[i]} : ${perso.nom}, niveau ${prog.niveau}">
+          style="--aff: ${COULEURS_AFFINITE[perso.affinite]}; ${varsSerie(perso.serie)}" data-motif="${motifSerie(perso.serie)}" aria-label="${NOMS_PLACES[i]} : ${perso.nom}, niveau ${prog.niveau}">
           ${htmlPortrait(perso)}
           <span class="place__infos">
             <span class="place__perso">${perso.nom}</span>

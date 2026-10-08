@@ -740,53 +740,34 @@ input[type="number"] {
   opacity: 1;
 }
 
-/* ---------- Cadres par rarete ---------- */
+/* ---------- Eclat par rarete ----------
+   Le cadre appartient a la serie (css/series.css) ; la rarete se lit
+   sur l'obi et sur l'eclat : un anneau discret pour Peu commun et Rare,
+   un halo qui respire pour Epique et Legendaire. */
 
 .carte--peu_commun {
-  border-color: #3f7d55;
   box-shadow: inset 0 0 0 2px #a8cdb1;
 }
 
 .carte--rare {
-  border-color: #2f5f9e;
   box-shadow: inset 0 0 0 2px #a7c2e2;
-}
-
-@property --angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-/* Epique et Legendaire : un lisere qui tourne autour de la carte */
-.carte--epique,
-.carte--legendaire,
-.etagere__tome.tome--epique:not(.etagere__tome--manquant) .etagere__couverture,
-.etagere__tome.tome--legendaire:not(.etagere__tome--manquant) .etagere__couverture {
-  border: 3px solid transparent;
-  background:
-    linear-gradient(var(--papier), var(--papier)) padding-box,
-    conic-gradient(from var(--angle), var(--c1), var(--c2), var(--c1), var(--c3), var(--c1)) border-box;
-  animation: lisere 4s linear infinite;
 }
 
 .carte--epique,
 .tome--epique:not(.etagere__tome--manquant) .etagere__couverture {
-  --c1: #4b2f86;
-  --c2: #c4b2e6;
-  --c3: #8a5cd8;
+  --halo: #8a5cd8;
+  animation: halo 2.6s ease-in-out infinite;
 }
 
 .carte--legendaire,
 .tome--legendaire:not(.etagere__tome--manquant) .etagere__couverture {
-  --c1: #9a6a06;
-  --c2: #f8e6a6;
-  --c3: #e9b526;
-  box-shadow: 0 0 0 1px var(--encre), 0 0 14px -2px #e9b526;
+  --halo: #e9b526;
+  animation: halo 2.2s ease-in-out infinite;
 }
 
-@keyframes lisere {
-  to { --angle: 360deg; }
+@keyframes halo {
+  0%, 100% { box-shadow: 0 0 0 1px var(--encre), 0 0 8px -2px var(--halo); }
+  50% { box-shadow: 0 0 0 1px var(--encre), 0 0 18px 1px var(--halo); }
 }
 
 /* Legendaire : reflet holographique sur le portrait */

@@ -9,6 +9,7 @@ import { RARETES } from "../donnees/raretes.js";
 import { ETOILES_MAX } from "../donnees/progression.js";
 import { portraitDe, estPokemon } from "../services/portraits.js";
 import { SOURCES_PORTRAITS } from "../donnees/portraits.js";
+import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
 
 export const COULEURS_AFFINITE = {
   puissance: "#e8772e",
@@ -102,18 +103,25 @@ export function htmlObi(perso) {
   return `<span class="obi-rarete obi-rarete--${perso.rarete}">${RARETES[perso.rarete].nom}</span>`;
 }
 
+// La plus belle variante possedee (doree > holo), ou null
+export const meilleureVariante = (progression) =>
+  (progression?.variantes?.includes("doree") ? "doree" : progression?.variantes?.includes("holo") ? "holo" : null);
+
 export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}) {
+  const variante = meilleureVariante(progression);
   const meta = progression
     ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles)}`
     : `<span class="carte__meta">${ROLES[perso.role].nom}</span>`;
   return `
-    <button type="button" class="carte carte--${perso.rarete} ${dansEquipe ? "carte--prise" : ""}"
-      data-action="choisir-perso" data-perso="${perso.id}" draggable="true"
-      aria-pressed="${dansEquipe}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}"
+    <button type="button" class="carte carte--${perso.rarete} ${variante ? `carte--${variante}` : ""} ${dansEquipe ? "carte--prise" : ""}"
+      data-action="choisir-perso" data-perso="${perso.id}" draggable="true" data-motif="${motifSerie(perso.serie)}"
+      aria-pressed="${dansEquipe}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}; ${varsSerie(perso.serie)}"
       aria-label="${perso.nom}, ${RARETES[perso.rarete].nom}, ${ROLES[perso.role].nom}${progression ? `, niveau ${progression.niveau}, ${progression.etoiles} étoiles` : ""}${dansEquipe ? ", dans ton équipe" : ""}">
       <span class="carte__role" title="${ROLES[perso.role].nom}, ${AFFINITES[perso.affinite]}">${iconeRole(perso.role)}</span>
       <span class="carte__visuel">${htmlPortrait(perso)}${htmlObi(perso)}</span>
       <span class="carte__infos">
+        <span class="carte__bande" aria-hidden="true"></span>
+        <span class="carte__serie" aria-hidden="true">${styleSerie(perso.serie).abrege}</span>
         <span class="carte__nom">${perso.nom}</span>
         <span class="carte__ligne">${meta}</span>
       </span>

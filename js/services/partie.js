@@ -10,10 +10,9 @@ import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { PALIERS } from "../donnees/ennemis.js";
 import {
   PERSOS_DE_DEPART, HEROS_AU_CHOIX, ENCRE_DE_DEPART,
-  xpCombat, encreCombat, COUT_TIRAGE, COUT_TIRAGE_X10, PITIE_LEGENDAIRE, PART_XP_RESERVE,
+  xpCombat, encreCombat, PART_XP_RESERVE,
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX, MISSIONS_PAR_JOUR, BONUS_TOUTES_MISSIONS,
 } from "../donnees/progression.js";
-import { tirerSerie } from "../moteur/gacha.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { MISSIONS, MISSIONS_PAR_ID } from "../donnees/missions.js";
@@ -41,12 +40,28 @@ import {
 } from "../donnees/tour.js";
 import { COFFRES_SEMAINE as COFFRES_SEMAINE_TOUR } from "../donnees/tour.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
+import { ouvrirBooster } from "../moteur/boosters.js";
+import {
+  EDITIONS_PAR_ID, PRIX_BOOSTER, HEURES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
+  POUSSIERE_PAR_BOOSTER, POUSSIERE_DOUBLON, COUT_FABRICATION, PITIE_BOOSTER, TICKETS_CHAPITRE,
+} from "../donnees/boosters.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
 const VERSION = 1;
 
 // Verifie une sauvegarde et la nettoie (persos inconnus, equipe invalide...)
+// Etat des boosters ; une ancienne sauvegarde (avant les boosters) recoit les tickets de depart
+function validerBoosters(b) {
+  return {
+    tickets: Math.max(0, Math.floor(Number(b?.tickets ?? TICKETS_DEPART)) || 0),
+    prochainGratuit: Number(b?.prochainGratuit) || Date.now() + HEURES_BOOSTER_GRATUIT * 3600000,
+    pitie: Math.max(0, Math.floor(Number(b?.pitie) || 0)),
+    poussiere: Math.max(0, Math.floor(Number(b?.poussiere) || 0)),
+    ouverts: Math.max(0, Math.floor(Number(b?.ouverts) || 0)),
+  };
+}
+
 function valider(p) {
   if (!p || p.version !== VERSION || typeof p.encre !== "number" || typeof p.collection !== "object") return null;
   const collection = {};
@@ -55,11 +70,14 @@ function valider(p) {
   }
   const equipe = Array.isArray(p.equipe) && p.equipe.length === 5 ? p.equipe : [null, null, null, null, null];
   const paliersBattus = Array.isArray(p.paliersBattus) ? p.paliersBattus.filter((n) => PALIERS.some((x) => x.palier === n)) : [];
+  for (const prog of Object.values(collection)) {
+    prog.variantes = Array.isArray(prog.variantes) ? prog.variantes.filter((v) => v === "holo" || v === "doree") : [];
+  }
   return {
     version: VERSION,
     encre: Math.max(0, Math.floor(p.encre)),
     collection,
-    pitie: Number(p.pitie) || 0,
+    boosters: validerBoosters(p.boosters),
     paliersBattus,
     equipe: equipe.map((id, i) => (collection[id] && equipe.indexOf(id) === i ? id : null)),
     palier: Number(p.palier) || 1,
@@ -163,8 +181,6 @@ export function definirVedette(id) {
   partie.vedette = id;
   sauver();
 }
-export const tiragesAvantLegendaire = () => PITIE_LEGENDAIRE - (partie?.pitie ?? 0);
-export const coutTirage = (nombre) => (nombre === 10 ? COUT_TIRAGE_X10 : COUT_TIRAGE * nombre);
 
 // Le plus haut palier accessible : celui qui suit le meilleur palier battu
 export function palierMaxDebloque() {
@@ -190,7 +206,7 @@ export function nouvellePartie(heros) {
     version: VERSION,
     encre: ENCRE_DE_DEPART,
     collection,
-    pitie: 0,
+    boosters: validerBoosters(null),
     paliersBattus: [],
     equipe: [...avant, ...arriere],
     palier: 1,
@@ -276,30 +292,99 @@ export function appliquerResultatCombat({ palier, victoire, ids, duree = 90, ult
 // ---------- Tirages ----------
 
 // Ajoute un perso tire a la collection, ou le compte comme doublon
-function ajouterTirage(id, rarete) {
+// Une carte obtenue : nouveau perso, ou doublon (etoiles, puis poussiere au-dela de 5 etoiles).
+// Une variante holo ou doree s'ajoute a la collection du perso (purement cosmetique).
+function ajouterCarte({ id, rarete, variante = null }) {
+  let resultat;
   if (!partie.collection[id]) {
-    partie.collection[id] = nouvelleProgression();
-    return { id, rarete, nouveau: true };
+    partie.collection[id] = { ...nouvelleProgression(), variantes: [] };
+    resultat = { id, rarete, variante, nouveau: true };
+  } else {
+    const doublon = ajouterDoublon(partie.collection[id]);
+    const poussiere = doublon.encreRendue ? POUSSIERE_DOUBLON[rarete] : 0;
+    partie.boosters.poussiere += poussiere;
+    resultat = { id, rarete, variante, nouveau: false, ...doublon, encreRendue: 0, poussiere };
   }
-  const resultat = ajouterDoublon(partie.collection[id]);
-  partie.encre += resultat.encreRendue;
-  return { id, rarete, nouveau: false, ...resultat };
+  const variantes = partie.collection[id].variantes ?? (partie.collection[id].variantes = []);
+  resultat.nouvelleVariante = Boolean(variante && !variantes.includes(variante));
+  if (resultat.nouvelleVariante) variantes.push(variante);
+  return resultat;
 }
 
-// Fait 1 ou 10 tirages. Renvoie null si l'encre ne suffit pas.
-export function effectuerTirage(nombre) {
-  const cout = coutTirage(nombre);
-  if (!partie || partie.encre < cout) return null;
-  partie.encre -= cout;
-  const { tirages, pitie } = tirerSerie(Math.random, nombre, partie.pitie, serieDeLaSemaine());
-  signalerSemaine("tirage", nombre);
-  partie.pitie = pitie;
-  const resultats = tirages.map(({ id, rarete }) => ajouterTirage(id, rarete));
-  partie.stats.tirages += nombre;
-  partie.stats.legendaires += resultats.filter((r) => r.rarete === "legendaire").length;
-  signaler("tirage", nombre);
+// ---------- Boosters ----------
+
+// Les tickets gratuits arrivent avec le temps (un toutes les 12 h tant qu'on en a moins de 2)
+function assurerTickets(maintenant = Date.now()) {
+  const b = partie.boosters;
+  const periode = HEURES_BOOSTER_GRATUIT * 3600000;
+  while (maintenant >= b.prochainGratuit) {
+    if (b.tickets < STOCK_GRATUIT_MAX) b.tickets += 1;
+    b.prochainGratuit += periode;
+  }
+  return b;
+}
+
+export function etatBoosters(maintenant = Date.now()) {
+  if (!partie) return null;
+  const b = assurerTickets(maintenant);
+  return {
+    tickets: b.tickets,
+    prochainGratuit: b.prochainGratuit,
+    stockPlein: b.tickets >= STOCK_GRATUIT_MAX,
+    poussiere: b.poussiere,
+    ouverts: b.ouverts,
+    avantLegendaire: PITIE_BOOSTER - b.pitie,
+    prix: PRIX_BOOSTER,
+  };
+}
+
+// Combien de boosters le joueur peut ouvrir tout de suite (tickets + encre)
+export const boostersDisponibles = () => {
+  if (!partie) return 0;
+  const b = assurerTickets();
+  return b.tickets + Math.floor(partie.encre / PRIX_BOOSTER);
+};
+
+// Ouvre un booster d'une edition, avec un ticket si possible, sinon avec de l'encre.
+// Renvoie null si on ne peut pas payer.
+export function ouvrirBoosterJoueur(editionId) {
+  if (!partie || !EDITIONS_PAR_ID[editionId]) return null;
+  const b = assurerTickets();
+  let paiement;
+  if (b.tickets > 0) { b.tickets -= 1; paiement = "ticket"; }
+  else if (partie.encre >= PRIX_BOOSTER) { partie.encre -= PRIX_BOOSTER; paiement = "encre"; }
+  else return null;
+  const r = ouvrirBooster(Math.random, editionId, { pitie: b.pitie, serieVedette: serieDeLaSemaine() });
+  b.pitie = r.pitie;
+  b.ouverts += 1;
+  b.poussiere += POUSSIERE_PAR_BOOSTER;
+  const cartes = r.cartes.map(ajouterCarte);
+  partie.stats.tirages += cartes.length;
+  partie.stats.boosters = (partie.stats.boosters ?? 0) + 1;
+  partie.stats.legendaires += cartes.filter((c) => c.rarete === "legendaire").length;
+  signaler("tirage");
+  signalerSemaine("tirage");
   sauver();
-  return resultats;
+  return { cartes, dore: r.dore, paiement, poussiereBooster: POUSSIERE_PAR_BOOSTER };
+}
+
+// Atelier : fabriquer la carte de son choix avec de la poussiere
+export const coutFabrication = (id) => COUT_FABRICATION[PERSOS_PAR_ID[id]?.rarete] ?? Infinity;
+
+export function fabriquerCarte(id) {
+  const perso = PERSOS.find((p) => p.id === id);
+  if (!partie || !perso) return { ok: false, erreur: "Perso inconnu." };
+  const cout = coutFabrication(id);
+  if (partie.boosters.poussiere < cout) return { ok: false, erreur: `Il te manque ${cout - partie.boosters.poussiere} poussière.` };
+  partie.boosters.poussiere -= cout;
+  const carte = ajouterCarte({ id, rarete: perso.rarete });
+  sauver();
+  return { ok: true, cout, carte };
+}
+
+// Tickets de booster gagnes en recompense (chapitres, missions)
+function donnerTickets(n) {
+  partie.boosters.tickets += n;
 }
 
 // ---------- Export, import et effacement ----------
@@ -412,6 +497,7 @@ export function reclamerBonusMissions() {
   if (etat.bonusReclame || !etat.liste.every((m) => m.reclamee)) return 0;
   etat.bonusReclame = true;
   partie.encre += BONUS_TOUTES_MISSIONS;
+  donnerTickets(1);   // + un booster gratuit
   sauver();
   return BONUS_TOUTES_MISSIONS;
 }
@@ -780,6 +866,8 @@ export function appliquerResultatCampagne({ chapitre, numero, victoire, ids, dur
   if (victoire) noterInsolites(ids, duree, arguments[0].koAllies ?? 0, "appliquerResultatCampagne");
   if (victoire && ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
   const liensDecouverts = victoire ? compterLiens(ids) : [];
+  const ticketsChapitre = premiereVictoire && numero === 8 ? TICKETS_CHAPITRE : 0;
+  if (ticketsChapitre) donnerTickets(ticketsChapitre);   // un chapitre fini : des boosters offerts
   sauver();
 
   const suivante = numero < 8 ? etapeDe(chapitre, numero + 1) : etapeDe(chapitre + 1, 1);
@@ -793,6 +881,7 @@ export function appliquerResultatCampagne({ chapitre, numero, victoire, ids, dur
     butin,
     suivante: suivante && etapeOuverte(suivante.chapitre, suivante.numero) ? suivante : null,
     chapitreTermine: premiereVictoire && numero === 8 ? chapitre : null,
+    tickets: ticketsChapitre,
   };
 }
 
@@ -1157,6 +1246,8 @@ function contexteTampons() {
     serieComplete: [...new Set(PERSOS.map((p) => p.serie))].some((serie) => PERSOS.filter((p) => p.serie === serie).every((p) => possede(p.id))),
     legendaires: PERSOS.filter((p) => p.rarete === "legendaire" && possede(p.id)).length,
     tirages: partie.stats.tirages ?? 0,
+    boosters: partie.stats.boosters ?? 0,
+    dorees: Object.values(partie.collection).filter((p) => p.variantes?.includes("doree")).length,
     objets: partie.chasse.decouverts.length,
     panoplieComplete: Object.values(piecesParPerso).some((liste) => {
       const c = {};
@@ -1462,6 +1553,8 @@ export function chargerEquipe(index) {
 export function nouveautes() {
   if (!partie) return [];
   const liste = [];
+  const tickets = assurerTickets().tickets;
+  if (tickets > 0) liste.push({ texte: `${tickets} booster${tickets > 1 ? "s" : ""} à ouvrir`, nav: "tirages" });
   const m = missionsDuJour();
   if (m.liste.some((x) => !x.reclamee && x.progres >= x.cible)) liste.push({ texte: "Une mission du jour est à réclamer", nav: "qg" });
   if (missionsDeLaSemaine().some((x) => !x.reclamee && x.progres >= x.cible)) liste.push({ texte: "Une mission de la semaine est à réclamer", nav: "qg" });

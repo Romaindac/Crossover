@@ -10,6 +10,7 @@ import { RARETES } from "../donnees/raretes.js";
 import { BONUS_NIVEAU, BONUS_ETOILE } from "../donnees/progression.js";
 import { bonusEquipement } from "./equipement.js";
 import { BONUS_EVEIL, TALENTS } from "../donnees/eveil.js";
+import { CALIBRAGE } from "../donnees/calibrage.js";
 
 // Bonus de serie : 2 persos de la meme serie, ou 3
 // (allege apres mesure : le trio valait +19 a +33 points de victoire et dictait les equipes ;
@@ -35,6 +36,7 @@ export function facteurProgression(perso, { niveau = 1, etoiles = 1, avecRarete 
 export function calculerStatsFinales(perso, { equipe = [], multiplicateur = 1, niveau = 1, etoiles = 1, avecRarete = true, equipement = [], eveil = 0, talents = [], bonusPct = 0 } = {}) {
   const base = ROLES[perso.role];
   const mods = perso.mods ?? {};
+  const cal = CALIBRAGE[perso.id] ?? 1;   // coefficient du calibrage automatique (PV et ATQ)
   const serie = bonusSerie(perso, equipe);
   const progression = facteurProgression(perso, { niveau, etoiles, avecRarete }) * (1 + BONUS_EVEIL * eveil) * (1 + bonusPct / 100);
   const e = bonusEquipement(equipement);
@@ -45,8 +47,8 @@ export function calculerStatsFinales(perso, { equipe = [], multiplicateur = 1, n
   }
 
   return {
-    pv: Math.round((base.pv * (mods.pv ?? 1) * progression + e.pv) * (1 + serie.pv + e.pvPct / 100) * multiplicateur),
-    atq: Math.round((base.atq * (mods.atq ?? 1) * progression + e.atq) * (1 + serie.atq + e.atqPct / 100) * multiplicateur),
+    pv: Math.round((base.pv * (mods.pv ?? 1) * cal * progression + e.pv) * (1 + serie.pv + e.pvPct / 100) * multiplicateur),
+    atq: Math.round((base.atq * (mods.atq ?? 1) * cal * progression + e.atq) * (1 + serie.atq + e.atqPct / 100) * multiplicateur),
     // La DEF ne monte pas avec la progression : sinon les combats a haut niveau
     // s'allongent et finissent au temps (constate en simulation).
     def: Math.round(base.def * (mods.def ?? 1) * (1 + e.defPct / 100)),

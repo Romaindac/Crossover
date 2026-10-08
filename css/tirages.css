@@ -491,3 +491,250 @@
     font-size: 0.6rem;
   }
 }
+
+/* ==========================================================
+   BOOSTERS
+   ========================================================== */
+
+.boosters__onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.boosters__onglets [aria-selected="true"] {
+  background: var(--encre);
+  color: var(--papier);
+}
+
+/* Reserve : tickets, encre, poussiere */
+.boosters__reserve {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+
+.reserve__case {
+  display: grid;
+  padding: 0.6rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.reserve__chiffre {
+  font-family: var(--police-titre);
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+.reserve__nom {
+  font-size: 0.85rem;
+  color: var(--encre-douce);
+}
+
+.reserve__aide,
+.boosters__reserve .etal__honneur {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.reserve__aide {
+  font-size: 0.9rem;
+  color: var(--encre-douce);
+}
+
+/* Une edition = un booster */
+.boosters__grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.booster {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 1rem;
+  padding: 0.9rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+/* Le paquet : sachet scelle aux couleurs de l'edition */
+.booster__paquet {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.4rem;
+  aspect-ratio: 5 / 8;
+  padding: 0.5rem;
+  text-align: center;
+  color: var(--papier);
+  background:
+    radial-gradient(color-mix(in srgb, var(--papier) 22%, transparent) 0.8px, transparent 1.2px) 0 0 / 5px 5px,
+    linear-gradient(160deg, var(--s1), color-mix(in srgb, var(--s1) 55%, var(--encre)));
+  border: 3px solid var(--encre);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 var(--encre);
+  transition: transform 160ms ease-out;
+}
+
+/* Les bords dentelés du sachet */
+.booster__paquet::before,
+.booster__paquet::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 7px;
+  background: linear-gradient(135deg, var(--fond) 50%, transparent 0) 0 0 / 8px 7px, linear-gradient(225deg, var(--fond) 50%, transparent 0) 0 0 / 8px 7px;
+}
+
+.booster__paquet::before { top: -4px; }
+.booster__paquet::after { bottom: -4px; rotate: 180deg; }
+
+.booster:hover .booster__paquet {
+  transform: rotate(-3deg) translateY(-3px);
+}
+
+.booster__numero {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.booster__nom {
+  font-family: var(--police-titre);
+  font-size: 1.05rem;
+  line-height: 1.1;
+  text-shadow: 0.06em 0.06em 0 var(--encre);
+}
+
+.booster__bandes {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+}
+
+.serie-bande-mini {
+  display: block;
+  height: 0.45rem;
+  background: var(--motif);
+  border: 1.5px solid var(--encre);
+}
+
+.booster__texte {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.booster__titre {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-size: 1.25rem;
+}
+
+.booster__series,
+.booster__progression {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.booster__series {
+  font-weight: 700;
+}
+
+.booster .bouton {
+  justify-self: start;
+  margin-top: 0.3rem;
+}
+
+/* Revelation d'un booster */
+.revelation__titre {
+  margin: 0 0 0.5rem;
+  font-family: var(--police-titre);
+  font-size: 1.4rem;
+  color: var(--papier);
+  text-align: center;
+  text-shadow: 0.06em 0.06em 0 var(--encre);
+}
+
+.revelation--doree .revelation__titre {
+  color: #f8e6a6;
+}
+
+.tome__face--avant .serie-bande {
+  top: auto;
+  bottom: 1.45rem;
+  z-index: 2;
+}
+
+.tome__variante {
+  position: absolute;
+  top: 2.1rem;
+  right: 0.3rem;
+  z-index: 3;
+}
+
+/* Atelier */
+.atelier {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.atelier__grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.75rem;
+}
+
+.atelier__carte {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  background: var(--papier);
+  border: 3px solid var(--s1);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.atelier__portrait {
+  position: relative;
+  display: block;
+  border: 2px solid var(--encre);
+}
+
+.atelier__nom {
+  font-weight: 800;
+}
+
+.atelier__info {
+  font-size: 0.75rem;
+  color: var(--encre-douce);
+}
+
+@media (max-width: 640px) {
+  .boosters__reserve {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem;
+  }
+
+  .reserve__chiffre {
+    font-size: 1.2rem;
+  }
+
+  .booster {
+    grid-template-columns: 5.5rem 1fr;
+    gap: 0.7rem;
+  }
+
+  .booster__nom {
+    font-size: 0.85rem;
+  }
+}

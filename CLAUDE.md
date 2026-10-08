@@ -1,6 +1,6 @@
 # Projet Crossover — mémo pour Claude
 
-Jeu navigateur gratuit (fan game assumé) : un crossover manga/anime avec gacha,
+Jeu navigateur gratuit (fan game assumé) : un crossover manga/anime avec boosters de cartes (78 persos, 14 séries),
 campagne, chasse façon Dofus, Tour infinie, éveil, boss de la semaine, liens entre persos.
 Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 
@@ -18,12 +18,14 @@ Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 - Lancer en local : `python3 -m http.server 8765` puis ouvrir http://localhost:8765
 - Vérifications rapides du moteur : `node tests/verifier.mjs`
 - Laboratoire (combats, tournoi, simulateurs d'économie) : `test-moteur.html`
-- Sauvegarde : localStorage, clé `crossover:partie` (validée et migrée dans `js/services/partie.js`).
+- Sauvegarde : localStorage, clé `crossover:partie` (validée et migrée dans `js/services/partie.js` ; une ancienne sauvegarde reçoit 3 tickets de booster).
 - Portraits : PokéAPI (Pokémon) et AniList GraphQL (les autres), en cache dans localStorage.
 
 ## Architecture
 
 - `js/donnees/` : toutes les données et tous les chiffres à régler (persos, objets, zones, campagne, tour, tampons...).
+  `boosters.js` : éditions, taux par case, pitié, variantes, prix, tickets, poussière. `series.js` : couleurs et motif du cadre de chaque manga.
+  `calibrage.js` est écrit par `node js/outils/calibrer.mjs` (coefficient PV/ATQ par perso) : ne pas le modifier à la main.
 - `js/moteur/` : logique pure, sans affichage. Le combat est déterministe (graine) : ne jamais utiliser Math.random dans le moteur.
 - `js/services/partie.js` : l'état du joueur, toutes les règles de progression et de récompenses.
 - `js/ui/` : composants d'affichage partagés (cartes, fiche, équipement, scènes, décors, navigation).
@@ -44,7 +46,9 @@ Toujours vérifier au simulateur avant de changer un chiffre d'économie
 (boutons du laboratoire, ou `js/outils/simulateur-v03.js`). Objectifs actuels :
 campagne finie vers le jour 19 à 45 min/jour ; équipe en éveil IV en environ 2 mois de jeu actif.
 
-Avant de retoucher un perso ou d'en ajouter un : lancer le tournoi d'équilibrage du labo
+Après avoir ajouté ou retouché des persos : lancer `node js/outils/calibrer.mjs` (environ 4 min),
+qui ajuste automatiquement un coefficient de PV/ATQ par perso. Si un coefficient sort de 0,8-1,2,
+c'est le kit qu'il faut corriger à la main. Ensuite, contrôler au tournoi d'équilibrage du labo
 (équipes rangées comme un joueur, niveau 30). Cibles : chaque rôle entre 47 et 53 %,
 chaque perso entre 42 et 58 % sans bonus de rareté. Le tournoi « placement au hasard »
 cache le poids des rôles : il ne sert qu'à tester la robustesse au placement.
@@ -55,5 +59,8 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
 
 - Fait : V0.1 combat, V0.2 gacha et progression, V0.3 campagne + équipement + chasse + histoire, mise à jour Longévité (13 étapes),
   mise à jour « Audit » : rééquilibrage mesuré, Rage d'encre, équipe conseillée, cartes premium, boss / Tour / saisons / missions revus,
-  Volume 2 (8 persos : C-18, Tsunade, Nami, Dracaufeu, Chevalier Squelette, Nobara, Shinobu, Hisoka ; 32 persos, 4 par série).
+  Volume 2 (8 persos : C-18, Tsunade, Nami, Dracaufeu, Chevalier Squelette, Nobara, Shinobu, Hisoka ; 32 persos, 4 par série),
+  refonte « Boosters » : 78 persos (6 nouvelles séries), obtention par boosters de 4 éditions à thème, tickets gratuits,
+  atelier à la poussière, variantes Holo et Dorée, cadre de carte propre à chaque manga.
+- Mise en ligne : GitHub Pages sur la branche `main` (https://romaindac.github.io/Crossover/), mise à jour automatique à chaque fusion.
 - À venir : retours de test et corrections, roguelite (V0.4), jeu en ligne avec comptes Supabase et PvP (V0.5).
