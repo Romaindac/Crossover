@@ -293,10 +293,11 @@
   gap: 1.25rem;
 }
 
+/* Une serie par etagere, sur toute la largeur : les series ont 5 ou 6 persos */
 .etageres {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
-  gap: 2rem 2.5rem;
+  grid-template-columns: 1fr;
+  gap: 2rem;
 }
 
 .inventaire__barre {
