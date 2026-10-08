@@ -51,13 +51,14 @@ export const TAMPONS = [
   t("retouches-100", "equipement", "Main sûre", "Faire 100 retouches à l'encre", (x) => x.retouches >= 100, { eclats: 500 }),
 
   // ---------- Tour ----------
-  ...[10, 25, 50, 100, 200].map((n) => t(`tour-${n}`, "tour", `Étage ${n}`, `Atteindre l'étage ${n} de la Tour`, (x) => x.tour >= n, { encre: n * 2, fragments: Math.floor(n / 25) })),
+  ...[10, 25, 50, 100, 150].map((n) => t(`tour-${n}`, "tour", `Étage ${n}`, `Atteindre l'étage ${n} de la Tour`, (x) => x.tour >= n, { encre: n * 2, fragments: Math.floor(n / 25) })),
   t("coffre-semaine", "tour", "Semaine bien remplie", "Ouvrir un coffre de la semaine", (x) => x.coffresSemaine >= 1, { encre: 40 }),
 
   // ---------- Legendes : boss de la semaine, liens, eveil ----------
   t("raid-1", "legendes", "Premier affrontement", "Tenter le boss de la semaine", (x) => x.raids >= 1, { encre: 30 }),
   t("raid-400k", "legendes", "Gros dégâts", "Infliger 400 000 dégâts au boss de la semaine", (x) => x.raidRecord >= 400000, { encre: 100, fragments: 2 }),
-  t("raid-1500k", "legendes", "Dévastateur", "Infliger 1 500 000 dégâts au boss de la semaine", (x) => x.raidRecord >= 1500000, { encre: 300, fragments: 6 }),
+  // (l'identifiant garde l'ancien seuil pour ne pas toucher aux sauvegardes)
+  t("raid-1500k", "legendes", "Dévastateur", "Infliger 1 000 000 dégâts au boss de la semaine", (x) => x.raidRecord >= 1000000, { encre: 300, fragments: 6 }),
   t("liens-5", "legendes", "Amitiés", "Découvrir 5 liens", (x) => x.liens >= 5, { encre: 80 }),
   t("liens-20", "legendes", "Tous liés", "Découvrir les 20 liens", (x) => x.liens >= 20, { encre: 300, fragments: 5 }),
   t("lien-max", "legendes", "Inséparables", "Monter un lien au niveau 5", (x) => x.lienMax, { encre: 150 }),

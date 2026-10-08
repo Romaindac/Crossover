@@ -139,9 +139,14 @@ export function chaqueSeconde(etat) {
   for (const u of etat.unites) {
     if (u.pv <= 0) continue;
 
-    // Brulure : 2 % des PV max par seconde
+    // Brulure : 2 % des PV max par seconde. Les boss de raid ont des PV enormes :
+    // pour eux, la brulure est plafonnee a 1,5 fois l'ATQ de celui qui l'a posee.
     const brulure = trouverEffet(u, "brulure");
-    if (brulure) perteDirecte(etat, u, u.pvMax * BRULURE_PAR_SECONDE, brulure.source, "Brûlure");
+    if (brulure) {
+      let perte = u.pvMax * BRULURE_PAR_SECONDE;
+      if (u.boss) perte = Math.min(perte, 1.5 * (brulure.source?.stats.atq ?? 0));
+      perteDirecte(etat, u, perte, brulure.source, "Brûlure");
+    }
 
     // Regeneration : 2 % des PV max par seconde
     const regen = trouverEffet(u, "regeneration");

@@ -45,6 +45,7 @@ function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
     etoiles,
     nom: perso.nom,
     serie: perso.serie,
+    boss: Boolean(perso.boss),
     role: perso.role,
     affinite: perso.affinite,
     passif: perso.passif,

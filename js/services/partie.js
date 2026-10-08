@@ -31,7 +31,7 @@ import { bossDeLaSemaine, NIVEAU_BOSS_RAID, TENTATIVES_PAR_JOUR, PALIERS_RAID } 
 import { LIENS, niveauLien, BONUS_PAR_NIVEAU_LIEN, VICTOIRES_DECOUVERTE } from "../donnees/liens.js";
 import { TAMPONS, PAGES, TITRE_DE_DEPART } from "../donnees/tampons.js";
 import { serieDeLaSemaine, BONUS_HONNEUR, BUTIN_HONNEUR, MISSIONS_SEMAINE } from "../donnees/hebdo.js";
-import { RANGS, saisonActuelle, pointsSaison, rangDe, CADRES } from "../donnees/saisons.js";
+import { RANGS, saisonActuelle, pointsSaison, detailPointsSaison, rangDe, CADRES } from "../donnees/saisons.js";
 import { pieceParfaite, nomPiece } from "../moteur/equipement.js";
 import { simulerCombat } from "../moteur/simulation.js";
 import { composerEquipe } from "../moteur/composition.js";
@@ -350,7 +350,8 @@ function tirerMissions(jour) {
   let graine = 0;
   for (const c of jour) graine = (graine * 31 + c.charCodeAt(0)) >>> 0;
   const h = creerHasard(graine);
-  const ids = MISSIONS.map((m) => m.id);
+  const modeOuvert = { chasse: true, tour: tourOuverte(), raid: raidOuvert(), deluxe: deluxeOuverte() };
+  const ids = MISSIONS.filter((m) => !m.mode || modeOuvert[m.mode]).map((m) => m.id);
   for (let i = ids.length - 1; i > 0; i--) {
     const j = Math.floor(h.nombre() * (i + 1));
     [ids[i], ids[j]] = [ids[j], ids[i]];
@@ -396,6 +397,12 @@ export function reclamerMission(id) {
   m.reclamee = true;
   partie.encre += def.recompense;
   partie.stats.missions = (partie.stats.missions ?? 0) + 1;
+  if (assurerMissions().liste.every((x) => x.reclamee)) {
+    const saison = assurerSaison();
+    const jour = aujourdhui();
+    if (!saison.joursActifs.includes(jour)) saison.joursActifs.push(jour);
+    debloquerCadresDeRang();
+  }
   sauver();
   return def.recompense;
 }
@@ -411,19 +418,30 @@ export function reclamerBonusMissions() {
 
 // ---------- Expedition ----------
 
+// Apres la campagne, l'expedition continue de progresser : +1 % d'XP par etape
+// deluxe gagnee et par 5 etages du record de la Tour (l'encre monte deux fois
+// moins vite, pour ne pas inonder les tirages).
+export function bonusExpedition() {
+  const deluxe = Object.values(partie?.campagne.deluxe ?? {}).filter(Boolean).length;
+  const tour = Math.floor((partie?.tour?.record ?? 0) / 5);
+  return (deluxe + tour) / 100;
+}
+
 // L'equipe s'entraine seule sur le meilleur palier battu, meme jeu ferme
 export function etatExpedition(maintenant = Date.now()) {
   const etape = meilleureEtape();
   if (!partie?.expedition || !etape) return null;
   const heures = Math.max(0, Math.min((maintenant - partie.expedition.debut) / 3600000, EXPEDITION_HEURES_MAX));
   const combats = Math.floor(heures * EXPEDITION_COMBATS_PAR_HEURE);
+  const bonus = bonusExpedition();
   return {
     etape,
     zone: etape.chapitre,
     heures,
     combats,
-    encre: combats * encreEtape(etape, false),
-    xp: Math.round(combats * xpEtape(etape, true) * 0.5),   // la moitie de l'XP d'un vrai combat
+    bonus,
+    encre: Math.round(combats * encreEtape(etape, false) * (1 + bonus / 2)),
+    xp: Math.round(combats * xpEtape(etape, true) * 0.5 * (1 + bonus)),   // la moitie de l'XP d'un vrai combat
     pleine: heures >= EXPEDITION_HEURES_MAX,
     heuresMax: EXPEDITION_HEURES_MAX,
     pieces: Math.floor(heures / 2),   // une piece d'equipement toutes les 2 heures
@@ -561,6 +579,7 @@ export function ameliorerPiece(uid) {
   if (partie.equipement.eclats < cout) return { ok: false, erreur: `Il te manque ${cout - partie.equipement.eclats} éclats.` };
   partie.equipement.eclats -= cout;
   piece.niveau += 1;
+  signaler("amelioration");
   sauver();
   return { ok: true, cout };
 }
@@ -657,8 +676,8 @@ export function appliquerResultatChasse({ zoneId, index, dore = false, victoire,
   signaler("ultime-manuel", ultimesManuels);
   signaler("niveau", xp.reduce((total, x) => total + (x.niveauApres - x.niveauAvant), 0));
   if (victoire) noterInsolites(ids, duree, arguments[0].koAllies ?? 0, "appliquerResultatChasse");
-  if (victoire && ids.some(estALHonneur)) signalerSemaine("victoire-honneur");
-  if (victoire) { partie.stats.victoiresChasse = (partie.stats.victoiresChasse ?? 0) + 1; if (dore) { partie.stats.dores = (partie.stats.dores ?? 0) + 1; signalerSemaine("chasse-dore"); } }
+  if (victoire && ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
+  if (victoire) { partie.stats.victoiresChasse = (partie.stats.victoiresChasse ?? 0) + 1; signaler("victoire-chasse"); if (dore) { partie.stats.dores = (partie.stats.dores ?? 0) + 1; signalerSemaine("chasse-dore"); signaler("chasse-dore"); } }
   const liensDecouverts = victoire ? compterLiens(ids) : [];
   sauver();
   return { liens: liensDecouverts, xp, xpReserve: gainReserve, eclats: eclatsGagnes, butin, zoneDebloquee };
@@ -759,7 +778,7 @@ export function appliquerResultatCampagne({ chapitre, numero, victoire, ids, dur
   signaler("ultime-manuel", ultimesManuels);
   signaler("niveau", xp.reduce((total, x) => total + (x.niveauApres - x.niveauAvant), 0));
   if (victoire) noterInsolites(ids, duree, arguments[0].koAllies ?? 0, "appliquerResultatCampagne");
-  if (victoire && ids.some(estALHonneur)) signalerSemaine("victoire-honneur");
+  if (victoire && ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
   const liensDecouverts = victoire ? compterLiens(ids) : [];
   sauver();
 
@@ -926,9 +945,10 @@ export function appliquerResultatTour({ etage, victoire, ids, duree = 90, ultime
   signaler("ultime-manuel", ultimesManuels);
   signaler("niveau", xp.reduce((total, x) => total + (x.niveauApres - x.niveauAvant), 0));
   if (victoire) noterInsolites(ids, duree, arguments[0].koAllies ?? 0, "appliquerResultatTour");
-  if (victoire && ids.some(estALHonneur)) signalerSemaine("victoire-honneur");
+  if (victoire && ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
   if (victoire) {
     signalerSemaine("etage-tour");
+    signaler("etage-tour");
     const saison = assurerSaison();
     saison.recordTour = Math.max(saison.recordTour, etage);
     debloquerCadresDeRang();
@@ -1064,10 +1084,13 @@ export function tenterRaid() {
   r.records[boss.id] = Math.max(r.records[boss.id] ?? 0, score);
   const saison = assurerSaison();
   saison.raid = Math.max(saison.raid, score);
+  const semaine = numeroSemaine();
+  saison.raidSemaines[semaine] = Math.max(saison.raidSemaines[semaine] ?? 0, score);
   debloquerCadresDeRang();
   partie.stats.raids = (partie.stats.raids ?? 0) + 1;
   signaler("raid");
   signalerSemaine("raid");
+  signaler("raid");
   sauver();
   return { ok: true, resultats, score, nouveauMeilleur };
 }
@@ -1103,6 +1126,7 @@ export const victoiresLien = (cle) => partie?.liens[cle] ?? 0;
 // ---------- Carnet de tampons ----------
 
 function noterInsolites(ids, duree, koAllies, mode) {
+  if (koAllies === 0) signaler("victoire-sans-ko");
   const ins = (partie.stats.insolites = partie.stats.insolites ?? {});
   const persos = ids.map((id) => PERSOS_PAR_ID[id]).filter(Boolean);
   if (new Set(persos.map((p) => p.serie)).size >= 5) ins.cinqSeries = true;
@@ -1258,28 +1282,30 @@ export function reclamerMissionSemaine(id) {
 // Une nouvelle saison chaque mois ; la precedente laisse une recompense a reclamer
 function assurerSaison() {
   const id = saisonActuelle();
-  if (!partie.saison) partie.saison = { id, recordTour: 0, raid: 0 };
+  if (!partie.saison) partie.saison = { id, recordTour: 0, raid: 0, raidSemaines: {}, joursActifs: [] };
+  partie.saison.raidSemaines ??= {};
+  partie.saison.joursActifs ??= [];
   if (partie.saison.id !== id) {
-    const rang = rangDe(pointsSaison(partie.saison.recordTour, partie.saison.raid));
+    const rang = rangDe(pointsSaison(partie.saison));
     partie.saisonPrecedente = rang ? { id: partie.saison.id, rang: rang.id, reclamee: false } : null;
-    partie.saison = { id, recordTour: 0, raid: 0 };
+    partie.saison = { id, recordTour: 0, raid: 0, raidSemaines: {}, joursActifs: [] };
   }
   return partie.saison;
 }
 
 function debloquerCadresDeRang() {
   const s = partie.saison;
-  const points = pointsSaison(s.recordTour, s.raid);
+  const points = pointsSaison(s);
   for (const r of RANGS) if (points >= r.points && !partie.cosmetiques.cadres.includes(r.id)) partie.cosmetiques.cadres.push(r.id);
 }
 
 export function etatSaison() {
   if (!partie) return null;
   const s = assurerSaison();
-  const points = pointsSaison(s.recordTour, s.raid);
+  const points = pointsSaison(s);
   const rang = rangDe(points);
   const suivant = RANGS.find((r) => r.points > points) ?? null;
-  return { id: s.id, recordTour: s.recordTour, raid: s.raid, points, rang, suivant, precedente: partie.saisonPrecedente };
+  return { id: s.id, recordTour: s.recordTour, raid: s.raid, points, detail: detailPointsSaison(s), rang, suivant, precedente: partie.saisonPrecedente };
 }
 
 export function reclamerSaisonPrecedente() {
@@ -1325,6 +1351,7 @@ export function appliquerResultatDeluxe({ chapitre, numero, victoire, ids, duree
   const avant = partie.campagne.deluxe[cle] ?? 0;
   const premiereVictoire = victoire && !(avant & ETOILE_VICTOIRE);
   let masque = avant;
+  if (victoire) signaler("victoire-deluxe");
   if (victoire) {
     masque |= ETOILE_VICTOIRE;
     if (koAllies === 0) masque |= ETOILE_SANS_KO;
@@ -1353,7 +1380,7 @@ export function appliquerResultatDeluxe({ chapitre, numero, victoire, ids, duree
     partie.stats.victoires += 1;
     signaler("victoire");
     noterInsolites(ids, duree, koAllies, "deluxe");
-    if (ids.some(estALHonneur)) signalerSemaine("victoire-honneur");
+    if (ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
   }
   signaler("ultime-manuel", ultimesManuels);
   const liensDecouverts = victoire ? compterLiens(ids) : [];

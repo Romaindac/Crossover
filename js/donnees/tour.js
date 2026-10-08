@@ -45,7 +45,10 @@ export function etageTour(n) {
     equipe = [a, b, pioche(reste), pioche(reste), pioche(reste)];
   }
   const niveau = Math.min(6 + n, 60);   // le boss est deja plus fort par sa composition
-  const profondeur = n > 50 ? Math.pow(1.03, n - 50) : 1;
+  // Au-dela de 50 : croissance lineaire (2,5 % par etage). Une equipe au maximum
+  // (eveil IV, panoplie +12) plafonne vers l'etage 145 ; l'ancienne courbe
+  // exponentielle bloquait tout le monde vers 90.
+  const profondeur = n > 50 ? 1 + 0.025 * (n - 50) : 1;
   return {
     etage: n,
     boss,

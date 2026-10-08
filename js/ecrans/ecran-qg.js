@@ -177,7 +177,7 @@ export function afficherQg(conteneur, { naviguer }) {
       return;
     }
     $("#expedition").innerHTML = `
-      <p class="case__aide">Ton équipe s'entraîne seule sur « ${e.etape.nom} » (chapitre ${e.etape.chapitre}), même jeu fermé : un combat toutes les 15 minutes, pendant ${e.heuresMax} h au plus.</p>
+      <p class="case__aide">Ton équipe s'entraîne seule sur « ${e.etape.nom} » (chapitre ${e.etape.chapitre}), même jeu fermé : un combat toutes les 15 minutes, pendant ${e.heuresMax} h au plus.${e.bonus ? ` Bonus d'expérience : +${Math.round(e.bonus * 100)} % d'XP (étapes deluxe et record de la Tour).` : ""}</p>
       <p class="expedition__gains"><strong>+${nombre(e.encre)}</strong> d'encre<br><strong>+${nombre(e.xp)}</strong> XP par perso<br><strong>+${e.pieces}</strong> pièce${e.pieces > 1 ? "s" : ""} d'équipement</p>
       <span class="barre-xp" role="img" aria-label="Expédition remplie à ${Math.round((e.heures / e.heuresMax) * 100)} %"><span class="barre-xp__rempli" style="--xp: ${e.heures / e.heuresMax}"></span></span>
       <p class="case__aide">${e.pleine ? "Expédition pleine : récupère vite tes gains !" : `Depuis ${duree(e.heures)}, pleine dans ${duree(e.heuresMax - e.heures)}.`}</p>
@@ -304,7 +304,7 @@ export function afficherQg(conteneur, { naviguer }) {
     zone.innerHTML = chapitreTermine(2) ? `
       <p class="case__surtitre">${nomSaison(saison.id)}</p>
       <p><strong>${saison.rang ? `Rang ${saison.rang.nom}` : "Pas encore classé"}</strong>, ${saison.points} points${saison.suivant ? ` (rang ${saison.suivant.nom} à ${saison.suivant.points})` : ""}</p>
-      <p class="case__aide">Points : ton meilleur étage de la Tour ce mois-ci, plus 1 point par 50 000 dégâts au boss de la semaine.</p>
+      <p class="case__aide">Ce mois-ci : ${saison.detail.tour} point${saison.detail.tour > 1 ? "s" : ""} de Tour (1 par 5 étages du record), ${saison.detail.raid} de boss (1 par 50 000 dégâts, chaque semaine, 15 au plus par semaine), ${saison.detail.jours} jour${saison.detail.jours > 1 ? "s" : ""} actif${saison.detail.jours > 1 ? "s" : ""} (les 3 missions du jour réclamées).</p>
       ${saison.precedente && !saison.precedente.reclamee ? `<button type="button" class="bouton bouton--obi-petit" data-action="saison-precedente">Récompense de la saison passée</button>` : ""}` : "";
   }
 
