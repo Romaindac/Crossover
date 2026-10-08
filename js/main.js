@@ -14,7 +14,7 @@ import { afficherQg } from "./ecrans/ecran-qg.js";
 import { afficherAventure } from "./ecrans/ecran-aventure.js";
 import { afficherSocial, afficherVitrinePartagee } from "./ecrans/ecran-social.js";
 import { vitrineDuLien, vitrineCompacte } from "./services/vitrine.js";
-import { connecte, envoyerSauvegarde, publierProfil } from "./services/enligne.js";
+import { connecte, envoyerSauvegarde, publierProfil, rafraichirNonLus } from "./services/enligne.js";
 import { aUnePartie, partieBrute, resumeJoueur } from "./services/partie.js";
 import { ecrire } from "./services/sauvegarde.js";
 import { brancherInclinaison } from "./ui/inclinaison.js";
@@ -68,3 +68,7 @@ setInterval(async () => {
     // Pas grave : on reessaiera au prochain tour
   }
 }, 5 * 60 * 1000);
+
+// Messages prives non lus : un coup d'oeil par minute (pastille de l'onglet Social)
+if (connecte()) rafraichirNonLus();
+setInterval(() => { if (connecte() && !document.hidden) rafraichirNonLus(); }, 60 * 1000);

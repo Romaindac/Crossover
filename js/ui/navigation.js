@@ -4,6 +4,7 @@
 // ==========================================================
 
 import { htmlDevenirFort } from "./aide.js";
+import { nonLusEnMemoire } from "../services/enligne.js";
 import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources } from "../services/partie.js";
 
 // Le lexique des ressources : a quoi sert chaque monnaie et comment l'obtenir
@@ -75,7 +76,7 @@ export function htmlNavigation(actif) {
       <button type="button" class="navigation__logo" data-nav="accueil" aria-label="Retour à l'accueil">Crossover</button>
       <div class="navigation__onglets">
         ${ONGLETS.map((o) => `
-          <button type="button" class="navigation__onglet" data-nav="${o.ecran}" ${o.ecran === actif ? 'aria-current="page"' : ""}>${o.nom}${o.ecran === "tirages" ? '<span class="pastille-tirage" data-pastille></span>' : ""}${o.ecran === "qg" ? '<span class="pastille-tirage" data-pastille-qg hidden>!</span>' : ""}</button>
+          <button type="button" class="navigation__onglet" data-nav="${o.ecran}" ${o.ecran === actif ? 'aria-current="page"' : ""}>${o.nom}${o.ecran === "tirages" ? '<span class="pastille-tirage" data-pastille></span>' : ""}${o.ecran === "qg" ? '<span class="pastille-tirage" data-pastille-qg hidden>!</span>' : ""}${o.ecran === "social" ? '<span class="pastille-tirage" data-pastille-social hidden></span>' : ""}</button>
         `).join("")}
       </div>
       <p class="compteur-energie" title="Énergie : les combats en coûtent (payée seulement à la victoire), +1 toutes les 3 minutes"><svg class="compteur-energie__eclair" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span data-energie>${etatEnergie()?.valeur ?? 0}/${etatEnergie()?.max ?? 0}</span><span class="visuellement-cache"> d'énergie</span></p>
@@ -105,6 +106,13 @@ export function brancherNavigation(conteneur, naviguer, actif) {
       pastille.hidden = n === 0;
       pastille.setAttribute("aria-label", n ? `${n} booster${n > 1 ? "s" : ""} à ouvrir` : "");
     }
+    const pastilleSocial = conteneur.querySelector("[data-pastille-social]");
+    if (pastilleSocial) {
+      const n = nonLusEnMemoire();
+      pastilleSocial.textContent = n > 9 ? "9+" : String(n);
+      pastilleSocial.hidden = n === 0;
+      pastilleSocial.setAttribute("aria-label", n ? `${n} message${n > 1 ? "s" : ""} privé${n > 1 ? "s" : ""} non lu${n > 1 ? "s" : ""}` : "");
+    }
     const pastilleQg = conteneur.querySelector("[data-pastille-qg]");
     if (pastilleQg) {
       const aReclamer = quelqueChoseAReclamer();
@@ -113,5 +121,8 @@ export function brancherNavigation(conteneur, naviguer, actif) {
     }
   };
   maj();
+  // Les messages prives non lus arrivent en arriere-plan
+  const surNonLus = () => { if (conteneur.isConnected) maj(); else window.removeEventListener("crossover:non-lus", surNonLus); };
+  window.addEventListener("crossover:non-lus", surNonLus);
   return maj;
 }

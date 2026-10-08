@@ -76,6 +76,10 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   défi entre amis : le score au boss de la semaine voyage dans le lien de vitrine, plus un classement « Boss cette semaine ».
 - Fait : panneau Synergies en direct dans l'écran Équipe (`js/ui/synergies.js` : séries, liens, affinités contre le prochain combat, placement),
   37 nouveaux liens (57 au total), page d'aide « Devenir plus fort » dans la fenêtre du bouton « ? » (`js/ui/aide.js`).
+- Fait : chat dans l'onglet Social (`js/ui/chat.js`) : canaux Général, Entraide, Échanges, messages privés, bloquer, signaler.
+  Tables `messages`, `prives`, `blocages`, `signalements`, `moderateurs` dans `supabase/schema.sql` (pseudo imposé par le serveur,
+  500 caractères, un message toutes les 2 s). Pour être modérateur : ajouter son id à la table `moderateurs` dans Supabase.
+  Nouveaux messages par interrogation toutes les 4 s (chat ouvert) ; pastille des privés non lus chaque minute.
 - Fait : écran Social. Vitrine de 6 cartes partageable par lien (`#vitrine=…`, sans serveur) ; comptes pseudo + mot de passe, sauvegarde en ligne (auto toutes les 5 min) et classements Tour / Boss / Collection via Supabase (`js/services/enligne.js`, appels REST sans bibliothèque).
   Pour activer : coller `supabase/schema.sql` dans le SQL Editor de Supabase, désactiver « Confirm email », puis mettre l'URL du projet et la clé « anon public » dans `js/donnees/config-enligne.js`. Jamais la clé service_role.
 - À venir : retours de test et corrections, roguelite (V0.4), PvP (V0.5).
