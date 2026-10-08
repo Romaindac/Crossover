@@ -12,7 +12,14 @@ import { numeroSemaine } from "../donnees/tour.js";
 export { enLigneDisponible };
 
 const CLE_SESSION = "session";
-const DOMAINE_COMPTES = "joueurs.crossover.jeu";
+// L'adresse technique d'un compte, fabriquee a partir du pseudo. Supabase exige un domaine
+// qui existe vraiment (avec un serveur de mail) : un domaine invente est refuse.
+// Aucun mail n'y est jamais envoye : la confirmation est desactivee, et le service de mail
+// integre de Supabase n'ecrit qu'aux membres du projet. (Si un jour on branche un SMTP
+// a soi, il faudra passer a un domaine qui nous appartient.)
+const DOMAINE_COMPTES = "gmail.com";
+const PREFIXE_COMPTES = "crossoverjeu.";
+const ANCIEN_DOMAINE = "joueurs.crossover.jeu";
 export const PSEUDO_VALIDE = /^[A-Za-z0-9_-]{3,20}$/;
 
 let session = lire(CLE_SESSION, null);
@@ -39,10 +46,12 @@ export function deconnecter() {
 
 // Traduit les erreurs du serveur en phrases simples
 function messageErreur(corps, statut) {
-  const brut = `${corps?.msg ?? corps?.message ?? corps?.error_description ?? corps?.error ?? ""}`.toLowerCase();
+  const brutOriginal = `${corps?.msg ?? corps?.message ?? corps?.error_description ?? corps?.error ?? ""}`.slice(0, 160);
+  const brut = brutOriginal.toLowerCase();
   if (brut.includes("already registered") || brut.includes("already exists") || brut.includes("duplicate")) return "Ce pseudo est déjà pris.";
   if (brut.includes("invalid login") || brut.includes("invalid_grant") || brut.includes("invalid credentials")) return "Pseudo ou mot de passe incorrect.";
-  if (brut.includes("email") && (brut.includes("invalid") || brut.includes("valid"))) return "Le serveur refuse l'adresse technique du compte : préviens le créateur du jeu (erreur « email »).";
+  if (brut.includes("email") && brut.includes("disabled")) return "Les comptes par mail sont désactivés dans Supabase : Authentication > Sign In / Providers > Email, à activer.";
+  if (brut.includes("email") && (brut.includes("invalid") || brut.includes("valid"))) return `Le serveur refuse l'adresse technique du compte. Préviens le créateur du jeu avec ce message : « ${brutOriginal} »`;
   if (brut.includes("signups not allowed") || brut.includes("signup is disabled")) return "Les inscriptions sont fermées dans Supabase (Authentication > Sign In / Providers > Allow new users to sign up).";
   if (brut.includes("password")) return "Mot de passe trop court (6 caractères minimum).";
   if (brut.includes("email not confirmed")) return "Le serveur demande une confirmation par mail : il faut la désactiver dans Supabase.";
@@ -53,7 +62,7 @@ function messageErreur(corps, statut) {
   if (brut.includes("trop rapide")) return "Doucement : un message toutes les 2 secondes.";
   if (brut.includes("bloque")) return "Ce joueur ne reçoit pas tes messages.";
   if (statut === 429) return "Trop d'essais : attends une minute.";
-  return "Le serveur ne répond pas comme prévu. Réessaie plus tard.";
+  return `Le serveur ne répond pas comme prévu${brutOriginal ? ` (« ${brutOriginal} »)` : ""}. Réessaie plus tard.`;
 }
 
 async function appel(chemin, { methode = "GET", corps, entetes = {}, authentifie = false } = {}) {
@@ -97,7 +106,8 @@ async function jetonFrais() {
   }
 }
 
-const adresse = (pseudo) => `${pseudo.toLowerCase()}@${DOMAINE_COMPTES}`;
+const adresse = (pseudo) => `${PREFIXE_COMPTES}${pseudo.toLowerCase()}@${DOMAINE_COMPTES}`;
+const ancienneAdresse = (pseudo) => `${pseudo.toLowerCase()}@${ANCIEN_DOMAINE}`;
 
 export async function inscrire(pseudo, motDePasse) {
   if (!PSEUDO_VALIDE.test(pseudo)) throw new Error("Pseudo : 3 à 20 lettres, chiffres, - ou _.");
@@ -110,7 +120,14 @@ export async function inscrire(pseudo, motDePasse) {
 }
 
 export async function connecter(pseudo, motDePasse) {
-  const d = await appel("/auth/v1/token?grant_type=password", { methode: "POST", corps: { email: adresse(pseudo), password: motDePasse } });
+  const essai = (email) => appel("/auth/v1/token?grant_type=password", { methode: "POST", corps: { email, password: motDePasse } });
+  let d;
+  try {
+    d = await essai(adresse(pseudo));
+  } catch (e) {
+    // Un compte cree avec l'ancienne adresse technique ?
+    d = await essai(ancienneAdresse(pseudo)).catch(() => { throw e; });
+  }
   garderSession(d, pseudo);
   // Le pseudo exact (majuscules) est celui du classement
   const ligne = await appel(`/rest/v1/joueurs?select=pseudo&id=eq.${session.id}`, { authentifie: true }).catch(() => null);
