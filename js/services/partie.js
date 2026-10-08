@@ -9,7 +9,7 @@
 import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { PALIERS } from "../donnees/ennemis.js";
 import {
-  PERSOS_DE_DEPART, HEROS_AU_CHOIX, ENCRE_DE_DEPART,
+  ENCRE_DE_DEPART,
   xpCombat, encreCombat, PART_XP_RESERVE,
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX, MISSIONS_PAR_JOUR, BONUS_TOUTES_MISSIONS,
 } from "../donnees/progression.js";
@@ -40,9 +40,9 @@ import {
 } from "../donnees/tour.js";
 import { COFFRES_SEMAINE as COFFRES_SEMAINE_TOUR } from "../donnees/tour.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
-import { ouvrirBooster } from "../moteur/boosters.js";
+import { ouvrirBooster, ouvrirBoosterDepart } from "../moteur/boosters.js";
 import {
-  EDITIONS_PAR_ID, PRIX_BOOSTER, HEURES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
+  EDITIONS_PAR_ID, PRIX_BOOSTER, MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
   POUSSIERE_PAR_BOOSTER, POUSSIERE_DOUBLON, COUT_FABRICATION, PITIE_BOOSTER, TICKETS_CHAPITRE,
 } from "../donnees/boosters.js";
 import { lire, ecrire } from "./sauvegarde.js";
@@ -55,7 +55,7 @@ const VERSION = 1;
 function validerBoosters(b) {
   return {
     tickets: Math.max(0, Math.floor(Number(b?.tickets ?? TICKETS_DEPART)) || 0),
-    prochainGratuit: Number(b?.prochainGratuit) || Date.now() + HEURES_BOOSTER_GRATUIT * 3600000,
+    prochainGratuit: Number(b?.prochainGratuit) || Date.now() + MINUTES_BOOSTER_GRATUIT * 60000,
     pitie: Math.max(0, Math.floor(Number(b?.pitie) || 0)),
     poussiere: Math.max(0, Math.floor(Number(b?.poussiere) || 0)),
     ouverts: Math.max(0, Math.floor(Number(b?.ouverts) || 0)),
@@ -190,17 +190,19 @@ export function palierMaxDebloque() {
 
 // ---------- Debut de partie ----------
 
-export function nouvellePartie(heros) {
-  if (!HEROS_AU_CHOIX.includes(heros)) throw new Error(`Héros inconnu : ${heros}`);
+// Nouvelle partie : un booster de depart offert donne les 5 premiers persos
+// (un par role). Renvoie ses cartes pour la mise en scene de l'ouverture.
+export function nouvellePartie() {
+  const { cartes } = ouvrirBoosterDepart(Math.random);
   const collection = {};
-  for (const id of [...PERSOS_DE_DEPART, heros]) collection[id] = nouvelleProgression();
+  for (const c of cartes) collection[c.id] = { ...nouvelleProgression(), variantes: [] };
 
-  // Equipe de depart : les tanks devant, les autres derriere
-  const ids = [...PERSOS_DE_DEPART, heros];
-  const tanks = ids.filter((id) => PERSOS_PAR_ID[id].role === "tank");
-  const autres = ids.filter((id) => PERSOS_PAR_ID[id].role !== "tank");
-  const avant = [...tanks, ...autres].slice(0, 2);
+  // Equipe de depart : tanks et attaquants devant, les autres derriere
+  const ordreDevant = ["tank", "attaquant", "controle", "soutien", "assassin"];
+  const ids = cartes.map((c) => c.id);
+  const avant = [...ids].sort((a, b) => ordreDevant.indexOf(PERSOS_PAR_ID[a].role) - ordreDevant.indexOf(PERSOS_PAR_ID[b].role)).slice(0, 2);
   const arriere = ids.filter((id) => !avant.includes(id));
+  const heros = cartes.find((c) => c.rarete === "rare")?.id ?? ids[0];
 
   partie = {
     version: VERSION,
@@ -225,6 +227,7 @@ export function nouvellePartie(heros) {
   // On repasse par la validation : tous les champs des versions recentes sont crees
   partie = valider(partie);
   sauver();
+  return cartes;
 }
 
 // ---------- Modifications ----------
@@ -313,10 +316,10 @@ function ajouterCarte({ id, rarete, variante = null }) {
 
 // ---------- Boosters ----------
 
-// Les tickets gratuits arrivent avec le temps (un toutes les 12 h tant qu'on en a moins de 2)
+// Les tickets gratuits arrivent avec le temps (un toutes les 15 min tant qu'on en a moins de 8)
 function assurerTickets(maintenant = Date.now()) {
   const b = partie.boosters;
-  const periode = HEURES_BOOSTER_GRATUIT * 3600000;
+  const periode = MINUTES_BOOSTER_GRATUIT * 60000;
   while (maintenant >= b.prochainGratuit) {
     if (b.tickets < STOCK_GRATUIT_MAX) b.tickets += 1;
     b.prochainGratuit += periode;

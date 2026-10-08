@@ -52,17 +52,37 @@ function tirerVariante(aleatoire) {
 
 // Ouvre un booster. pitie : boosters ouverts depuis le dernier Legendaire.
 // Renvoie { cartes: [{ id, rarete, variante }], pitie, dore }
-export function ouvrirBooster(aleatoire, editionId, { pitie = 0, serieVedette = null } = {}) {
+export function ouvrirBooster(aleatoire, editionId, { pitie = 0, serieVedette = null, pitieMax = PITIE_BOOSTER } = {}) {
   const edition = EDITIONS_PAR_ID[editionId];
   if (!edition) throw new Error(`Édition inconnue : ${editionId}`);
   const dore = aleatoire() < CHANCE_BOOSTER_DORE;
   const tables = dore ? CASES_BOOSTER.map(() => CASE_DOREE) : CASES_BOOSTER;
   const cartes = tables.map((table, i) => {
-    const garantie = !dore && i === tables.length - 1 && pitie + 1 >= PITIE_BOOSTER;
+    const garantie = !dore && i === tables.length - 1 && pitie + 1 >= pitieMax;
     const rarete = garantie ? "legendaire" : tirerDansTable(aleatoire, table);
     const perso = tirerPersoEdition(aleatoire, edition, rarete, serieVedette);
     return { id: perso.id, rarete: perso.rarete, variante: tirerVariante(aleatoire) };
   });
   const legendaire = cartes.some((c) => c.rarete === "legendaire");
   return { cartes, pitie: legendaire ? 0 : pitie + 1, dore };
+}
+
+// ---------- Booster de depart ----------
+// Offert une seule fois : 5 persos differents, un par role (tank, soutien,
+// controle, attaquant, assassin), pour que la premiere equipe soit jouable.
+// Des Communs et Peu communs, dont un Rare garanti ; 5 series differentes.
+const ROLES_DEPART = ["tank", "soutien", "controle", "attaquant", "assassin"];
+
+export function ouvrirBoosterDepart(aleatoire) {
+  const indexRare = Math.floor(aleatoire() * ROLES_DEPART.length);
+  const series = new Set();
+  const cartes = ROLES_DEPART.map((role, i) => {
+    const raretes = i === indexRare ? ["rare"] : ["commun", "peu_commun"];
+    let liste = PERSOS.filter((p) => p.role === role && raretes.includes(p.rarete) && !series.has(p.serie));
+    if (!liste.length) liste = PERSOS.filter((p) => p.role === role && raretes.includes(p.rarete));
+    const perso = liste[Math.floor(aleatoire() * liste.length)];
+    series.add(perso.serie);
+    return { id: perso.id, rarete: perso.rarete, variante: null };
+  });
+  return { cartes };
 }

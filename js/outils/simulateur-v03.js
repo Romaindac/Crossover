@@ -8,7 +8,7 @@
 
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 import {
-  PERSOS_DE_DEPART, ENCRE_DE_DEPART, PART_XP_RESERVE,
+  ENCRE_DE_DEPART, PART_XP_RESERVE,
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX,
 } from "../donnees/progression.js";
 import { TOUTES_LES_ETAPES, encreEtape, xpEtape, COFFRES } from "../donnees/campagne.js";
@@ -16,8 +16,10 @@ import { ZONES, tableButin, xpChasse, eclatsChasse, MULT_SOUS_ZONE } from "../do
 import { OBJETS_PAR_ID } from "../donnees/objets.js";
 import { ORDRE_EMPLACEMENTS, NIVEAU_MAX_PIECE } from "../donnees/equipement.js";
 import { simulerCombat } from "../moteur/simulation.js";
-import { ouvrirBooster } from "../moteur/boosters.js";
-import { EDITIONS, PRIX_BOOSTER, TICKETS_DEPART, TICKETS_CHAPITRE } from "../donnees/boosters.js";
+import { ouvrirBooster, ouvrirBoosterDepart } from "../moteur/boosters.js";
+import { EDITIONS, PRIX_BOOSTER, TICKETS_DEPART, TICKETS_CHAPITRE, STOCK_GRATUIT_MAX } from "../donnees/boosters.js";
+
+const TICKETS_GRATUITS_PAR_JOUR = 3 * STOCK_GRATUIT_MAX;
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { composerEquipe } from "../moteur/composition.js";
@@ -32,7 +34,8 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     collection: {}, encre: ENCRE_DE_DEPART, pitie: 0, eclats: 0, tickets: TICKETS_DEPART, boosters: 0,
     pieces: [], uid: 1, battues: new Set(), bossChasse: new Set(), echecs: 0,
   };
-  for (const id of [...PERSOS_DE_DEPART, heros]) j.collection[id] = nouvelleProgression();
+  // Le booster de depart offert (heros n'est plus utilise : garde pour la compatibilite)
+  for (const c of ouvrirBoosterDepart(h.nombre).cartes) j.collection[c.id] = nouvelleProgression();
 
   const jalons = {};           // chapitre termine -> jour
   const bilans = [];
@@ -177,7 +180,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
   for (jour = 1; jour <= jours && prochaineEtape(); jour++) {
     // L'expedition pendant l'absence
     const etapeExp = meilleureEtape();
-    if (jour > 1) j.tickets += 2;   // les tickets gratuits (un toutes les 12 h)
+    if (jour > 1) j.tickets += TICKETS_GRATUITS_PAR_JOUR;   // un ticket toutes les 15 min, reserve de 8 : environ 3 visites par jour
     if (jour > 1 && etapeExp) {
       const combats = Math.floor(Math.min(24 - minutesParJour / 60, EXPEDITION_HEURES_MAX) * EXPEDITION_COMBATS_PAR_HEURE);
       j.encre += combats * encreEtape(etapeExp, false);

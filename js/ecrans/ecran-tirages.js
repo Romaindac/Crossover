@@ -1,7 +1,7 @@
 // ==========================================================
 // ECRAN DES BOOSTERS
 // La seule facon d'obtenir des persos : ouvrir des boosters.
-// Chaque edition a ses series ; un booster = 5 cartes. Les cartes
+// Chaque edition a ses series ; un booster = 3 cartes. Les cartes
 // se retournent une par une, l'obi annonce la rarete d'abord.
 // L'atelier fabrique la carte de son choix avec la poussiere.
 // ==========================================================
@@ -11,7 +11,7 @@ import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { ETOILES_MAX } from "../donnees/progression.js";
 import {
   EDITIONS, CASES_BOOSTER, CHANCE_BOOSTER_DORE, PITIE_BOOSTER, CHANCE_HOLO, CHANCE_DOREE,
-  STOCK_GRATUIT_MAX, POUSSIERE_PAR_BOOSTER, COUT_FABRICATION,
+  STOCK_GRATUIT_MAX, POUSSIERE_PAR_BOOSTER, COUT_FABRICATION, CARTES_PAR_BOOSTER,
 } from "../donnees/boosters.js";
 import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
 import { serieDeLaSemaine } from "../donnees/hebdo.js";
@@ -22,6 +22,7 @@ import {
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
+import { htmlSachet } from "../ui/sachet.js";
 import { annoncerTampons } from "../ui/toast.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -81,25 +82,6 @@ export function afficherTirages(conteneur, { naviguer }) {
 
   // ---------- Boutique : une edition = un booster ----------
 
-  // Le sachet d'un booster : feuille metallisee aux couleurs de l'edition,
-  // bords soudes, et ses 3 vedettes en eventail dans la fenetre
-  function htmlSachet(edition, { attributs = "" } = {}) {
-    const [c1, c2, c3] = edition.couleurs;
-    return `
-      <span class="sachet" style="--p1: ${c1}; --p2: ${c2}; --p3: ${c3}" ${attributs}>
-        <span class="sachet__soudure sachet__soudure--haut" aria-hidden="true"></span>
-        <span class="sachet__logo">Crossover</span>
-        <span class="sachet__edition">Édition ${edition.numero}</span>
-        <span class="sachet__fenetre" aria-hidden="true">
-          ${edition.vedettes.map((id, i) => `<span class="sachet__vedette sachet__vedette--${i}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}
-        </span>
-        <span class="sachet__nom">${edition.nom}</span>
-        <span class="sachet__badge">5 cartes</span>
-        <span class="sachet__reflet" aria-hidden="true"></span>
-        <span class="sachet__soudure sachet__soudure--bas" aria-hidden="true"></span>
-      </span>`;
-  }
-
   function htmlBooster(edition) {
     const persos = persosEdition(edition);
     const obtenus = persos.filter((p) => possede(p.id)).length;
@@ -123,8 +105,8 @@ export function afficherTirages(conteneur, { naviguer }) {
   }
 
   function htmlTaux() {
-    const nomsCases = ["Cartes 1 à 3", "Carte 4", "Carte 5"];
-    const cases = [CASES_BOOSTER[0], CASES_BOOSTER[3], CASES_BOOSTER[4]];
+    const nomsCases = CASES_BOOSTER.map((_, i) => `Carte ${i + 1}`);
+    const cases = CASES_BOOSTER;
     const ordre = ORDRE_RARETES.slice().reverse();
     return `
       <details class="taux">
@@ -137,7 +119,7 @@ export function afficherTirages(conteneur, { naviguer }) {
             </tbody>
           </table>
         </div>
-        <p>Chaque carte a ${pourcent(CHANCE_HOLO)} de chances d'être Holo et ${pourcent(CHANCE_DOREE)} d'être Dorée : même force, autre cadre, à collectionner. Un booster sur ${Math.round(1 / CHANCE_BOOSTER_DORE)} est un booster doré (5 cartes Épiques ou Légendaires). Un Légendaire est garanti au ${PITIE_BOOSTER}e booster sans Légendaire. Chaque booster donne ${POUSSIERE_PAR_BOOSTER} poussière. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en poussière.</p>
+        <p>Chaque carte a ${pourcent(CHANCE_HOLO)} de chances d'être Holo et ${pourcent(CHANCE_DOREE)} d'être Dorée : même force, autre cadre, à collectionner. Un booster sur ${Math.round(1 / CHANCE_BOOSTER_DORE)} est un booster doré (${CARTES_PAR_BOOSTER} cartes Épiques ou Légendaires). Un Légendaire est garanti au ${PITIE_BOOSTER}e booster sans Légendaire. Chaque booster donne ${POUSSIERE_PAR_BOOSTER} poussière. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en poussière.</p>
       </details>`;
   }
 
@@ -341,11 +323,15 @@ export function afficherTirages(conteneur, { naviguer }) {
     if (e.key === "Escape" && revelation && !$("#revelation-actions")?.hidden) fermer();
   });
 
-  // Le compte a rebours du ticket gratuit se met a jour chaque minute
+  // Le compte a rebours se met a jour ; quand un ticket gratuit arrive, tout l'ecran suit
+  let ticketsAffiches = etatBoosters().tickets;
   const minuteur = setInterval(() => {
     if (!conteneur.isConnected) return clearInterval(minuteur);
-    if (!revelation) rendreReserve();
-  }, 60000);
+    if (revelation) return;
+    const tickets = etatBoosters().tickets;
+    if (tickets !== ticketsAffiches) { ticketsAffiches = tickets; rendre(); }
+    else rendreReserve();
+  }, 30000);
 
   chargerPortraits((id) => rafraichirPortrait(conteneur, id));
   rendre();

@@ -63,6 +63,8 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   mise à jour « Audit » : rééquilibrage mesuré, Rage d'encre, équipe conseillée, cartes premium, boss / Tour / saisons / missions revus,
   Volume 2 (8 persos : C-18, Tsunade, Nami, Dracaufeu, Chevalier Squelette, Nobara, Shinobu, Hisoka ; 32 persos, 4 par série),
   refonte « Boosters » : 78 persos (6 nouvelles séries), obtention par boosters de 4 éditions à thème, tickets gratuits,
-  atelier à la poussière, variantes Holo et Dorée, cadre de carte propre à chaque manga.
+  atelier à la poussière, variantes Holo et Dorée, cadre de carte propre à chaque manga ;
+  début de partie par un booster offert (5 persos, un par rôle) ; boosters de 3 cartes, un gratuit toutes les 15 min
+  (réserve de 8), collection complète vers 1 000 boosters (environ 5 semaines).
 - Mise en ligne : GitHub Pages sur la branche `main` (https://romaindac.github.io/Crossover/), mise à jour automatique à chaque fusion.
 - À venir : retours de test et corrections, roguelite (V0.4), jeu en ligne avec comptes Supabase et PvP (V0.5).
