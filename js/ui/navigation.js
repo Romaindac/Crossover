@@ -3,7 +3,7 @@
 // Presente sur les ecrans du jeu (pas en combat ni a l'accueil).
 // ==========================================================
 
-import { encre, quelqueChoseAReclamer, boostersDisponibles } from "../services/partie.js";
+import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie } from "../services/partie.js";
 
 const ONGLETS = [
   { ecran: "qg", nom: "QG" },
@@ -23,6 +23,7 @@ export function htmlNavigation(actif) {
           <button type="button" class="navigation__onglet" data-nav="${o.ecran}" ${o.ecran === actif ? 'aria-current="page"' : ""}>${o.nom}${o.ecran === "tirages" ? '<span class="pastille-tirage" data-pastille></span>' : ""}${o.ecran === "qg" ? '<span class="pastille-tirage" data-pastille-qg hidden>!</span>' : ""}</button>
         `).join("")}
       </div>
+      <p class="compteur-energie" title="Énergie : les combats en coûtent (payée seulement à la victoire), +1 toutes les 3 minutes"><svg class="compteur-energie__eclair" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span data-energie>${etatEnergie()?.valeur ?? 0}/${etatEnergie()?.max ?? 0}</span><span class="visuellement-cache"> d'énergie</span></p>
       <p class="compteur-encre navigation__encre"><span class="compteur-encre__goutte" aria-hidden="true"></span><span data-encre>${encre().toLocaleString("fr-FR")}</span><span class="visuellement-cache"> d'encre</span></p>
     </nav>
   `;
@@ -37,6 +38,9 @@ export function brancherNavigation(conteneur, naviguer, actif) {
   const maj = () => {
     const zone = conteneur.querySelector(".navigation [data-encre]");
     if (zone) zone.textContent = encre().toLocaleString("fr-FR");
+    const energie = conteneur.querySelector(".navigation [data-energie]");
+    const e = etatEnergie();
+    if (energie && e) energie.textContent = `${e.valeur}/${e.max}`;
     const pastille = conteneur.querySelector("[data-pastille]");
     if (pastille) {
       const n = boostersDisponibles();

@@ -73,7 +73,7 @@ export function afficherTirages(conteneur, { naviguer }) {
       ? `Réserve de tickets gratuits pleine (${STOCK_GRATUIT_MAX}) : ouvre-les !`
       : `Prochain ticket gratuit dans ${duree(b.prochainGratuit - Date.now())}.`;
     $("#reserve").innerHTML = `
-      <div class="reserve__case"><span class="reserve__chiffre">${b.tickets}</span><span class="reserve__nom">ticket${b.tickets > 1 ? "s" : ""} de booster</span></div>
+      <div class="reserve__case"><span class="reserve__chiffre">${b.tickets}${b.dores ? ` + ${b.dores} doré${b.dores > 1 ? "s" : ""}` : ""}</span><span class="reserve__nom">ticket${b.tickets > 1 ? "s" : ""} de booster</span></div>
       <div class="reserve__case"><span class="reserve__chiffre">${nombre(encre())}</span><span class="reserve__nom">encre (${nombre(b.prix)} le booster)</span></div>
       <div class="reserve__case"><span class="reserve__chiffre">${nombre(b.poussiere)}</span><span class="reserve__nom">poussière pour l'atelier</span></div>
       <p class="reserve__aide">${prochain} Un Légendaire est garanti dans <strong>${b.avantLegendaire}</strong> booster${b.avantLegendaire > 1 ? "s" : ""} au plus. Des tickets se gagnent aussi en finissant un chapitre de campagne et avec le bonus des missions du jour ; l'encre se gagne en combattant.</p>
@@ -86,8 +86,8 @@ export function afficherTirages(conteneur, { naviguer }) {
     const persos = persosEdition(edition);
     const obtenus = persos.filter((p) => possede(p.id)).length;
     const b = etatBoosters();
-    const payer = b.tickets > 0 ? "Ouvrir · 1 ticket" : `Ouvrir · ${nombre(b.prix)} d'encre`;
-    const peutOuvrir = b.tickets > 0 || encre() >= b.prix;
+    const payer = b.dores > 0 ? "Ouvrir · booster doré !" : b.tickets > 0 ? "Ouvrir · 1 ticket" : `Ouvrir · ${nombre(b.prix)} d'encre`;
+    const peutOuvrir = b.dores > 0 || b.tickets > 0 || encre() >= b.prix;
     return `
       <article class="booster">
         <button type="button" class="booster__bouton-sachet" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}
@@ -241,7 +241,7 @@ export function afficherTirages(conteneur, { naviguer }) {
     $("#revelation-actions").hidden = false;
     $("#tout-reveler").hidden = true;
     const b = etatBoosters();
-    $("#revelation [data-action='ouvrir']").disabled = !(b.tickets > 0 || encre() >= b.prix);
+    $("#revelation [data-action='ouvrir']").disabled = !(b.dores > 0 || b.tickets > 0 || encre() >= b.prix);
     annoncerTampons(verifierTampons());
     rendre();
   }

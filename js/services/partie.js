@@ -29,7 +29,12 @@ import { EVEILS, niveauMaxDe, COUT_CHANGER_TALENT } from "../donnees/eveil.js";
 import { bossDeLaSemaine, NIVEAU_BOSS_RAID, TENTATIVES_PAR_JOUR, PALIERS_RAID } from "../donnees/raid.js";
 import { LIENS, niveauLien, BONUS_PAR_NIVEAU_LIEN, VICTOIRES_DECOUVERTE } from "../donnees/liens.js";
 import { TAMPONS, PAGES, TITRE_DE_DEPART } from "../donnees/tampons.js";
-import { serieDeLaSemaine, BONUS_HONNEUR, BUTIN_HONNEUR, MISSIONS_SEMAINE } from "../donnees/hebdo.js";
+import { serieDeLaSemaine, BONUS_HONNEUR, BUTIN_HONNEUR, MISSIONS_SEMAINE, SERIES } from "../donnees/hebdo.js";
+import {
+  ENERGIE_MAX, MINUTES_PAR_ENERGIE, ENERGIE_PLAFOND, COUT_ENERGIE, RECHARGE_ENCRE, ENERGIE_BONUS_MISSIONS,
+  DEFI_DU_JOUR, CALENDRIER, PALIERS_TOURNOI,
+} from "../donnees/evenements.js";
+import { heureFolle, serieDuDefi } from "../moteur/evenements.js";
 import { RANGS, saisonActuelle, pointsSaison, detailPointsSaison, rangDe, CADRES } from "../donnees/saisons.js";
 import { pieceParfaite, nomPiece } from "../moteur/equipement.js";
 import { simulerCombat } from "../moteur/simulation.js";
@@ -59,6 +64,7 @@ function validerBoosters(b) {
     pitie: Math.max(0, Math.floor(Number(b?.pitie) || 0)),
     poussiere: Math.max(0, Math.floor(Number(b?.poussiere) || 0)),
     ouverts: Math.max(0, Math.floor(Number(b?.ouverts) || 0)),
+    dores: Math.max(0, Math.floor(Number(b?.dores) || 0)),   // tickets de booster dore (evenements)
   };
 }
 
@@ -78,6 +84,12 @@ function valider(p) {
     encre: Math.max(0, Math.floor(p.encre)),
     collection,
     boosters: validerBoosters(p.boosters),
+    energie: {
+      valeur: Math.min(ENERGIE_PLAFOND, Math.max(0, Number(p.energie?.valeur ?? ENERGIE_MAX) || 0)),
+      maj: Number(p.energie?.maj) || Date.now(),
+      achats: p.energie?.achats ?? null,
+    },
+    evenements: p.evenements ?? {},
     paliersBattus,
     equipe: equipe.map((id, i) => (collection[id] && equipe.indexOf(id) === i ? id : null)),
     palier: Number(p.palier) || 1,
@@ -209,6 +221,8 @@ export function nouvellePartie() {
     encre: ENCRE_DE_DEPART,
     collection,
     boosters: validerBoosters(null),
+    energie: { valeur: ENERGIE_MAX, maj: Date.now(), achats: null },
+    evenements: {},
     paliersBattus: [],
     equipe: [...avant, ...arriere],
     palier: 1,
@@ -332,6 +346,7 @@ export function etatBoosters(maintenant = Date.now()) {
   const b = assurerTickets(maintenant);
   return {
     tickets: b.tickets,
+    dores: b.dores,
     prochainGratuit: b.prochainGratuit,
     stockPlein: b.tickets >= STOCK_GRATUIT_MAX,
     poussiere: b.poussiere,
@@ -345,7 +360,7 @@ export function etatBoosters(maintenant = Date.now()) {
 export const boostersDisponibles = () => {
   if (!partie) return 0;
   const b = assurerTickets();
-  return b.tickets + Math.floor(partie.encre / PRIX_BOOSTER);
+  return b.dores + b.tickets + Math.floor(partie.encre / PRIX_BOOSTER);
 };
 
 // Ouvre un booster d'une edition, avec un ticket si possible, sinon avec de l'encre.
@@ -354,10 +369,11 @@ export function ouvrirBoosterJoueur(editionId) {
   if (!partie || !EDITIONS_PAR_ID[editionId]) return null;
   const b = assurerTickets();
   let paiement;
-  if (b.tickets > 0) { b.tickets -= 1; paiement = "ticket"; }
+  if (b.dores > 0) { b.dores -= 1; paiement = "dore"; }
+  else if (b.tickets > 0) { b.tickets -= 1; paiement = "ticket"; }
   else if (partie.encre >= PRIX_BOOSTER) { partie.encre -= PRIX_BOOSTER; paiement = "encre"; }
   else return null;
-  const r = ouvrirBooster(Math.random, editionId, { pitie: b.pitie, serieVedette: serieDeLaSemaine() });
+  const r = ouvrirBooster(Math.random, editionId, { pitie: b.pitie, serieVedette: serieDeLaSemaine(), forcerDore: paiement === "dore" });
   b.pitie = r.pitie;
   b.ouverts += 1;
   b.poussiere += POUSSIERE_PAR_BOOSTER;
@@ -388,6 +404,181 @@ export function fabriquerCarte(id) {
 // Tickets de booster gagnes en recompense (chapitres, missions)
 function donnerTickets(n) {
   partie.boosters.tickets += n;
+}
+
+
+// ---------- Energie ----------
+// Les combats coutent de l'energie, payee seulement en cas de victoire.
+// Elle remonte seule (+1 toutes les 3 min) jusqu'a 150 ; les cadeaux peuvent depasser.
+
+function assurerEnergie(maintenant = Date.now()) {
+  const e = partie.energie;
+  const periode = MINUTES_PAR_ENERGIE * 60000;
+  if (e.valeur >= ENERGIE_MAX) { e.maj = maintenant; return e; }
+  const gagne = Math.floor((maintenant - e.maj) / periode);
+  if (gagne > 0) {
+    e.valeur = Math.min(ENERGIE_MAX, e.valeur + gagne);
+    e.maj = e.valeur >= ENERGIE_MAX ? maintenant : e.maj + gagne * periode;
+  }
+  return e;
+}
+
+export function etatEnergie(maintenant = Date.now()) {
+  if (!partie) return null;
+  const e = assurerEnergie(maintenant);
+  const jour = aujourdhui();
+  const achats = e.achats?.jour === jour ? e.achats.n : 0;
+  return {
+    valeur: e.valeur, max: ENERGIE_MAX,
+    prochain: e.valeur >= ENERGIE_MAX ? null : e.maj + MINUTES_PAR_ENERGIE * 60000,
+    achatsRestants: RECHARGE_ENCRE.parJour - achats, recharge: RECHARGE_ENCRE,
+  };
+}
+
+// Le cout d'un combat (l'heure folle peut le reduire)
+export function coutEnergie(mode) {
+  const base = COUT_ENERGIE[mode] ?? 0;
+  return Math.ceil(base * (heureFolle().coutEnergie ?? 1));
+}
+
+export const assezDEnergie = (mode) => Boolean(partie) && assurerEnergie().valeur >= coutEnergie(mode);
+
+export function payerEnergie(mode) {
+  const e = assurerEnergie();
+  const cout = coutEnergie(mode);
+  const etaitPlein = e.valeur >= ENERGIE_MAX;
+  e.valeur = Math.max(0, e.valeur - cout);
+  if (etaitPlein && e.valeur < ENERGIE_MAX) e.maj = Date.now();
+  sauver();
+  return cout;
+}
+
+function donnerEnergie(n) {
+  const e = assurerEnergie();
+  const etaitPlein = e.valeur >= ENERGIE_MAX;
+  e.valeur = Math.min(ENERGIE_PLAFOND, e.valeur + n);
+  if (!etaitPlein && e.valeur >= ENERGIE_MAX) e.maj = Date.now();
+}
+
+export function rechargerEnergie() {
+  const etat = etatEnergie();
+  if (etat.achatsRestants <= 0) return { ok: false, erreur: "Plus de recharge possible aujourd'hui." };
+  if (partie.encre < RECHARGE_ENCRE.prix) return { ok: false, erreur: `Il te manque ${RECHARGE_ENCRE.prix - partie.encre} d'encre.` };
+  partie.encre -= RECHARGE_ENCRE.prix;
+  donnerEnergie(RECHARGE_ENCRE.energie);
+  const jour = aujourdhui();
+  const e = partie.energie;
+  e.achats = { jour, n: (e.achats?.jour === jour ? e.achats.n : 0) + 1 };
+  sauver();
+  return { ok: true };
+}
+
+// ---------- Evenements ----------
+
+// Donne une recompense d'evenement : { tickets, ticketsDores, energie, encre, poussiere, eclats }
+function donnerRecompense(r) {
+  if (r.tickets) donnerTickets(r.tickets);
+  if (r.ticketsDores) partie.boosters.dores += r.ticketsDores;
+  if (r.energie) donnerEnergie(r.energie);
+  if (r.encre) partie.encre += r.encre;
+  if (r.poussiere) partie.boosters.poussiere += r.poussiere;
+  if (r.eclats) partie.equipement.eclats += r.eclats;
+}
+
+function assurerEvenements() {
+  const ev = partie.evenements ?? (partie.evenements = {});
+  const defi = serieDuDefi(SERIES);
+  if (ev.defi?.numero !== defi.numero) ev.defi = { numero: defi.numero, serie: defi.serie, victoires: 0, reclame: false };
+  const semaine = numeroSemaine();
+  if (ev.tournoi?.semaine !== semaine) ev.tournoi = { semaine, points: 0, paliers: [] };
+  ev.calendrier = ev.calendrier ?? { jour: null, case: -1, reclame: true };
+  const jour = aujourdhui();
+  if (ev.calendrier.jour !== jour) {
+    ev.calendrier = { jour, case: (ev.calendrier.case + 1) % CALENDRIER.length, reclame: false };
+  }
+  return ev;
+}
+
+let dernierBonus = null;
+// Ce que l'heure folle a rapporte lors de la derniere victoire (affiche en fin de combat)
+export const bonusDerniereVictoire = () => {
+  const b = dernierBonus;
+  dernierBonus = null;
+  return b;
+};
+
+// Appelee a chaque victoire (campagne, deluxe, chasse, Tour)
+function noterVictoireEvenements(ids) {
+  const ev = assurerEvenements();
+  const persos = ids.map((id) => PERSOS_PAR_ID[id]).filter(Boolean);
+  // Defi du jour
+  if (persos.filter((p) => p.serie === ev.defi.serie).length >= DEFI_DU_JOUR.persosSerie) {
+    ev.defi.victoires = Math.min(DEFI_DU_JOUR.victoires, ev.defi.victoires + 1);
+  }
+  // Tournoi de la semaine
+  const heure = heureFolle();
+  const honneur = persos.filter((p) => p.serie === serieDeLaSemaine()).length;
+  if (honneur) ev.tournoi.points += (honneur >= 3 ? 2 : 1) * (heure.pointsTournoi ?? 1);
+  // Heure folle
+  const g = heure.gains;
+  if (!g) return null;
+  const gains = { nom: heure.nom };
+  if (g.encre) { partie.encre += g.encre; gains.encre = g.encre; }
+  if (g.poussiere) { partie.boosters.poussiere += g.poussiere; gains.poussiere = g.poussiere; }
+  if (g.eclats) { partie.equipement.eclats += g.eclats; gains.eclats = g.eclats; }
+  if (g.energie) { donnerEnergie(g.energie); gains.energie = g.energie; }
+  if (g.chanceTicket && Math.random() < g.chanceTicket) { donnerTickets(1); gains.tickets = 1; }
+  return Object.keys(gains).length > 1 ? gains : null;
+}
+
+export function etatEvenements(maintenant = Date.now()) {
+  if (!partie) return null;
+  const ev = assurerEvenements();
+  const defi = serieDuDefi(SERIES, maintenant);
+  return {
+    heure: heureFolle(maintenant),
+    defi: { ...ev.defi, cible: DEFI_DU_JOUR.victoires, persosSerie: DEFI_DU_JOUR.persosSerie, recompense: DEFI_DU_JOUR.recompense, fin: defi.fin },
+    calendrier: { ...ev.calendrier, cases: CALENDRIER },
+    tournoi: { ...ev.tournoi, serie: serieDeLaSemaine(), paliers: PALIERS_TOURNOI.map((p, i) => ({ ...p, atteint: ev.tournoi.points >= p.points, reclame: ev.tournoi.paliers.includes(i) })) },
+  };
+}
+
+export function reclamerDefi() {
+  const ev = assurerEvenements();
+  if (ev.defi.reclame || ev.defi.victoires < DEFI_DU_JOUR.victoires) return false;
+  ev.defi.reclame = true;
+  donnerRecompense(DEFI_DU_JOUR.recompense);
+  sauver();
+  return true;
+}
+
+export function reclamerCalendrier() {
+  const ev = assurerEvenements();
+  if (ev.calendrier.reclame) return null;
+  ev.calendrier.reclame = true;
+  const c = CALENDRIER[ev.calendrier.case];
+  donnerRecompense(c.recompense);
+  sauver();
+  return c;
+}
+
+export function reclamerPalierTournoi(i) {
+  const ev = assurerEvenements();
+  const p = PALIERS_TOURNOI[i];
+  if (!p || ev.tournoi.paliers.includes(i) || ev.tournoi.points < p.points) return false;
+  ev.tournoi.paliers.push(i);
+  donnerRecompense(p.recompense);
+  sauver();
+  return true;
+}
+
+// Combien de recompenses d'evenement attendent (pour le point rouge du QG)
+export function evenementsAReclamer() {
+  if (!partie) return 0;
+  const e = etatEvenements();
+  return (e.defi.victoires >= e.defi.cible && !e.defi.reclame ? 1 : 0)
+    + (e.calendrier.reclame ? 0 : 1)
+    + e.tournoi.paliers.filter((p) => p.atteint && !p.reclame).length;
 }
 
 // ---------- Export, import et effacement ----------
@@ -501,6 +692,7 @@ export function reclamerBonusMissions() {
   etat.bonusReclame = true;
   partie.encre += BONUS_TOUTES_MISSIONS;
   donnerTickets(1);   // + un booster gratuit
+  donnerEnergie(ENERGIE_BONUS_MISSIONS);
   sauver();
   return BONUS_TOUTES_MISSIONS;
 }
@@ -560,7 +752,7 @@ export function quelqueChoseAReclamer() {
   const mission = missions.liste.some((m) => !m.reclamee && m.progres >= m.cible)
     || (!missions.bonusReclame && missions.liste.every((m) => m.reclamee));
   const expedition = etatExpedition();
-  return mission || Boolean(expedition && expedition.heures >= 1);
+  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0;
 }
 
 // ---------- Equipement ----------
@@ -1219,6 +1411,7 @@ export const victoiresLien = (cle) => partie?.liens[cle] ?? 0;
 
 function noterInsolites(ids, duree, koAllies, mode) {
   if (koAllies === 0) signaler("victoire-sans-ko");
+  dernierBonus = noterVictoireEvenements(ids);
   const ins = (partie.stats.insolites = partie.stats.insolites ?? {});
   const persos = ids.map((id) => PERSOS_PAR_ID[id]).filter(Boolean);
   if (new Set(persos.map((p) => p.serie)).size >= 5) ins.cinqSeries = true;
@@ -1556,6 +1749,7 @@ export function chargerEquipe(index) {
 export function nouveautes() {
   if (!partie) return [];
   const liste = [];
+  if (evenementsAReclamer() > 0) liste.push({ texte: "Une récompense d'événement t'attend", nav: "qg" });
   const tickets = assurerTickets().tickets;
   if (tickets > 0) liste.push({ texte: `${tickets} booster${tickets > 1 ? "s" : ""} à ouvrir`, nav: "tirages" });
   const m = missionsDuJour();

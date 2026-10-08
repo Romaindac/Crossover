@@ -65,6 +65,9 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   refonte « Boosters » : 78 persos (6 nouvelles séries), obtention par boosters de 4 éditions à thème, tickets gratuits,
   atelier à la poussière, variantes Holo et Dorée, cadre de carte propre à chaque manga ;
   début de partie par un booster offert (5 persos, un par rôle) ; boosters de 3 cartes, un gratuit toutes les 15 min
-  (réserve de 8), collection complète vers 1 000 boosters (environ 5 semaines).
+  (réserve de 8), collection complète vers 1 000 boosters (environ 5 semaines) ;
+  énergie pour les combats (150 max, +1/3 min, payée seulement à la victoire, recharge à l'encre 3 fois par jour) ;
+  événements : heure folle (bonus horaire), défi du jour, calendrier de connexion 7 jours, tournoi de la semaine
+  (`js/donnees/evenements.js`, calendrier déterministe dans `js/moteur/evenements.js`).
 - Mise en ligne : GitHub Pages sur la branche `main` (https://romaindac.github.io/Crossover/), mise à jour automatique à chaque fusion.
 - À venir : retours de test et corrections, roguelite (V0.4), jeu en ligne avec comptes Supabase et PvP (V0.5).

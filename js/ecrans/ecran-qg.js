@@ -13,7 +13,7 @@ import { bonusSerie } from "../moteur/stats.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import {
   encre, idsPossedes, progressionDe, equipeSauvee, estBattu,
-  etatBoosters, statistiques, missionsDuJour, reclamerMission,
+  etatBoosters, statistiques, etatEvenements, reclamerDefi, reclamerCalendrier, reclamerPalierTournoi, etatEnergie, missionsDuJour, reclamerMission,
   reclamerBonusMissions, etatExpedition, recupererExpedition, vedette, entreeCombat, prochaineEtape, etapeBattue,
   missionsDeLaSemaine, reclamerMissionSemaine, chapitreTermine,
   cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes,
@@ -101,6 +101,11 @@ export function afficherQg(conteneur, { naviguer }) {
               <button type="button" class="bouton bouton--clair" data-action="aventure">Voir la campagne</button>
             </div>
           </div>
+        </section>
+
+        <section class="case case--evenements" aria-labelledby="titre-evenements">
+          <h2 class="case__titre" id="titre-evenements">Événements</h2>
+          <div id="evenements"></div>
         </section>
 
         <section class="case case--equipe" aria-labelledby="titre-equipe">
@@ -219,6 +224,52 @@ export function afficherQg(conteneur, { naviguer }) {
             </div>`;
         }).join("")}
       </div>`;
+  }
+
+  // ---------- Evenements : heure folle, defi du jour, calendrier, tournoi ----------
+  function dans(ms) {
+    const minutes = Math.max(1, Math.ceil(ms / 60000));
+    return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}` : `${minutes} min`;
+  }
+
+  function rendreEvenements(message = "") {
+    const ev = etatEvenements();
+    const en = etatEnergie();
+    const d = ev.defi;
+    const t = ev.tournoi;
+    const prochainPalier = t.paliers.find((x) => !x.atteint);
+    $("#evenements").innerHTML = `
+      <div class="evenement evenement--heure">
+        <p class="evenement__quand">Heure folle · encore ${dans(ev.heure.fin - Date.now())}</p>
+        <p class="evenement__nom">${ev.heure.nom}</p>
+        <p class="case__aide">${ev.heure.texte}. Un nouveau bonus chaque heure.</p>
+      </div>
+      <div class="evenement">
+        <p class="evenement__quand">Défi du jour · encore ${dans(d.fin - Date.now())}</p>
+        <p class="evenement__nom">${d.victoires} / ${d.cible} victoires avec au moins ${d.persosSerie} persos ${d.serie}</p>
+        <span class="barre-xp"><span class="barre-xp__rempli" style="--xp: ${d.victoires / d.cible}"></span></span>
+        ${d.reclame ? '<p class="case__aide">Récompense réclamée. Nouveau défi demain.</p>'
+          : `<button type="button" class="bouton bouton--obi-petit" data-action="defi" ${d.victoires >= d.cible ? "" : "disabled"}>${d.recompense.tickets} boosters + ${d.recompense.energie} énergie</button>`}
+      </div>
+      <div class="evenement">
+        <p class="evenement__quand">Calendrier de connexion</p>
+        <ol class="calendrier">
+          ${ev.calendrier.cases.map((c, i) => `<li class="calendrier__case ${i < ev.calendrier.case || (i === ev.calendrier.case && ev.calendrier.reclame) ? "calendrier__case--prise" : ""} ${i === ev.calendrier.case ? "calendrier__case--jour" : ""}"><span>J${i + 1}</span>${c.texte}</li>`).join("")}
+        </ol>
+        ${ev.calendrier.reclame ? '<p class="case__aide">Reviens demain pour la case suivante.</p>'
+          : `<button type="button" class="bouton bouton--obi-petit" data-action="calendrier">Réclamer : ${ev.calendrier.cases[ev.calendrier.case].texte}</button>`}
+      </div>
+      <div class="evenement">
+        <p class="evenement__quand">Tournoi de la semaine · ${t.serie}</p>
+        <p class="evenement__nom">${t.points} points</p>
+        <p class="case__aide">1 point par victoire avec un perso ${t.serie}, 2 avec au moins 3.${prochainPalier ? ` Prochain palier à ${prochainPalier.points} : ${prochainPalier.texte}.` : " Tous les paliers sont atteints !"}</p>
+        <div class="tournoi__paliers">
+          ${t.paliers.map((x, i) => x.reclame ? `<span class="tournoi__palier tournoi__palier--pris">${x.points} · ${x.texte}</span>`
+            : `<button type="button" class="tournoi__palier" data-action="palier-tournoi" data-index="${i}" ${x.atteint ? "" : "disabled"}>${x.points} · ${x.texte}</button>`).join("")}
+        </div>
+      </div>
+      <p class="case__aide">Énergie : <strong>${en.valeur} / ${en.max}</strong>${en.prochain ? `, +1 dans ${dans(en.prochain - Date.now())}` : " (pleine)"}. Les combats en coûtent seulement si tu gagnes.</p>
+      <p class="case__message" role="status" aria-live="polite">${message}</p>`;
   }
 
   function rendreMissions(message = "") {
@@ -368,6 +419,19 @@ export function afficherQg(conteneur, { naviguer }) {
       rendreEncre();
       return;
     }
+    if (action === "defi") {
+      if (reclamerDefi()) { rendreEvenements("Défi du jour réussi : boosters et énergie ajoutés !"); rendreEncre(); rendreNouveautes(); }
+      return;
+    }
+    if (action === "calendrier") {
+      const c = reclamerCalendrier();
+      if (c) { rendreEvenements(`Calendrier : ${c.texte} !`); rendreEncre(); rendreNouveautes(); }
+      return;
+    }
+    if (action === "palier-tournoi") {
+      if (reclamerPalierTournoi(Number(cible.dataset.index))) { rendreEvenements("Palier du tournoi réclamé !"); rendreEncre(); rendreNouveautes(); }
+      return;
+    }
     if (action === "bonus") {
       const gain = reclamerBonusMissions();
       if (gain) rendreMissions(`Bonus du jour : +${gain} d'encre !`);
@@ -378,7 +442,7 @@ export function afficherQg(conteneur, { naviguer }) {
   // L'expedition avance pendant qu'on regarde
   const minuteur = setInterval(() => {
     if (!conteneur.isConnected) return clearInterval(minuteur);
-    if (!conteneur.querySelector(".case__message")?.textContent) rendreExpedition();
+    if (!conteneur.querySelector(".case__message")?.textContent) { rendreExpedition(); rendreEvenements(); }
   }, 30000);
 
   annoncerTampons(tamponsDuJour);
@@ -386,6 +450,7 @@ export function afficherQg(conteneur, { naviguer }) {
   rendreEncre();
   rendreExpedition();
   rendreMissions();
+  rendreEvenements();
   rendreStats();
   rendreHebdo();
   estimerProchain();

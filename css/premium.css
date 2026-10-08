@@ -807,3 +807,61 @@ input[type="number"] {
     animation: none;
   }
 }
+
+/* ---------- Energie ---------- */
+
+.compteur-energie {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 0.5rem 0 auto;
+  padding: 0.3rem 0.7rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--papier);
+  border: 2px solid var(--obi);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.compteur-energie__eclair {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: var(--obi);
+}
+
+.manque-energie {
+  display: grid;
+  place-items: center;
+  min-height: 80vh;
+  padding: 1.25rem;
+}
+
+.manque-energie__case {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 34rem;
+  padding: 1.5rem;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  box-shadow: 6px 6px 0 var(--encre);
+}
+
+.manque-energie__titre {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.6rem;
+}
+
+.manque-energie__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .compteur-energie {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.85rem;
+  }
+}
