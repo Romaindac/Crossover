@@ -1,11 +1,14 @@
 // ==========================================================
-// LES 78 PERSOS (24 de la V0.1, 8 du Volume 2, 46 du Volume 3)
+// LES 160 PERSOS (24 de la V0.1, 8 du Volume 2, 46 du Volume 3,
+// 82 du Volume 4 dans persos-v4.js)
 // Chaque perso : sa serie, son role, son affinite, sa rarete, de petits
 // ajustements de stats (mods), son passif et son ultime.
 // Ajouter un perso = ajouter une entree ici.
 // ==========================================================
 
-export const PERSOS = [
+import { PERSOS_V4 } from "./persos-v4.js";
+
+const PERSOS_BASE = [
   // ---------- Dragon Ball ----------
   {
     id: "goku", nom: "Goku", serie: "Dragon Ball", role: "attaquant", affinite: "puissance", rarete: "legendaire",
@@ -701,6 +704,8 @@ export const PERSOS = [
     ] },
   },
 ];
+
+export const PERSOS = [...PERSOS_BASE, ...PERSOS_V4];
 
 // La Rature : le seul perso entierement original du jeu, boss final de l'histoire.
 // Elle n'est pas dans PERSOS : on ne peut ni la tirer ni l'avoir dans sa collection.

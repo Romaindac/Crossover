@@ -22,6 +22,12 @@ export const STYLES_SERIES = {
   "Chainsaw Man":         { abrege: "CSM",  c1: "#e8590c", c2: "#1a1a1a", motif: "ecailles" },
   "Frieren":              { abrege: "FRN",  c1: "#7fb3c9", c2: "#e8dcc0", motif: "etoiles" },
   "Fairy Tail":           { abrege: "FT",   c1: "#d6336c", c2: "#f3d36b", motif: "flammes" },
+  "Saint Seiya":          { abrege: "STS",  c1: "#d4a017", c2: "#1d3a8a", motif: "etoiles" },
+  "Black Clover":         { abrege: "BC",   c1: "#14532d", c2: "#0f0f0f", motif: "croix" },
+  "Solo Leveling":        { abrege: "SL",   c1: "#3b5bdb", c2: "#0b0b1a", motif: "eclairs" },
+  "Fullmetal Alchemist":  { abrege: "FMA",  c1: "#b91c1c", c2: "#c9a227", motif: "spirale" },
+  "Tokyo Ghoul":          { abrege: "TG",   c1: "#9f1239", c2: "#e5e5e5", motif: "ecailles" },
+  "JoJo":                 { abrege: "JOJO", c1: "#7c3aed", c2: "#facc15", motif: "damier" },
 };
 
 const PAR_DEFAUT = { abrege: "", c1: "#17192d", c2: "#f2f0ea", motif: "points" };

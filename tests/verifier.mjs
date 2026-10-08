@@ -29,7 +29,7 @@ const equipe = ["ronflex", "luffy", "zoro", "sakura", "pikachu"].map((id) => ({ 
 const a = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 const b = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 verifier(JSON.stringify(a.journal) === JSON.stringify(b.journal), "le combat est reproductible (meme graine, meme resultat)");
-verifier(PERSOS.length === 78, `78 persos jouables (${PERSOS.length})`);
+verifier(PERSOS.length === 160, `160 persos jouables (${PERSOS.length})`);
 verifier(new Set(PERSOS.map((p) => p.id)).size === PERSOS.length && PERSOS.every((p) => /^[a-z][a-z0-9]*$/.test(p.id)), "ids de persos uniques et simples (alias AniList)");
 verifier(PERSOS.every((p) => SOURCES_PORTRAITS[p.id]), "chaque perso a une source de portrait");
 verifier(OBJETS.length === 120 && new Set(OBJETS.map((o) => o.id)).size === 120, `120 objets aux ids uniques (${OBJETS.length})`);
@@ -63,7 +63,7 @@ verifier(PERSOS.every((p) => EDITIONS.some((e) => e.series.includes(p.serie)) &&
 verifier([1, 2, 3, 4, 5].every((g) => { const c = ouvrirBoosterDepart(creerHasard(g).nombre).cartes; return c.length === 5 && new Set(c.map((x) => PERSOS.find((p) => p.id === x.id).role)).size === 5 && c.filter((x) => x.rarete === "rare").length === 1; }), "le booster de depart donne 5 persos, un par role, dont un Rare");
 // Chaque perso peut sortir d'un booster : son edition a des cases qui tirent sa rarete
 const raretesTirables = new Set(CASES_BOOSTER.flatMap((c) => Object.keys(c)));
-verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 78 persos peuvent sortir d'un booster");
+verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 160 persos peuvent sortir d'un booster");
 
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);

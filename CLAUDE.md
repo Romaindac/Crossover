@@ -1,6 +1,6 @@
 # Projet Crossover — mémo pour Claude
 
-Jeu navigateur gratuit (fan game assumé) : un crossover manga/anime avec boosters de cartes (78 persos, 14 séries),
+Jeu navigateur gratuit (fan game assumé) : un crossover manga/anime avec boosters de cartes (160 persos, 20 séries),
 campagne, chasse façon Dofus, Tour infinie, éveil, boss de la semaine, liens entre persos.
 Ce fichier résume tout ce qu'il faut savoir pour reprendre le projet.
 
@@ -70,6 +70,7 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
   événements : heure folle (bonus horaire), défi du jour, calendrier de connexion 7 jours, tournoi de la semaine
   (`js/donnees/evenements.js`, calendrier déterministe dans `js/moteur/evenements.js`).
 - Mise en ligne : GitHub Pages sur la branche `main` (https://romaindac.github.io/Crossover/), mise à jour automatique à chaque fusion.
+- Fait : Volume 4, 160 persos (40 par extension, 5 séries de 8 par extension). Nouvelles séries : Saint Seiya, Black Clover, Solo Leveling, Fullmetal Alchemist, Tokyo Ghoul, JoJo. Fiches dans `js/donnees/persos-v4.js`.
 - Fait : écran Social. Vitrine de 6 cartes partageable par lien (`#vitrine=…`, sans serveur) ; comptes pseudo + mot de passe, sauvegarde en ligne (auto toutes les 5 min) et classements Tour / Boss / Collection via Supabase (`js/services/enligne.js`, appels REST sans bibliothèque).
   Pour activer : coller `supabase/schema.sql` dans le SQL Editor de Supabase, désactiver « Confirm email », puis mettre l'URL du projet et la clé « anon public » dans `js/donnees/config-enligne.js`. Jamais la clé service_role.
 - À venir : retours de test et corrections, roguelite (V0.4), PvP (V0.5).
