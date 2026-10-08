@@ -19,8 +19,8 @@ export const PERSOS = [
     id: "vegeta", nom: "Vegeta", serie: "Dragon Ball", role: "assassin", affinite: "chaos", rarete: "epique",
     mods: { atq: 1.05, pv: 0.95 },
     passif: { nom: "Fierté du prince", description: "ATQ +10 % par KO réalisé (max +30 %)", type: "atqParKo", bonus: 0.1, max: 0.3 },
-    ultime: { nom: "Final Flash", description: "420 % au perso ennemi qui a le moins de PV", actions: [
-      { type: "degats", cible: "plus-faible", mult: 4.2 },
+    ultime: { nom: "Final Flash", description: "360 % au perso ennemi qui a le moins de PV", actions: [
+      { type: "degats", cible: "plus-faible", mult: 3.6 },
     ] },
   },
   {
@@ -38,8 +38,8 @@ export const PERSOS = [
     id: "naruto", nom: "Naruto", serie: "Naruto", role: "attaquant", affinite: "esprit", rarete: "rare",
     mods: { pv: 1.08 },
     passif: { nom: "Volonté", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
-    ultime: { nom: "Multiclonage", description: "5 frappes de 100 % sur des ennemis au hasard", actions: [
-      { type: "degats", cible: "aleatoire", mult: 1.0, coups: 5 },
+    ultime: { nom: "Multiclonage", description: "6 frappes de 100 % sur des ennemis au hasard", actions: [
+      { type: "degats", cible: "aleatoire", mult: 1.0, coups: 6 },
     ] },
   },
   {
@@ -62,7 +62,7 @@ export const PERSOS = [
   // ---------- One Piece ----------
   {
     id: "luffy", nom: "Luffy", serie: "One Piece", role: "tank", affinite: "puissance", rarete: "rare",
-    mods: { pv: 1.05 },
+    mods: { pv: 1.1 },
     passif: { nom: "Corps élastique", description: "-15 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.15 },
     ultime: { nom: "Gatling", description: "6 coups de 60 % sur la ligne avant, puis Provocation", actions: [
       { type: "degats", cible: "ligne-avant-aleatoire", mult: 0.6, coups: 6 },
@@ -71,7 +71,7 @@ export const PERSOS = [
   },
   {
     id: "zoro", nom: "Zoro", serie: "One Piece", role: "attaquant", affinite: "technique", rarete: "rare",
-    mods: { atq: 1.08, vit: 0.95 },
+    mods: { atq: 1.08, vit: 0.95, crit: 0.1 },
     passif: { nom: "Sabreur", description: "Ses critiques font x1,8 au lieu de x1,5", type: "multCrit", valeur: 1.8 },
     ultime: { nom: "Santoryu", description: "450 % à une cible", actions: [
       { type: "degats", cible: "base", mult: 4.5 },
@@ -80,9 +80,9 @@ export const PERSOS = [
   {
     id: "chopper", nom: "Chopper", serie: "One Piece", role: "soutien", affinite: "technique", rarete: "commun",
     mods: { pv: 0.95, vit: 1.05 },
-    passif: { nom: "Médecin de bord", description: "Soigne l'allié le plus blessé de 4 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.04, periode: 4 },
+    passif: { nom: "Médecin de bord", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
     ultime: { nom: "Rumble Ball", description: "Régénération sur toute l'équipe et Bouclier de 10 % sur la ligne avant", actions: [
-      { type: "effet", cible: "allies", effet: "regeneration", duree: 5 },
+      { type: "effet", cible: "allies", effet: "regeneration", duree: 4 },
       { type: "effet", cible: "allies-avant", effet: "bouclier", duree: 6, pourcentPv: 0.1 },
     ] },
   },
@@ -91,15 +91,15 @@ export const PERSOS = [
   {
     id: "pikachu", nom: "Pikachu", serie: "Pokémon", role: "controle", affinite: "vitesse", rarete: "peu_commun",
     mods: { vit: 1.15 },
-    passif: { nom: "Statik", description: "20 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.2, duree: 1 },
-    ultime: { nom: "Tonnerre", description: "300 % à une cible et Étourdissement", actions: [
-      { type: "degats", cible: "base", mult: 3.0, effet: { type: "etourdi", duree: 2 } },
+    passif: { nom: "Statik", description: "30 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.3, duree: 1 },
+    ultime: { nom: "Tonnerre", description: "3 éclairs de 110 % sur des ennemis au hasard, chacun avec Étourdissement 1,5 s", actions: [
+      { type: "degats", cible: "aleatoire", mult: 1.1, coups: 3, effet: { type: "etourdi", duree: 1.5 } },
     ] },
   },
   {
     id: "ronflex", nom: "Ronflex", serie: "Pokémon", role: "tank", affinite: "puissance", rarete: "commun",
     mods: { pv: 1.1, vit: 0.9 },
-    passif: { nom: "Repos", description: "À 30 % de PV, dort 2 s et récupère 35 % de ses PV max (une fois)", type: "reposUneFois", seuil: 0.3, duree: 2, soin: 0.35 },
+    passif: { nom: "Repos", description: "À 30 % de PV, dort 2 s et récupère 25 % de ses PV max (une fois)", type: "reposUneFois", seuil: 0.3, duree: 2, soin: 0.25 },
     ultime: { nom: "Plaquage", description: "200 % à la cible en face, Étourdissement 1,5 s et Provocation", actions: [
       { type: "degats", cible: "face", mult: 2.0, effet: { type: "etourdi", duree: 1.5 } },
       { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
@@ -127,7 +127,7 @@ export const PERSOS = [
   {
     id: "griffith", nom: "Griffith", serie: "Berserk", role: "soutien", affinite: "esprit", rarete: "rare",
     mods: { vit: 1.08 },
-    passif: { nom: "Charisme", description: "ATQ +8 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.08 },
+    passif: { nom: "Charisme", description: "ATQ +15 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.15 },
     ultime: { nom: "Aube du Faucon", description: "Renforcement et +30 d'énergie pour tous les alliés", actions: [
       { type: "effet", cible: "allies", effet: "renforcement", duree: 6 },
       { type: "energie", cible: "allies-autres", montant: 30 },
@@ -165,8 +165,8 @@ export const PERSOS = [
     id: "megumi", nom: "Megumi", serie: "Jujutsu Kaisen", role: "controle", affinite: "chaos", rarete: "commun",
     mods: { atq: 1.1 },
     passif: { nom: "Dix ombres", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
-    ultime: { nom: "Chiens divins", description: "3 morsures de 100 % sur la ligne arrière et Ralentissement", actions: [
-      { type: "degats", cible: "arriere-aleatoire", mult: 1.0, coups: 3, effet: { type: "ralenti", duree: 4 } },
+    ultime: { nom: "Chiens divins", description: "3 morsures de 150 % sur la ligne arrière et Ralentissement", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 1.5, coups: 3, effet: { type: "ralenti", duree: 4 } },
     ] },
   },
 
@@ -175,13 +175,13 @@ export const PERSOS = [
     id: "tanjiro", nom: "Tanjiro", serie: "Demon Slayer", role: "attaquant", affinite: "technique", rarete: "rare",
     mods: {},
     passif: { nom: "Odorat", description: "+20 % de dégâts contre les ennemis sous 50 % de PV", type: "degatsContreBlesses", seuil: 0.5, bonus: 0.2 },
-    ultime: { nom: "Danse du dieu du feu", description: "260 % à une cible et Brûlure", actions: [
-      { type: "degats", cible: "base", mult: 2.6, effet: { type: "brulure", duree: 4 } },
+    ultime: { nom: "Danse du dieu du feu", description: "260 % et Brûlure à l'ennemi qui a le moins de PV (il sent la faille)", actions: [
+      { type: "degats", cible: "plus-faible", mult: 2.6, effet: { type: "brulure", duree: 4 } },
     ] },
   },
   {
     id: "nezuko", nom: "Nezuko", serie: "Demon Slayer", role: "tank", affinite: "chaos", rarete: "peu_commun",
-    mods: { vit: 1.05 },
+    mods: { vit: 1.05, pv: 1.12 },
     passif: { nom: "Sang démoniaque", description: "Ses attaques de base ont 50 % de chance d'appliquer Brûlure 1 s", type: "effetSurBase", effet: "brulure", duree: 1, chance: 0.5 },
     ultime: { nom: "Sang explosif", description: "120 % et Brûlure à toute la ligne avant, puis Provocation", actions: [
       { type: "degats", cible: "ligne-avant", mult: 1.2, effet: { type: "brulure", duree: 4 } },
@@ -201,9 +201,9 @@ export const PERSOS = [
   {
     id: "gon", nom: "Gon", serie: "Hunter x Hunter", role: "attaquant", affinite: "puissance", rarete: "commun",
     mods: { pv: 1.05, vit: 0.95 },
-    passif: { nom: "Concentration", description: "+10 % de dégâts par coup sur la même cible (max +50 %)", type: "concentration", bonus: 0.1, max: 0.5 },
-    ultime: { nom: "Jajanken", description: "460 % à la cible en face, mais il perd 10 % de ses PV", actions: [
-      { type: "degats", cible: "face", mult: 4.6 },
+    passif: { nom: "Concentration", description: "+10 % de dégâts par coup sur la même cible (max +60 %)", type: "concentration", bonus: 0.1, max: 0.6 },
+    ultime: { nom: "Jajanken", description: "500 % à la cible en face, mais il perd 10 % de ses PV", actions: [
+      { type: "degats", cible: "face", mult: 5.0 },
       { type: "coutPv", pourcent: 0.1 },
     ] },
   },
@@ -211,8 +211,8 @@ export const PERSOS = [
     id: "killua", nom: "Killua", serie: "Hunter x Hunter", role: "assassin", affinite: "vitesse", rarete: "peu_commun",
     mods: { vit: 1.05 },
     passif: { nom: "Né assassin", description: "Son premier coup du combat est un critique garanti", type: "premierCoupCritique" },
-    ultime: { nom: "Godspeed", description: "VIT +60 % pendant 5 s et 200 % à un perso de la ligne arrière avec Étourdissement 1 s", actions: [
-      { type: "effet", cible: "soi", effet: "acceleration", duree: 5 },
+    ultime: { nom: "Godspeed", description: "VIT +60 % pendant 3 s et 200 % à un perso de la ligne arrière avec Étourdissement 1 s", actions: [
+      { type: "effet", cible: "soi", effet: "acceleration", duree: 3 },
       { type: "degats", cible: "arriere", mult: 2.0, effet: { type: "etourdi", duree: 1 } },
     ] },
   },
@@ -220,8 +220,10 @@ export const PERSOS = [
     id: "kurapika", nom: "Kurapika", serie: "Hunter x Hunter", role: "controle", affinite: "technique", rarete: "epique",
     mods: { def: 1.05, atq: 1.1 },
     passif: { nom: "Yeux écarlates", description: "ATQ +30 % dès qu'un allié tombe KO", type: "atqSiAllieKo", bonus: 0.3 },
-    ultime: { nom: "Chaîne du jugement", description: "220 % et Étourdissement 3 s sur l'ennemi à la plus forte ATQ", actions: [
-      { type: "degats", cible: "plus-forte-atq", mult: 2.2, effet: { type: "etourdi", duree: 3 } },
+    ultime: { nom: "Chaîne du jugement", description: "240 % et Étourdissement 3 s sur l'ennemi à la plus forte ATQ, puis Emperor Time : Accélération 3 s et Renforcement 6 s", actions: [
+      { type: "degats", cible: "plus-forte-atq", mult: 2.4, effet: { type: "etourdi", duree: 3 } },
+      { type: "effet", cible: "soi", effet: "acceleration", duree: 3 },
+      { type: "effet", cible: "soi", effet: "renforcement", duree: 6 },
     ] },
   },
 ];

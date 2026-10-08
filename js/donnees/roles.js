@@ -5,8 +5,8 @@
 
 export const ROLES = {
   tank:      { nom: "Tank",      pv: 2500, atq: 80,  def: 60, vit: 90,  crit: 0.05 },
-  attaquant: { nom: "Attaquant", pv: 1800, atq: 135, def: 35, vit: 100, crit: 0.10 },
-  assassin:  { nom: "Assassin",  pv: 1600, atq: 150, def: 25, vit: 125, crit: 0.25 },
+  attaquant: { nom: "Attaquant", pv: 1900, atq: 138, def: 40, vit: 100, crit: 0.10 },
+  assassin:  { nom: "Assassin",  pv: 1550, atq: 145, def: 25, vit: 120, crit: 0.20 },
   soutien:   { nom: "Soutien",   pv: 1700, atq: 85,  def: 40, vit: 105, crit: 0.05 },
   controle:  { nom: "Contrôle",  pv: 1700, atq: 100, def: 35, vit: 110, crit: 0.10 },
 };

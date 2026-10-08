@@ -44,6 +44,13 @@ Toujours vérifier au simulateur avant de changer un chiffre d'économie
 (boutons du laboratoire, ou `js/outils/simulateur-v03.js`). Objectifs actuels :
 campagne finie vers le jour 19 à 45 min/jour ; équipe en éveil IV en environ 2 mois de jeu actif.
 
+Avant de retoucher un perso ou d'en ajouter un : lancer le tournoi d'équilibrage du labo
+(équipes rangées comme un joueur, niveau 30). Cibles : chaque rôle entre 47 et 53 %,
+chaque perso entre 42 et 58 % sans bonus de rareté. Le tournoi « placement au hasard »
+cache le poids des rôles : il ne sert qu'à tester la robustesse au placement.
+Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PAR_CHAPITRE`
+(campagne.js) au simulateur.
+
 ## Feuille de route
 
 - Fait : V0.1 combat, V0.2 gacha et progression, V0.3 campagne + équipement + chasse + histoire, mise à jour Longévité (13 étapes).
