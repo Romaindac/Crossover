@@ -3,10 +3,12 @@
 // Lancer avec : node js/outils/catalogue-sql.mjs
 // Ecrit supabase/catalogue.sql : la liste des objets et de leurs
 // fourchettes, pour que l'hotel des ventes refuse les objets impossibles.
-// A relancer (et a recoller dans Supabase) si on change objets.js.
+// Ecrit aussi supabase/a-coller.sql : schema.sql + catalogue, en un seul
+// fichier a coller d'un coup dans Supabase.
+// A relancer (et a recoller dans Supabase) si on change objets.js ou schema.sql.
 // ==========================================================
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync } from "node:fs";
 import { OBJETS } from "../donnees/objets.js";
 
 export function catalogueSql() {
@@ -22,7 +24,18 @@ on conflict (id) do update set rarete = excluded.rarete, emplacement = excluded.
 `;
 }
 
+// Tout en un : le schema puis le catalogue
+export function toutSql() {
+  const schema = readFileSync(new URL("../../supabase/schema.sql", import.meta.url), "utf8");
+  return `-- CROSSOVER : tout le serveur en un seul fichier (genere par node js/outils/catalogue-sql.mjs).
+-- Supabase > SQL Editor > New query : coller tout ce fichier, puis Run. Peut etre relance sans risque.
+
+${schema}
+${catalogueSql()}`;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   writeFileSync(new URL("../../supabase/catalogue.sql", import.meta.url), catalogueSql());
-  console.log(`supabase/catalogue.sql ecrit (${OBJETS.length} objets).`);
+  writeFileSync(new URL("../../supabase/a-coller.sql", import.meta.url), toutSql());
+  console.log(`supabase/catalogue.sql et supabase/a-coller.sql ecrits (${OBJETS.length} objets).`);
 }
