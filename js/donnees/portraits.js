@@ -41,4 +41,14 @@ export const SOURCES_PORTRAITS = {
   gon:      { recherche: "Gon Freecss", verif: "freecss", cadrage: "50% 30%" },
   killua:   { recherche: "Killua Zoldyck", verif: "killua" },
   kurapika: { recherche: "Kurapika", verif: "kurapika" },
+
+  // Volume 2
+  c18:       { recherche: "Android 18", verif: "18" },
+  tsunade:   { recherche: "Tsunade", verif: "tsunade" },
+  nami:      { recherche: "Nami", verif: "nami" },
+  dracaufeu: { pokemon: 6 },
+  chevalier: { recherche: "Skull Knight", verif: "skull" },
+  nobara:    { recherche: "Nobara Kugisaki", verif: "kugisaki" },
+  shinobu:   { recherche: "Shinobu Kochou", verif: "kochou" },
+  hisoka:    { recherche: "Hisoka", verif: "hisoka" },
 };

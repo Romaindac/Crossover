@@ -36,10 +36,11 @@ export const TAMPONS = [
   t("boucle-50", "chasse", "Machine", "Gagner 50 combats d'affilée dans une boucle", (x) => x.boucleMax >= 50, { encre: 100 }),
 
   // ---------- Collection ----------
-  ...[10, 16, 20, 24].map((n) => t(`collection-${n}`, "collection", `${n} persos`, `Réunir ${n} persos`, (x) => x.collection >= n, { encre: 5 * n })),
+  ...[10, 16, 24, 32].map((n) => t(`collection-${n}`, "collection", `${n} persos`, `Réunir ${n} persos`, (x) => x.collection >= n, { encre: 5 * n })),
   t("cinq-etoiles", "collection", "Étoile pleine", "Monter un perso à 5 étoiles", (x) => x.cinqEtoiles, { encre: 100 }),
   t("serie-complete", "collection", "Série complète", "Réunir tous les persos d'une série", (x) => x.serieComplete, { encre: 60 }),
-  t("legendaires-3", "collection", "Trio légendaire", "Posséder les 3 Légendaires", (x) => x.legendaires >= 3, { encre: 150, fragments: 3 }),
+  t("legendaires-3", "collection", "Trio légendaire", "Posséder 3 Légendaires", (x) => x.legendaires >= 3, { encre: 150, fragments: 3 }),
+  t("legendaires-5", "collection", "Panthéon", "Posséder les 5 Légendaires", (x) => x.legendaires >= 5, { encre: 250, fragments: 5 }),
   t("tirages-100", "collection", "Gros lecteur", "Ouvrir 100 tomes", (x) => x.tirages >= 100, { encre: 100 }),
 
   // ---------- Equipement ----------

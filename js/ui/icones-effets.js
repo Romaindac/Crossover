@@ -11,6 +11,7 @@ const DESSINS = {
   renforcement: '<path d="M12 19V5M6 11l6-6 6 6"/>',
   regeneration: '<path d="M12 6v12M6 12h12"/>',
   acceleration: '<path d="M5 7l5 5-5 5M13 7l5 5-5 5"/>',
+  vulnerabilite: '<path d="M12 4l-2 6 4 2-2 8"/><path d="M6 6l12 12"/>',
 };
 
 export function iconeEffet(type) {

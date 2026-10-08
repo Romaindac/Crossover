@@ -53,6 +53,8 @@ function selectionner(etat, u, cible) {
       return [ennemis.reduce((a, b) => (b.pv < a.pv ? b : a))];
     case "plus-forte-atq":
       return [ennemis.reduce((a, b) => (atqActuelle(etat, b) > atqActuelle(etat, a) ? b : a))];
+    case "plus-energie":
+      return [ennemis.reduce((a, b) => (b.energie > a.energie ? b : a))];
     case "soi":
       return [u];
     case "allies":
@@ -159,6 +161,9 @@ export function chaqueSeconde(etat) {
     if (p.type === "regenPeriodique" && etat.t % (p.periode * TICS_PAR_SECONDE) === 0) {
       soigner(etat, u, u, u.pvMax * p.pourcent);
     }
+
+    // Energie infinie de C-18 : de l'energie a chaque seconde
+    if (p.type === "energieParSeconde") gagnerEnergie(u, p.valeur);
 
     // Medecin de bord de Chopper : soigne l'allie le plus blesse
     if (p.type === "soinPeriodiqueBlesse" && etat.t % (p.periode * TICS_PAR_SECONDE) === 0) {

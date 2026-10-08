@@ -53,5 +53,7 @@ Les persos servent aussi d'ennemis : après un rééquilibrage, recaler `MULT_PA
 
 ## Feuille de route
 
-- Fait : V0.1 combat, V0.2 gacha et progression, V0.3 campagne + équipement + chasse + histoire, mise à jour Longévité (13 étapes).
+- Fait : V0.1 combat, V0.2 gacha et progression, V0.3 campagne + équipement + chasse + histoire, mise à jour Longévité (13 étapes),
+  mise à jour « Audit » : rééquilibrage mesuré, Rage d'encre, équipe conseillée, cartes premium, boss / Tour / saisons / missions revus,
+  Volume 2 (8 persos : C-18, Tsunade, Nami, Dracaufeu, Chevalier Squelette, Nobara, Shinobu, Hisoka ; 32 persos, 4 par série).
 - À venir : retours de test et corrections, roguelite (V0.4), jeu en ligne avec comptes Supabase et PvP (V0.5).

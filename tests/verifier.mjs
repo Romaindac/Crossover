@@ -11,6 +11,7 @@ import { TOUTES_LES_ETAPES } from "../js/donnees/campagne.js";
 import { etageTour } from "../js/donnees/tour.js";
 import { TAMPONS } from "../js/donnees/tampons.js";
 import { LIENS } from "../js/donnees/liens.js";
+import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
 import { creerCombat, avancer } from "../js/moteur/simulation.js";
 import { appliquerEffet } from "../js/moteur/regles.js";
 
@@ -24,7 +25,8 @@ const equipe = ["ronflex", "luffy", "zoro", "sakura", "pikachu"].map((id) => ({ 
 const a = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 const b = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 verifier(JSON.stringify(a.journal) === JSON.stringify(b.journal), "le combat est reproductible (meme graine, meme resultat)");
-verifier(PERSOS.length === 24, `24 persos jouables (${PERSOS.length})`);
+verifier(PERSOS.length === 32, `32 persos jouables (${PERSOS.length})`);
+verifier(PERSOS.every((p) => SOURCES_PORTRAITS[p.id]), "chaque perso a une source de portrait");
 verifier(OBJETS.length === 120 && new Set(OBJETS.map((o) => o.id)).size === 120, `120 objets aux ids uniques (${OBJETS.length})`);
 verifier(OBJETS.every((o) => !o.panoplie || PANOPLIES[o.panoplie]), "chaque objet de panoplie a sa panoplie");
 verifier(TOUTES_LES_ETAPES.length === 40, "40 etapes de campagne");

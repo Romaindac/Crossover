@@ -13,6 +13,7 @@ export const EFFETS = {
   renforcement: { nom: "Renforcement",   positif: true },
   regeneration: { nom: "Régénération",   positif: true },
   acceleration: { nom: "Accélération",   positif: true },
+  vulnerabilite: { nom: "Vulnérabilité", positif: false },   // +25 % de degats subis
 };
 
 // Apres un etourdissement, 3 secondes d'immunite (en tics)

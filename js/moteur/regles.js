@@ -15,6 +15,7 @@ export const DUREE_MAX = 90 * TICS_PAR_SECONDE;   // 90 secondes
 export const DEBUT_RAGE = 60 * TICS_PAR_SECONDE;
 const PALIER_RAGE = 5 * TICS_PAR_SECONDE;
 const EFFET_RAGE = 0.15;
+export const VULNERABILITE = 0.25;
 export const niveauRage = (t) => (t < DEBUT_RAGE ? 0 : 1 + Math.floor((t - DEBUT_RAGE) / PALIER_RAGE));
 export const INTERVALLE_BASE = 1.5;               // secondes entre 2 attaques a 100 de vitesse
 export const ENERGIE_PAR_ATTAQUE = 10;
@@ -293,6 +294,10 @@ export function infligerDegats(etat, source, cible, { mult = 1, base = false, cr
   }
 
   if (base && cible.passif.type === "reductionBase") degats *= 1 - cible.passif.pourcent;
+  // B3. Armure du Chevalier Squelette : reduit les degats des ultimes
+  if (ultime && cible.passif.type === "reductionUltime") degats *= 1 - cible.passif.pourcent;
+  // B2. Vulnerabilite : la cible subit plus de degats
+  if (aEffet(cible, "vulnerabilite")) degats *= 1 + VULNERABILITE;
 
   // Critique
   const premierCoup = ps.type === "premierCoupCritique" && !source.compteurs.premierCoupFait;

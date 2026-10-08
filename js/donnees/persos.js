@@ -1,5 +1,5 @@
 // ==========================================================
-// LES 24 PERSOS DE LA V0.1
+// LES 32 PERSOS (24 de la V0.1, 8 du Volume 2)
 // Chaque perso : sa serie, son role, son affinite, sa rarete, de petits
 // ajustements de stats (mods), son passif et son ultime.
 // Ajouter un perso = ajouter une entree ici.
@@ -224,6 +224,74 @@ export const PERSOS = [
       { type: "degats", cible: "plus-forte-atq", mult: 2.4, effet: { type: "etourdi", duree: 3 } },
       { type: "effet", cible: "soi", effet: "acceleration", duree: 3 },
       { type: "effet", cible: "soi", effet: "renforcement", duree: 6 },
+    ] },
+  },
+  // ---------- Volume 2 : un 4e perso par serie ----------
+  {
+    id: "c18", nom: "C-18", serie: "Dragon Ball", role: "attaquant", affinite: "vitesse", rarete: "rare",
+    mods: { vit: 1.05 },
+    passif: { nom: "Énergie infinie", description: "Gagne 4 d'énergie par seconde", type: "energieParSeconde", valeur: 4 },
+    ultime: { nom: "Kienzan", description: "280 % au perso ennemi qui a le moins de PV", actions: [
+      { type: "degats", cible: "plus-faible", mult: 2.8 },
+    ] },
+  },
+  {
+    id: "tsunade", nom: "Tsunade", serie: "Naruto", role: "soutien", affinite: "puissance", rarete: "legendaire",
+    mods: {},
+    passif: { nom: "Médecin légendaire", description: "Soins +25 % sur les alliés sous 40 % de PV", type: "soinsBonusBlesses", seuil: 0.4, bonus: 0.25 },
+    ultime: { nom: "Katsuyu", description: "Soigne toute l'équipe de 12 % et lui donne Régénération 3 s", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.12 },
+      { type: "effet", cible: "allies", effet: "regeneration", duree: 3 },
+    ] },
+  },
+  {
+    id: "nami", nom: "Nami", serie: "One Piece", role: "controle", affinite: "vitesse", rarete: "rare",
+    mods: { vit: 1.1 },
+    passif: { nom: "Navigatrice", description: "Ralentit toute l'équipe ennemie de 8 %", type: "auraVitEnnemis", malus: 0.08 },
+    ultime: { nom: "Zeus Breeze Tempo", description: "110 % à tous les ennemis, puis Étourdissement 1,5 s sur l'un d'eux au hasard", actions: [
+      { type: "degats", cible: "tous", mult: 1.1 },
+      { type: "degats", cible: "aleatoire", mult: 0.3, effet: { type: "etourdi", duree: 1.5 } },
+    ] },
+  },
+  {
+    id: "dracaufeu", nom: "Dracaufeu", serie: "Pokémon", role: "attaquant", affinite: "puissance", rarete: "epique",
+    mods: { atq: 1.05 },
+    passif: { nom: "Brasier", description: "ATQ +30 % sous 33 % de PV", type: "atqSousPv", seuil: 0.33, bonus: 0.3 },
+    ultime: { nom: "Déflagration", description: "140 % et Brûlure 2 s à tous les ennemis", actions: [
+      { type: "degats", cible: "tous", mult: 1.4, effet: { type: "brulure", duree: 2 } },
+    ] },
+  },
+  {
+    id: "chevalier", nom: "Chevalier Squelette", serie: "Berserk", role: "tank", affinite: "technique", rarete: "legendaire",
+    mods: { pv: 1.12, atq: 1.2 },
+    passif: { nom: "Armure de l'ancien roi", description: "-25 % de dégâts subis des ultimes", type: "reductionUltime", pourcent: 0.25 },
+    ultime: { nom: "Épée de Béhérit", description: "180 % à tous les ennemis, puis Provocation", actions: [
+      { type: "degats", cible: "tous", mult: 1.8 },
+      { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
+    ] },
+  },
+  {
+    id: "nobara", nom: "Nobara", serie: "Jujutsu Kaisen", role: "controle", affinite: "technique", rarete: "rare",
+    mods: { atq: 1.15, pv: 1.05 },
+    passif: { nom: "Résonance", description: "Ses attaques de base ont 50 % de chance d'appliquer Vulnérabilité 3 s (+25 % de dégâts subis)", type: "effetSurBase", effet: "vulnerabilite", duree: 3, chance: 0.5 },
+    ultime: { nom: "Clou et marteau", description: "4 clous de 110 % sur des ennemis au hasard, chacun avec Vulnérabilité 4 s", actions: [
+      { type: "degats", cible: "aleatoire", mult: 1.1, coups: 4, effet: { type: "vulnerabilite", duree: 4 } },
+    ] },
+  },
+  {
+    id: "shinobu", nom: "Shinobu", serie: "Demon Slayer", role: "assassin", affinite: "technique", rarete: "epique",
+    mods: { atq: 0.95, vit: 1.05 },
+    passif: { nom: "Poison de glycine", description: "Ses attaques de base appliquent Vulnérabilité 2 s (+25 % de dégâts subis)", type: "effetSurBase", effet: "vulnerabilite", duree: 2 },
+    ultime: { nom: "Danse du papillon", description: "4 piqûres de 80 % sur la ligne arrière, chacune avec Vulnérabilité 4 s", actions: [
+      { type: "degats", cible: "arriere-aleatoire", mult: 0.8, coups: 4, effet: { type: "vulnerabilite", duree: 4 } },
+    ] },
+  },
+  {
+    id: "hisoka", nom: "Hisoka", serie: "Hunter x Hunter", role: "controle", affinite: "chaos", rarete: "epique",
+    mods: { atq: 1.2, pv: 1.05 },
+    passif: { nom: "Texture surprise", description: "30 % de chance d'esquiver les attaques de base", type: "esquiveBase", chance: 0.3 },
+    ultime: { nom: "Bungee Gum", description: "320 % et Étourdissement 2,5 s sur l'ennemi qui a le plus d'énergie (il coupe son ultime)", actions: [
+      { type: "degats", cible: "plus-energie", mult: 3.2, effet: { type: "etourdi", duree: 2.5 } },
     ] },
   },
 ];
