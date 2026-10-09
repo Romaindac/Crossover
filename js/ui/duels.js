@@ -8,7 +8,7 @@
 
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 import {
-  equipeDuel, puissanceEquipe, jouerDuel, recompenserDuel, equipeSauvee, RECOMPENSE_DUEL, verifierTampons,
+  equipeDuel, puissanceEquipe, jouerDuel, configDuel, recompenserDuel, equipeSauvee, RECOMPENSE_DUEL, verifierTampons,
 } from "../services/partie.js";
 import {
   enLigneDisponible, connecte, monId, maDefense, enregistrerDefense, adversairesDuel, resultatDuel, duelsRecents, saisonEnCours,
@@ -17,11 +17,11 @@ import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "./cartes.js";
 import { ouvrirCompte } from "./compte.js";
 import { annoncerTampons } from "./toast.js";
+import { jouerCombatDirect } from "./combat-direct.js";
 import { sonRarete, sonCarte } from "./sons.js";
 
 const echapper = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
-const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export const RANGS_DUEL = [
   { nom: "Bronze", min: 0 },
@@ -152,8 +152,9 @@ export function afficherDuels(zone, { naviguer, majNavigation }) {
     enCombat = id;
     dire("");
     rendre();
-    const r = jouerDuel(a.equipe);
-    await pause(900);
+    const graine = Math.floor(Math.random() * 2147483647);
+    await jouerCombatDirect({ config: configDuel(a.equipe, graine), titre: `Duel contre ${echapper(a.pseudo)}`, sousTitre: `${rangDuel(a.points).nom} · ${nombre(a.points)} points` });
+    const r = jouerDuel(a.equipe, graine);
     try {
       const s = await resultatDuel(id, r.victoire, r.graine);
       const rec = recompenserDuel(r.victoire);
