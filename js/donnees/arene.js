@@ -16,15 +16,16 @@ const ORDRE = { epique: 1, legendaire: 2 };
 
 // Niveau du boss k (0 a 7) du monde m (0 a 3) : il suit la campagne
 // (le monde m s'ouvre a la fin du chapitre m)
-export const niveauBoss = (m, k) => 3 + m * 7 + k;
+// Le tout premier monde demarre plus bas : une equipe de depart (niveau 1) doit pouvoir y gagner
+export const niveauBoss = (m, k) => (m === 0 ? 1 + k : 3 + m * 7 + k);
 
 // Le boss est un perso gonfle : ses PV et son ATQ sont multiplies, puis un
 // coefficient par boss (calibrage-arene.js, ecrit par node js/outils/calibrer-arene.mjs)
 // vise : equipe au niveau du boss, 2 etoiles, 80 % de victoire contre le premier
-// boss du monde, 45 % contre le dernier.
+// boss du monde, 45 % contre le dernier (97 % et 90 % pour les deux premiers boss du jeu).
 export const pvBoss = (k) => 7 + 0.9 * k;
 export const atqBoss = (k) => 2.2 + 0.12 * k;
-export const victoireVisee = (k) => 0.8 - 0.05 * k;
+export const victoireVisee = (k, m = 1) => (m === 0 && k < 2 ? 0.97 - 0.07 * k : 0.8 - 0.05 * k);
 
 // Les 8 boss d'un monde : les Epiques puis les Legendaires de l'edition
 export function bossDuMonde(edition) {

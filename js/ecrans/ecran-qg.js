@@ -424,7 +424,7 @@ export function afficherQg(conteneur, { naviguer }) {
     zone.innerHTML = chapitreTermine(2) ? `
       <p class="case__surtitre">${nomSaison(saison.id)}</p>
       <p><strong>${saison.rang ? `Rang ${saison.rang.nom}` : "Pas encore classé"}</strong>, ${saison.points} points${saison.suivant ? ` (rang ${saison.suivant.nom} à ${saison.suivant.points})` : ""}</p>
-      <p class="case__aide">Ce mois-ci : ${saison.detail.tour} point${saison.detail.tour > 1 ? "s" : ""} de Tour (1 par 5 étages du record), ${saison.detail.raid} de boss (1 par 50 000 dégâts, chaque semaine, 15 au plus par semaine), ${saison.detail.jours} jour${saison.detail.jours > 1 ? "s" : ""} actif${saison.detail.jours > 1 ? "s" : ""} (les 3 missions du jour réclamées).</p>
+      <p class="case__aide">Ce mois-ci : ${saison.detail.tour} point${saison.detail.tour > 1 ? "s" : ""} de Tour (1 par 5 étages du record), ${saison.detail.raid} de boss (1 par 90 000 dégâts, chaque semaine, 15 au plus par semaine), ${saison.detail.jours} jour${saison.detail.jours > 1 ? "s" : ""} actif${saison.detail.jours > 1 ? "s" : ""} (les 3 missions du jour réclamées).</p>
       ${saison.precedente && !saison.precedente.reclamee ? `<button type="button" class="bouton bouton--obi-petit" data-action="saison-precedente">Récompense de la saison passée</button>` : ""}` : "";
   }
 

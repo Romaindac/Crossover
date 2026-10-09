@@ -8,13 +8,15 @@
 // requetes (3 en tout), car elle limite le nombre d'appels.
 // ==========================================================
 
-import { PERSOS } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { SOURCES_PORTRAITS } from "../donnees/portraits.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const API_ANILIST = "https://graphql.anilist.co";
-const CLE_CACHE = "portraits-v2";
-const PERSOS_PAR_REQUETE = 7;
+// v3 : les images sont maintenant verifiees par la serie (les anciennes, parfois
+// fausses, sont rechargees une fois)
+const CLE_CACHE = "portraits-v3";
+const PERSOS_PAR_REQUETE = 5;
 const ATTENTE_ENTRE_REQUETES = 2500; // on reste tres en dessous de la limite
 const DELAI_MAX = 10000;             // on abandonne une requete au bout de 10 s
 
@@ -55,13 +57,25 @@ function sauverCache() {
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Une seule requete demande plusieurs persos a la fois
+// Les mots qui reconnaissent chaque serie dans les titres AniList (romaji ou anglais)
+const TITRES_SERIES = {
+  "Dragon Ball": ["dragon ball"], "Naruto": ["naruto", "boruto"], "One Piece": ["one piece"], "Bleach": ["bleach"],
+  "Saint Seiya": ["saint seiya"], "Jujutsu Kaisen": ["jujutsu kaisen"], "Demon Slayer": ["kimetsu", "demon slayer"],
+  "My Hero Academia": ["boku no hero", "my hero academia"], "Black Clover": ["black clover"],
+  "Solo Leveling": ["solo leveling", "ore dake level", "na honjaman"], "Pokémon": ["pok", "pocket monster"],
+  "Hunter x Hunter": ["hunter"], "Fairy Tail": ["fairy tail"], "Frieren": ["frieren", "sousou"],
+  "Fullmetal Alchemist": ["hagane", "fullmetal"], "Berserk": ["berserk"], "L'Attaque des Titans": ["shingeki", "attack on titan"],
+  "Chainsaw Man": ["chainsaw"], "Tokyo Ghoul": ["tokyo ghoul", "tokyo kushu"], "JoJo": ["jojo"],
+};
+
+// Une seule requete demande plusieurs persos a la fois, avec les oeuvres de chaque resultat
 async function demanderLot(ids) {
   const champs = ids.map((id) => `
-    ${id}: Page(perPage: 5) {
+    ${id}: Page(perPage: 8) {
       characters(search: ${JSON.stringify(SOURCES_PORTRAITS[id].recherche)}, sort: [FAVOURITES_DESC]) {
         name { full alternative }
         image { large }
+        media(perPage: 4, sort: [POPULARITY_DESC]) { nodes { title { romaji english } } }
       }
     }`).join("\n");
 
@@ -87,12 +101,21 @@ async function demanderLot(ids) {
   }
 }
 
-// verif : un mot (ou une liste de mots) qui doit apparaitre dans le nom trouve
-function choisirImage(page, verif) {
+// verif : un mot (ou une liste de mots) qui doit apparaitre dans le nom trouve ;
+// serie : le perso doit venir d'une oeuvre de cette serie (sinon : pas d'image,
+// les initiales plutot qu'un autre perso du meme nom)
+function choisirImage(page, verif, serie) {
   const mots = Array.isArray(verif) ? verif : [verif];
+  const titres = TITRES_SERIES[serie] ?? [];
+  const deLaSerie = (perso) => {
+    const oeuvres = perso.media?.nodes;
+    if (!Array.isArray(oeuvres) || !titres.length) return true;   // pas d'info : on ne bloque pas
+    const texte = oeuvres.map((m) => `${m?.title?.romaji ?? ""} ${m?.title?.english ?? ""}`).join(" ").toLowerCase();
+    return titres.some((t) => texte.includes(t));
+  };
   const trouve = (page?.characters ?? []).find((perso) => {
     const noms = [perso.name?.full, ...(perso.name?.alternative ?? [])].join(" ").toLowerCase();
-    return mots.some((mot) => noms.includes(mot));
+    return mots.some((mot) => noms.includes(mot)) && deLaSerie(perso);
   });
   const url = trouve?.image?.large ?? null;
   return url && !url.includes("default") ? url : null;
@@ -116,7 +139,7 @@ export function chargerPortraits(surProgression = () => {}) {
       try {
         const donnees = await demanderLot(lot);
         for (const id of lot) {
-          const url = choisirImage(donnees[id], SOURCES_PORTRAITS[id].verif);
+          const url = choisirImage(donnees[id], SOURCES_PORTRAITS[id].verif, PERSOS_PAR_ID[id]?.serie);
           if (url) {
             portraits[id] = url;
             secours.delete(id);
