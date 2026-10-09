@@ -51,10 +51,14 @@ import {
   EDITIONS, EDITIONS_PAR_ID, PRIX_BOOSTER, MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
   POUSSIERE_PAR_BOOSTER, POUSSIERE_DOUBLON, COUT_FABRICATION, PITIE_BOOSTER, TICKETS_CHAPITRE,
 } from "../donnees/boosters.js";
-import { invoquer } from "../moteur/invocations.js";
+import { invoquer, phaseAutel, phaseRelancee, definitionPhase } from "../moteur/invocations.js";
+import { CODES_CADEAUX } from "../donnees/codes.js";
 import {
   INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_PLAFOND,
-  NIVEAUX_AUTEL, CHANCE_PAR_NIVEAU, CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE,
+  NIVEAUX_AUTEL, INVOCATIONS_PAR_NIVEAU_EN_PLUS, POINTS_PAR_NIVEAU, BRANCHES_AUTEL, CHANCE_PAR_POINT, VITESSE_PAR_POINT,
+  POTIONS_PAR_POINT, BORDURE_PAR_POINT, COUT_REDISTRIBUTION, FUSION,
+  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX,
+  CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE,
   POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
   POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
 } from "../donnees/invocations.js";
@@ -85,7 +89,7 @@ function validerInvocations(v) {
   const potions = {};
   const actives = {};
   for (const id of Object.keys(POTIONS_PAR_ID)) {
-    potions[id] = entier(v?.potions?.[id], v ? 0 : POTIONS_DEPART[id]);
+    potions[id] = entier(v?.potions?.[id], POTIONS_DEPART[id]);   // une potion nouvelle arrive avec sa dotation de depart
     actives[id] = Number(v?.actives?.[id]) || 0;
   }
   return {
@@ -95,6 +99,8 @@ function validerInvocations(v) {
     pitie: entier(v?.pitie),
     monde: MONDES.some((m) => m.edition === v?.monde) ? v.monde : MONDES[0].edition,
     potions, actives,
+    points: Object.fromEntries(BRANCHES_AUTEL.map((b) => [b.id, Math.min(b.max, entier(v?.points?.[b.id]))])),
+    phaseForcee: v?.phaseForcee && typeof v.phaseForcee.id === "string" && definitionPhase(v.phaseForcee.id) ? v.phaseForcee : null,
   };
 }
 
@@ -147,6 +153,7 @@ function valider(p) {
     tampons: Array.isArray(p.tampons) ? p.tampons : [],
     guide: Array.isArray(p.guide) ? p.guide : [],
     completions: Array.isArray(p.completions) ? p.completions : [],
+    codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
     tamponsNouveaux: Array.isArray(p.tamponsNouveaux) ? p.tamponsNouveaux : [],
     titre: p.titre ?? TITRE_DE_DEPART,
     tour: {
@@ -356,6 +363,7 @@ function ajouterCarte({ id, rarete, variante = null }, tablePoussiere = POUSSIER
   } else {
     const doublon = ajouterDoublon(partie.collection[id]);
     const poussiere = doublon.encreRendue ? tablePoussiere[rarete] : 0;
+    if (doublon.encreRendue) partie.collection[id].surplus = (partie.collection[id].surplus ?? 0) + 1;   // compte pour la fusion
     partie.boosters.poussiere += poussiere;
     resultat = { id, rarete, variante, nouveau: false, ...doublon, encreRendue: 0, poussiere };
   }
@@ -2028,9 +2036,14 @@ function gainsVictoireAutel() {
 // Ce que la derniere victoire a rapporte a l'autel (affiche en fin de combat)
 export const recolteAutelDerniereVictoire = () => { const r = derniereRecolteAutel; derniereRecolteAutel = null; return r; };
 
+// Le niveau d'autel : la liste des paliers, puis un niveau toutes les 5 000 invocations
+export function seuilNiveauAutel(n) {
+  if (n < NIVEAUX_AUTEL.length) return NIVEAUX_AUTEL[n].invocations;
+  return NIVEAUX_AUTEL.at(-1).invocations + (n - NIVEAUX_AUTEL.length + 1) * INVOCATIONS_PAR_NIVEAU_EN_PLUS;
+}
 export function niveauAutel(total = partie?.invocations.total ?? 0) {
   let n = 0;
-  while (n + 1 < NIVEAUX_AUTEL.length && total >= NIVEAUX_AUTEL[n + 1].invocations) n += 1;
+  while (total >= seuilNiveauAutel(n + 1)) n += 1;
   return n;
 }
 export const pouvoirAutel = (pouvoir) => {
@@ -2038,27 +2051,66 @@ export const pouvoirAutel = (pouvoir) => {
   return i >= 0 && niveauAutel() >= i;
 };
 
+// ---------- Points d'autel ----------
+export const pointsAutel = () => ({ ...(partie?.invocations.points ?? {}) });
+export function pointsAutelLibres() {
+  if (!partie) return 0;
+  const places = Object.values(partie.invocations.points).reduce((a, b) => a + b, 0);
+  return niveauAutel() * POINTS_PAR_NIVEAU - places;
+}
+export function placerPointAutel(branche) {
+  const def = BRANCHES_AUTEL.find((b) => b.id === branche);
+  if (!partie || !def || pointsAutelLibres() <= 0 || partie.invocations.points[branche] >= def.max) return false;
+  partie.invocations.points[branche] += 1;
+  sauver();
+  return true;
+}
+export function redistribuerPointsAutel() {
+  if (!partie || partie.boosters.poussiere < COUT_REDISTRIBUTION) return false;
+  partie.boosters.poussiere -= COUT_REDISTRIBUTION;
+  for (const b of BRANCHES_AUTEL) partie.invocations.points[b.id] = 0;
+  sauver();
+  return true;
+}
+
 const potionActive = (id, maintenant = Date.now()) => (partie?.invocations.actives[id] ?? 0) > maintenant;
 
-// L'Index : series et editions completes, bordures obtenues
+// ---------- Phase de l'autel (commune a tous, ou relancee par une potion de lune) ----------
+export function phaseActuelle(maintenant = Date.now()) {
+  const base = phaseAutel(maintenant);
+  const forcee = partie?.invocations.phaseForcee;
+  const p = forcee && forcee.fenetre === base.fenetre ? { ...definitionPhase(forcee.id), rangSerie: forcee.rangSerie, debut: base.debut, fin: base.fin, fenetre: base.fenetre, relancee: true } : base;
+  const monde = partie?.invocations.monde ?? MONDES[0].edition;
+  return { ...p, serie: p.rangSerie != null ? EDITIONS_PAR_ID[monde].series[p.rangSerie] : null };
+}
+
+// L'Index : la collection (series, editions, bordures) et les combats (arene, Tour, eveils)
 export function chanceIndex() {
-  if (!partie) return { series: 0, editions: 0, bordures: 0, total: 0 };
+  if (!partie) return { series: 0, editions: 0, bordures: 0, combats: 0, total: 0, nbSeries: 0, nbEditions: 0 };
   const series = [...new Set(PERSOS.map((p) => p.serie))].filter((x) => { const { n, total } = progressionSerie(x); return n === total; }).length;
   const editions = EDITIONS.filter((e) => PERSOS.filter((p) => e.series.includes(p.serie)).every((p) => partie.collection[p.id])).length;
   let bordures = 0;
   for (const prog of Object.values(partie.collection)) for (const v of prog.variantes ?? []) bordures += CHANCE_PAR_BORDURE[v] ?? 0;
-  const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures };
-  return { ...pts, nbSeries: series, nbEditions: editions, total: pts.series + pts.editions + pts.bordures };
+  const boss = partie.arene.battus.length;
+  const mondesFinis = MONDES.filter((m) => BOSS_ARENE.filter((b) => b.monde === m.edition).every((b) => partie.arene.battus.includes(b.id))).length;
+  const tour = Math.min(CHANCE_TOUR_MAX, Math.floor((partie.tour.record || 0) / 10) * CHANCE_PAR_10_ETAGES);
+  const eveils = Math.min(CHANCE_EVEIL_MAX, Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0) * CHANCE_PAR_EVEIL);
+  const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + tour + eveils;
+  const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures, combats };
+  return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, total: pts.series + pts.editions + pts.bordures + pts.combats };
 }
 
 export function chanceActuelle(maintenant = Date.now()) {
-  const niveau = niveauAutel() * CHANCE_PAR_NIVEAU;
+  const points = partie?.invocations.points ?? { chance: 0, bordure: 0 };
+  const niveau = points.chance * CHANCE_PAR_POINT;
   const index = chanceIndex();
+  const phase = phaseActuelle(maintenant);
   const potion = potionActive("chance", maintenant) ? MULT_POTION_CHANCE : 1;
+  const multPhase = phase.chance ?? 1;
   return {
-    niveau, index, potion,
-    total: (1 + niveau + index.total) * potion,
-    bordure: potionActive("bordure", maintenant) ? MULT_POTION_BORDURE : 1,
+    niveau, index, potion, phase: multPhase,
+    total: (1 + niveau + index.total) * potion * multPhase,
+    bordure: (potionActive("bordure", maintenant) ? MULT_POTION_BORDURE : 1) * (phase.bordure ?? 1) * (1 + points.bordure * BORDURE_PAR_POINT),
   };
 }
 
@@ -2071,16 +2123,19 @@ export function etatInvocations(maintenant = Date.now()) {
   if (!partie) return null;
   const v = assurerInvocations(maintenant);
   const niveau = niveauAutel();
-  const prochain = NIVEAUX_AUTEL[niveau + 1] ?? null;
+  const phase = phaseActuelle(maintenant);
   const vitesse = potionActive("vitesse", maintenant);
-  const delai = (pouvoirAutel("rapide") ? DELAI_RAPIDE_MS : DELAI_TIRAGE_MS) * (vitesse ? FACTEUR_POTION_VITESSE : 1);
+  const delai = (pouvoirAutel("rapide") ? DELAI_RAPIDE_MS : DELAI_TIRAGE_MS) * (vitesse ? FACTEUR_POTION_VITESSE : 1)
+    * (phase.vitesse ?? 1) * (1 - v.points.vitesse * VITESSE_PAR_POINT);
+  const prochainNiveau = NIVEAUX_AUTEL[niveau + 1] ?? { invocations: seuilNiveauAutel(niveau + 1) };
   return {
     reserve: v.reserve, max: INVOCATIONS_MAX,
     prochaine: v.reserve >= INVOCATIONS_MAX ? null : v.maj + MINUTES_PAR_INVOCATION * 60000,
-    total: v.total, niveau, prochainNiveau: prochain,
-    seuilNiveau: NIVEAUX_AUTEL[niveau].invocations,
+    total: v.total, niveau, prochainNiveau,
+    seuilNiveau: seuilNiveauAutel(niveau),
     avantLegendaire: PITIE_INVOCATION - v.pitie,
-    monde: v.monde, delai,
+    monde: v.monde, delai, phase,
+    points: { ...v.points }, pointsLibres: pointsAutelLibres(),
     pouvoirs: { auto: pouvoirAutel("auto"), rapide: pouvoirAutel("rapide"), triple: pouvoirAutel("triple") },
     chance: chanceActuelle(maintenant),
     potions: { ...v.potions },
@@ -2106,9 +2161,14 @@ export function invoquerJoueur(nombre = 1) {
   const niveauAvant = niveauAutel();
   const avant = idsPossedes().length;
   const chance = chanceActuelle();
+  const phase = phaseActuelle();
+  const vedettes = [serieDeLaSemaine(), phase.serie].filter(Boolean);
   const cartes = [];
   for (let k = 0; k < nombre; k++) {
-    const r = invoquer(Math.random, v.monde, { chance: chance.total, multBordure: chance.bordure, pitie: v.pitie, serieVedette: serieDeLaSemaine() });
+    const r = invoquer(Math.random, v.monde, {
+      chance: chance.total, multBordure: chance.bordure, pitie: v.pitie,
+      serieVedette: vedettes, poidsVedette: phase.serie ? 3 : 2,
+    });
     v.pitie = r.pitie;
     v.reserve -= 1;
     v.total += 1;
@@ -2124,17 +2184,25 @@ export function invoquerJoueur(nombre = 1) {
   sauver();
   return {
     cartes, completions, avant,
-    niveauGagne: niveau > niveauAvant ? { niveau, ...NIVEAUX_AUTEL[niveau] } : null,
+    niveauGagne: niveau > niveauAvant ? { niveau, ...(NIVEAUX_AUTEL[niveau] ?? {}), points: (niveau - niveauAvant) * POINTS_PAR_NIVEAU } : null,
   };
 }
 
-// Boire une potion : elle agit tout de suite (ou rallonge celle en cours)
+// Boire une potion : elle agit tout de suite (ou rallonge celle en cours).
+// La potion de lune relance la phase de l'autel jusqu'a la fin de la phase en cours.
 export function boirePotion(id) {
   const def = POTIONS_PAR_ID[id];
   if (!partie || !def || partie.invocations.potions[id] <= 0) return false;
   const maintenant = Date.now();
+  if (id === "lune") {
+    partie.invocations.potions.lune -= 1;
+    partie.invocations.phaseForcee = phaseRelancee(Math.random, phaseAutel(maintenant).fenetre);
+    sauver();
+    return true;
+  }
+  const duree = def.minutes * 60000 * (1 + partie.invocations.points.potions * POTIONS_PAR_POINT);
   const depart = Math.max(maintenant, partie.invocations.actives[id] || 0);
-  const fin = Math.min(maintenant + MINUTES_POTION_MAX * 60000, depart + def.minutes * 60000);
+  const fin = Math.min(maintenant + MINUTES_POTION_MAX * 60000, depart + duree);
   if (fin <= depart) return false;
   partie.invocations.potions[id] -= 1;
   partie.invocations.actives[id] = fin;
@@ -2152,6 +2220,44 @@ export function fabriquerPotion(id) {
   return true;
 }
 
+// ---------- Fusion : les doublons en trop forgent une bordure ----------
+// La prochaine bordure que la fusion peut donner a ce perso, ou null
+export function prochaineFusion(id) {
+  const prog = partie?.collection[id];
+  if (!prog) return null;
+  const etape = FUSION.find((f) => !(prog.variantes ?? []).includes(f.bordure));
+  return etape ? { ...etape, surplus: prog.surplus ?? 0, pret: (prog.surplus ?? 0) >= etape.doublons } : null;
+}
+
+export function fusionner(id) {
+  const f = prochaineFusion(id);
+  if (!f || !f.pret) return null;
+  const prog = partie.collection[id];
+  prog.surplus -= f.doublons;
+  prog.variantes = [...(prog.variantes ?? []), f.bordure];
+  sauver();
+  return f.bordure;
+}
+
+// ---------- Codes cadeaux ----------
+// Le jeu ne garde que l'empreinte (SHA-256) des codes : on ne peut pas les lire dans le code source.
+export const codesUtilises = () => [...(partie?.codes ?? [])];
+export async function utiliserCode(texte) {
+  if (!partie) return { ok: false, erreur: "Pas de partie." };
+  const propre = String(texte ?? "").trim().toUpperCase().replace(/\s+/g, "");
+  if (!propre) return { ok: false, erreur: "Écris un code." };
+  const octets = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`crossover:${propre}`));
+  const empreinte = [...new Uint8Array(octets)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const code = CODES_CADEAUX.find((c) => c.empreinte === empreinte);
+  if (!code) return { ok: false, erreur: "Ce code n'existe pas (ou plus)." };
+  if (partie.codes.includes(empreinte)) return { ok: false, erreur: "Tu as déjà utilisé ce code." };
+  if (code.invocationsMin && partie.invocations.total < code.invocationsMin) return { ok: false, erreur: `Ce code demande ${code.invocationsMin.toLocaleString("fr-FR")} invocations à l'autel.` };
+  if (code.bossMin && partie.arene.battus.length < code.bossMin) return { ok: false, erreur: `Ce code demande d'avoir vaincu ${code.bossMin} boss de l'Arène.` };
+  partie.codes.push(empreinte);
+  donnerRecompense(code.recompense);
+  sauver();
+  return { ok: true, recompense: code.recompense };
+}
 // ==========================================================
 // ARENE DES BOSS
 // Ton equipe (le deck) contre un boss geant. 8 boss par monde, a

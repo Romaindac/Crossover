@@ -10,7 +10,8 @@ import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
 import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { EDITIONS_PAR_ID } from "../donnees/boosters.js";
 import {
-  MONDES, POTIONS, BORDURES, NIVEAUX_AUTEL, CHANCE_PAR_NIVEAU, INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_VICTOIRE,
+  MONDES, POTIONS, BORDURES, NIVEAUX_AUTEL, BRANCHES_AUTEL, POINTS_PAR_NIVEAU, COUT_REDISTRIBUTION, PHASES, MINUTES_PAR_PHASE,
+  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_VICTOIRE,
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, PITIE_INVOCATION, POUSSIERE_DOUBLON_INVOCATION, CHANCE_POTION_VICTOIRE,
 } from "../donnees/invocations.js";
 import { tableAvecChance } from "../moteur/invocations.js";
@@ -18,8 +19,10 @@ import { CHAPITRES } from "../donnees/campagne.js";
 import { styleSerie, varsSerie } from "../donnees/series.js";
 import {
   etatInvocations, invoquerJoueur, boirePotion, fabriquerPotion, choisirMonde, mondeOuvert, progressionDe, possede,
-  progressionSerie, verifierTampons,
+  progressionSerie, verifierTampons, placerPointAutel, redistribuerPointsAutel,
 } from "../services/partie.js";
+import { connecte, envoyerMessage } from "../services/enligne.js";
+import { reglage } from "../services/reglages.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlCarteStatique, rafraichirPortrait, nomBordure } from "./cartes.js";
 import { annoncerTampons } from "./toast.js";
@@ -69,6 +72,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       <div class="autel__mondes" id="autel-mondes" role="radiogroup" aria-label="Choisir l'autel"></div>
       <div class="autel__scene" id="autel-scene">
         <div class="autel__halo" aria-hidden="true"></div>
+        <p class="autel__phase" id="autel-phase" aria-live="polite"></p>
         ${SCEAU}
         <div class="autel__carte" id="autel-carte" aria-live="polite">
           <p class="autel__invite">Touche « Invoquer » : une carte jaillit du sceau.</p>
@@ -138,29 +142,38 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     const c = e.chance;
     const table = tableAvecChance(c.total);
     const lignes = [
-      ["Niveau d'autel", `+${pourcent(c.niveau)}`],
+      ["Points d'autel (Chance)", `+${pourcent(c.niveau)}`],
       [`Index · ${c.index.nbSeries} série${c.index.nbSeries > 1 ? "s" : ""} complète${c.index.nbSeries > 1 ? "s" : ""}`, `+${pourcent(c.index.series)}`],
       [`Index · ${c.index.nbEditions} édition${c.index.nbEditions > 1 ? "s" : ""} complète${c.index.nbEditions > 1 ? "s" : ""}`, `+${pourcent(c.index.editions)}`],
       ["Index · bordures", `+${pourcent(c.index.bordures)}`],
+      [`Index · combats (${c.index.nbBoss} boss, Tour, éveils)`, `+${pourcent(c.index.combats)}`],
       ...(c.potion > 1 ? [["Potion de chance", multiplicateur(c.potion)]] : []),
+      ...(c.phase > 1 ? [[`Phase : ${e.phase.nom}`, multiplicateur(c.phase)]] : []),
     ];
     $("#autel-chance").innerHTML = `
       <p class="autel__panneau-titre">Chance <strong class="autel__chance">${multiplicateur(c.total)}</strong></p>
       <dl class="autel__lignes">${lignes.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join("")}</dl>
-      <p class="autel__taux-courts">${ORDRE_RARETES.slice(0, 3).map((r) => `<span class="autel__taux autel__taux--${r}">${RARETES[r].nom} ${pourcent(table[r])}</span>`).join("")}${c.bordure > 1 ? `<span class="autel__taux autel__taux--bordure">Bordures ×${c.bordure}</span>` : ""}</p>`;
+      <p class="autel__taux-courts">${ORDRE_RARETES.slice(0, 3).map((r) => `<span class="autel__taux autel__taux--${r}">${RARETES[r].nom} ${pourcent(table[r])}</span>`).join("")}${c.bordure > 1 ? `<span class="autel__taux autel__taux--bordure">Bordures ${multiplicateur(c.bordure)}</span>` : ""}</p>`;
     $("#autel-scene").style.setProperty("--chance", String(Math.min(1, (c.total - 1) / 2)));
   }
 
   function rendreNiveau() {
     const e = etatInvocations();
     const p = e.prochainNiveau;
-    const v = p ? (e.total - e.seuilNiveau) / (p.invocations - e.seuilNiveau) : 1;
+    const v = (e.total - e.seuilNiveau) / (p.invocations - e.seuilNiveau);
     const pouvoirs = NIVEAUX_AUTEL.map((x, i) => x.pouvoir ? `<li class="${e.niveau >= i ? "autel__pouvoir--ok" : ""}">Niv. ${i} · ${x.texte}</li>` : "").join("");
     $("#autel-niveau").innerHTML = `
       <p class="autel__panneau-titre">Niveau d'autel <strong>${e.niveau}</strong></p>
       <span class="autel__jauge autel__jauge--niveau"><span style="--v: ${v}"></span></span>
-      <p class="autel__aide">${p ? `${nombre(e.total)} / ${nombre(p.invocations)} invocations pour le niveau ${e.niveau + 1}${p.texte ? ` : <b>${p.texte}</b>` : ""}` : `${nombre(e.total)} invocations : niveau maximum !`}. Chaque niveau : +${pourcent(CHANCE_PAR_NIVEAU)} de chance.</p>
-      <ul class="autel__pouvoirs">${pouvoirs}</ul>`;
+      <p class="autel__aide">${nombre(e.total)} / ${nombre(p.invocations)} invocations pour le niveau ${e.niveau + 1}${p.texte ? ` : <b>${p.texte}</b>` : ""}. Chaque niveau : ${POINTS_PAR_NIVEAU} points d'autel.</p>
+      <ul class="autel__pouvoirs">${pouvoirs}</ul>
+      <p class="autel__points-titre">Points d'autel ${e.pointsLibres ? `<b class="autel__points-libres">${e.pointsLibres} à placer</b>` : ""}</p>
+      <ul class="autel__branches">${BRANCHES_AUTEL.map((b) => `
+        <li class="autel__branche">
+          <span class="autel__branche-nom"><b>${b.nom}</b> ${e.points[b.id]}/${b.max}<small>${b.effet(e.points[b.id])}</small></span>
+          <button type="button" class="autel__plus" data-autel="point" data-branche="${b.id}" ${e.pointsLibres > 0 && e.points[b.id] < b.max ? "" : "disabled"} aria-label="Placer un point en ${b.nom}">+</button>
+        </li>`).join("")}</ul>
+      <button type="button" class="bouton-texte autel__redistribuer" data-autel="redistribuer" ${e.poussiere >= COUT_REDISTRIBUTION && Object.values(e.points).some(Boolean) ? "" : "disabled"}>Tout redistribuer · ${COUT_REDISTRIBUTION} poussière</button>`;
   }
 
   function rendrePotions() {
@@ -170,9 +183,9 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       return `
         <div class="potion ${fin ? "potion--active" : ""}" style="--potion: ${p.couleur}">
           <span class="potion__icone">${ICONE_POTION}<span class="potion__stock">${e.potions[p.id]}</span></span>
-          <span class="potion__texte"><b>${p.nom}</b><span>${p.effet} · ${p.minutes} min</span>${fin ? `<span class="potion__minuteur" data-fin="${fin}">Active : ${dureeCourte(fin - Date.now())}</span>` : ""}</span>
+          <span class="potion__texte"><b>${p.nom}</b><span>${p.effet}${p.minutes ? ` · ${p.minutes} min` : ""}</span>${fin ? `<span class="potion__minuteur" data-fin="${fin}">Active : ${dureeCourte(fin - Date.now())}</span>` : ""}</span>
           <span class="potion__actions">
-            <button type="button" class="bouton bouton--obi-petit" data-autel="boire" data-potion="${p.id}" ${e.potions[p.id] > 0 ? "" : "disabled"}>${fin ? "Rallonger" : "Boire"}</button>
+            <button type="button" class="bouton bouton--obi-petit" data-autel="boire" data-potion="${p.id}" ${e.potions[p.id] > 0 ? "" : "disabled"}>${p.id === "lune" ? "Relancer" : fin ? "Rallonger" : "Boire"}</button>
             <button type="button" class="bouton-texte" data-autel="distiller" data-potion="${p.id}" ${e.poussiere >= p.poussiere ? "" : "disabled"} title="Fabriquer avec la poussière d'atelier (tu en as ${nombre(e.poussiere)})">Distiller · ${p.poussiere} poussière</button>
           </span>
         </div>`;
@@ -197,12 +210,22 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
         <summary>Voir les taux, les bordures et l'Index</summary>
         <p>Taux de base par invocation : ${ORDRE_RARETES.map((r) => `${RARETES[r].nom} ${pourcent(base[r])}`).join(", ")}. La chance multiplie les Rares, Épiques et Légendaires ; le Commun recule d'autant. Un Légendaire est garanti à la ${PITIE_INVOCATION}e invocation sans Légendaire.</p>
         <p>Bordures (même force, autre cadre) : ${BORDURES.slice().reverse().map((b) => `${b.nom} ${pourcent(b.chance)}`).join(", ")}. La potion de bordure triple ces chances.</p>
-        <p>L'Index rend chanceux pour toujours : +${pourcent(CHANCE_SERIE_COMPLETE)} par série complète, +${pourcent(CHANCE_EDITION_COMPLETE)} par édition complète, et un peu pour chaque bordure obtenue.</p>
+        <p>L'Index rend chanceux pour toujours : +${pourcent(CHANCE_SERIE_COMPLETE)} par série complète, +${pourcent(CHANCE_EDITION_COMPLETE)} par édition complète, un peu pour chaque bordure, +${pourcent(CHANCE_BOSS_ARENE)} par boss de l'Arène vaincu, +${pourcent(CHANCE_MONDE_FINI)} par monde dont les 8 boss sont tombés, et des bonus pour le record de la Tour et les éveils.</p>
+        <p>Phases de l'autel : toutes les ${MINUTES_PAR_PHASE} minutes, la même pour tous les joueurs. ${PHASES.map((x) => `<b>${x.nom}</b> (${x.texte.replace(/\.$/, "")})`).join(", ")}. La potion de lune relance la phase jusqu'au prochain changement.</p>
         <p>Réserve : ${INVOCATIONS_MAX} invocations, +1 toutes les ${MINUTES_PAR_INVOCATION} min et +${INVOCATIONS_VICTOIRE} par combat gagné (${pourcent(CHANCE_POTION_VICTOIRE)} des victoires donnent aussi une potion). Un doublon d'un perso déjà à 5 étoiles donne de la poussière (${ORDRE_RARETES.slice().reverse().map((r) => `${RARETES[r].nom} ${POUSSIERE_DOUBLON_INVOCATION[r]}`).join(", ")}).</p>
       </details>`;
   }
 
+  function rendrePhase() {
+    const ph = etatInvocations().phase;
+    const z = $("#autel-phase");
+    z.className = `autel__phase autel__phase--${ph.id}`;
+    z.innerHTML = `<b>${ph.nom}</b><span>${ph.serie ? `${ph.serie} à l'honneur : 3 fois plus de chances` : ph.texte}</span><small data-phase-fin="${ph.fin}">${ph.relancee ? "relancée · " : ""}change dans ${dureeCourte(ph.fin - Date.now())}</small>`;
+    $("#autel-scene").dataset.phase = ph.id;
+  }
+
   function rendreTout() {
+    rendrePhase();
     rendreMondes();
     rendreReserve();
     rendreChance();
@@ -299,6 +322,17 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     }
   }
 
+  // ---------- Annonces dans le chat (General) des tirages tres rares ----------
+  let derniereAnnonce = 0;
+  function annoncerDansLeChat(cartes) {
+    if (!connecte() || !reglage("annonces") || Date.now() - derniereAnnonce < 30000) return;
+    const c = cartes.find((x) => ["arcenciel", "neant"].includes(x.variante) || (x.rarete === "legendaire" && x.variante));
+    if (!c) return;
+    derniereAnnonce = Date.now();
+    const p = PERSOS_PAR_ID[c.id];
+    envoyerMessage("general", `[Autel] vient d'invoquer ${p.nom} ${RARETES[c.rarete].nom}${c.variante ? `, bordure ${nomBordure(c.variante)}` : ""} !`).catch(() => {});
+  }
+
   // ---------- Invoquer ----------
 
   async function invoquer(nombreCartes = 1) {
@@ -330,7 +364,8 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     rendreHistorique();
     // Nouveau niveau d'autel, series completes : on le dit
     const annonces = [];
-    if (r.niveauGagne) annonces.push(`Niveau d'autel ${r.niveauGagne.niveau}${r.niveauGagne.texte ? ` : ${r.niveauGagne.texte} débloquée !` : " : +3 % de chance"}`);
+    if (r.niveauGagne) annonces.push(`Niveau d'autel ${r.niveauGagne.niveau} : +${r.niveauGagne.points} points à placer${r.niveauGagne.texte ? `, ${r.niveauGagne.texte} débloquée !` : ""}`);
+    annoncerDansLeChat(r.cartes);
     for (const x of r.completions) annonces.push(`${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre`);
     for (const c of r.cartes.filter((x) => x.nouveau)) {
       const { n, total } = progressionSerie(PERSOS_PAR_ID[c.id].serie);
@@ -377,7 +412,9 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       if (auto) boucleAuto();
     }
     if (a === "monde" && choisirMonde(b.dataset.edition)) { rendreMondes(); }
-    if (a === "boire" && boirePotion(b.dataset.potion)) { rendrePotions(); rendreChance(); rendreReserve(); }
+    if (a === "boire" && boirePotion(b.dataset.potion)) { rendrePotions(); rendrePhase(); rendreChance(); rendreReserve(); }
+    if (a === "point" && placerPointAutel(b.dataset.branche)) { rendreNiveau(); rendreChance(); }
+    if (a === "redistribuer" && redistribuerPointsAutel()) { rendreNiveau(); rendreChance(); rendrePotions(); }
     if (a === "distiller" && fabriquerPotion(b.dataset.potion)) { rendrePotions(); majEncre?.(); }
   });
 
@@ -390,7 +427,12 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       if (reste <= 0) { rendrePotions(); rendreChance(); } else m.textContent = `Active : ${dureeCourte(reste)}`;
     });
     if (!enCours) rendreReserve();
-    void e;
+    const finPhase = zone.querySelector("[data-phase-fin]");
+    if (finPhase) {
+      const reste = Number(finPhase.dataset.phaseFin) - Date.now();
+      if (reste <= 0) { rendrePhase(); rendreChance(); }
+      else finPhase.textContent = `${e.phase.relancee ? "relancée · " : ""}change dans ${dureeCourte(reste)}`;
+    }
   }, 1000);
 
   rendreTout();

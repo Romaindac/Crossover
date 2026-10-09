@@ -61,7 +61,8 @@ function majPastille() {
 // Un apercu du dernier message, au-dessus de la bulle, quelques secondes
 function apercu(m) {
   const zone = racine.querySelector(".bulle-chat__apercu");
-  zone.innerHTML = `<b>${echapper(m.pseudo)}</b> ${echapper(m.texte).slice(0, 90)}${m.texte.length > 90 ? "…" : ""}`;
+  const texte = m.texte.startsWith("[Autel] ") ? m.texte.slice(8) : m.texte;
+  zone.innerHTML = `<b>${echapper(m.pseudo)}</b> ${echapper(texte).slice(0, 90)}${texte.length > 90 ? "…" : ""}`;
   zone.hidden = false;
   zone.classList.remove("bulle-chat__apercu--sort");
   void zone.offsetWidth;
