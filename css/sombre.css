@@ -1,0 +1,326 @@
+/* ==========================================================
+   TOUT LE JEU EN NUIT
+   Les derniers panneaux « papier clair » (campagne, chasse, Tour,
+   raid, donjon, autel, atelier, collection, social, reglages,
+   notifications...) passent en encre, comme le QG et l'Equipe.
+
+   Principe : dans chaque panneau, on inverse localement les jetons
+   --papier / --encre / --encre-douce. Tout ce qui s'en sert (textes,
+   filets, fonds internes) suit d'un coup. « :not(#n) » donne a ces
+   regles une priorite d'identifiant, pour passer devant les anciennes
+   regles plus precises sans recourir a !important.
+   Charge en tout dernier.
+   ========================================================== */
+
+:root {
+  --sb-fond: #12142b;
+  --sb-surface: #1a1d3a;
+  --sb-surface-2: #222648;
+  --sb-creux: rgb(0 0 0 / 0.26);
+  --sb-bord: rgb(255 255 255 / 0.1);
+  --sb-bord-fort: rgb(255 255 255 / 0.18);
+  --sb-texte: #e9e6f2;
+  --sb-doux: #a9a8c4;
+  --sb-or: linear-gradient(180deg, #ffe07a, #f0b52a);
+}
+
+/* ---------- Les panneaux ---------- */
+:is(
+  .arene__fiche, .etape, .zone-carte, .zone__titre, .groupe, .zone__butin, .boucle,
+  .donjon__maitrise, .hotel, .coffre, .tour__chiffres > div, .collectif, .raid__equipes,
+  .volume, .carnet__page, .encyclo-objet, .index__source, .index__serie, .lien,
+  .carte-reglage, .vitrine-resume > li, .atelier__carte, .autel__panneau, .autel__reserve,
+  .potion, .toast, .paliers-raid > *, .scenes-chapitre, .bandeau-compte
+):not(#n) {
+  --papier: var(--sb-surface);
+  --fond: var(--sb-fond);
+  --encre: var(--sb-texte);
+  --encre-douce: var(--sb-doux);
+  color: var(--sb-texte);
+  background-color: var(--sb-surface);
+  background-image: radial-gradient(ellipse 90% 70% at 0% 0%, rgb(255 255 255 / 0.04), transparent 70%);
+  border-color: var(--sb-bord-fort);
+  box-shadow: 0 10px 26px rgb(0 0 0 / 0.35);
+}
+
+/* Les sous-blocs poses dans un panneau : un creux plus sombre */
+:is(.zone__butin li, .encyclo-objet .piece-details__lignes, .autel__panneau li, .index__source .barre-xp, .potion__actions):not(#n) {
+  background-color: var(--sb-creux);
+}
+
+/* Tout bouton, puce ou etiquette a l'interieur : plus d'ombre « tampon » claire */
+:is(
+  .arene__fiche, .etape, .zone-carte, .zone__titre, .groupe, .zone__butin, .boucle,
+  .donjon__maitrise, .hotel, .coffre, .collectif, .raid__equipes, .volume, .carnet__page,
+  .encyclo-objet, .index__source, .index__serie, .lien, .carte-reglage, .atelier__carte,
+  .autel__panneau, .autel__reserve, .potion, .toast
+) :is(.bouton, .filtre, .chances, .obi-rarete, .tampon, .choix-segmente__option, .autel__taux, .pastille):not(#n) {
+  box-shadow: none;
+}
+
+/* ---------- Etats particuliers ---------- */
+/* Campagne : l'etape choisie, l'elite et le boss gardent leur couleur */
+.etape--boss:not(#n) { background-image: radial-gradient(ellipse 90% 80% at 100% 0%, rgb(255 80 70 / 0.2), transparent 70%); }
+.etape--elite:not(#n) { background-image: radial-gradient(ellipse 90% 80% at 100% 0%, rgb(255 200 60 / 0.16), transparent 70%); }
+:is(.etape--choisie, .etape[aria-current], .zone-carte[aria-pressed="true"], .zone-carte--active, .volume--prochain, .volume[aria-current]):not(#n) {
+  border-color: #f0b52a;
+  box-shadow: 0 0 0 1px #f0b52a, 0 10px 26px rgb(0 0 0 / 0.4), 0 0 22px rgb(240 181 42 / 0.18);
+}
+
+/* Chasse et Tour : le groupe dore reste dore */
+.groupe--dore:not(#n) { background-image: radial-gradient(ellipse 90% 80% at 100% 0%, rgb(255 200 60 / 0.22), transparent 70%); border-color: rgb(255 200 60 / 0.6); }
+
+/* Coffres : a ouvrir (dore), deja ouverts (eteints) */
+.coffre:not(#n) { background-image: radial-gradient(ellipse 90% 80% at 0% 0%, rgb(255 200 60 / 0.12), transparent 70%); }
+:is(.coffre--pret, .coffre[data-pret="true"]):not(#n) { border-color: #f0b52a; box-shadow: 0 0 0 1px #f0b52a, 0 0 18px rgb(240 181 42 / 0.25); }
+:is(.coffre--ouvert, .coffre:disabled):not(#n) { opacity: 0.7; }
+
+/* Encyclopedie : le filet garde la couleur de rarete */
+.encyclo-objet:not(#n) { border-color: color-mix(in srgb, var(--couleur-rarete, #8a8fc4) 55%, transparent); }
+.encyclo-objet--inconnu:not(#n) { opacity: 0.75; background-image: none; }
+
+/* Liens et pages du carnet encore caches */
+:is(.lien--cache):not(#n) { background-image: radial-gradient(circle, rgb(255 255 255 / 0.05) 0 1px, transparent 1.4px); background-size: 9px 9px; opacity: 0.85; }
+.carnet__page:not(#n) { background-image: linear-gradient(90deg, transparent 2.2rem, rgb(255 90 78 / 0.35) 2.2rem, rgb(255 90 78 / 0.35) calc(2.2rem + 1px), transparent calc(2.2rem + 1px)), radial-gradient(ellipse 90% 70% at 0% 0%, rgb(255 255 255 / 0.04), transparent 70%); }
+
+/* Reglages : le panneau « danger » */
+.carte-reglage--danger:not(#n) { border-color: rgb(255 90 78 / 0.45); background-image: radial-gradient(ellipse 90% 80% at 100% 0%, rgb(255 90 78 / 0.14), transparent 70%); }
+
+/* Notifications */
+.toast:not(#n) { background-color: rgb(26 29 58 / 0.96); border-color: var(--sb-bord-fort); box-shadow: 0 14px 30px rgb(0 0 0 / 0.5); backdrop-filter: blur(6px); }
+
+/* ---------- Commandes ---------- */
+/* Puces de filtre et choix segmentes : verre sombre, or quand choisis */
+:is(.filtre, .choix-segmente__option):not(#n) {
+  color: var(--sb-texte);
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid var(--sb-bord-fort);
+  box-shadow: none;
+}
+
+:is(.filtre:hover, .choix-segmente__option:hover):not(#n) { background: rgb(255 255 255 / 0.1); }
+
+:is(.filtre[aria-pressed="true"], .choix-segmente__option[aria-checked="true"]):not(#n) {
+  color: #1a1206;
+  background: var(--sb-or);
+  border-color: transparent;
+}
+
+/* Boutons secondaires (filet) : clairs sur fond sombre */
+.bouton--clair:not(#n) {
+  color: var(--sb-texte);
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid var(--sb-bord-fort);
+  box-shadow: none;
+}
+
+.bouton--clair:hover:not(#n):not(:disabled) { background: rgb(255 255 255 / 0.1); border-color: var(--sb-doux); }
+
+/* Les petits outils de la formation */
+.formation__outils .bouton-texte:not(#n) {
+  color: var(--sb-texte);
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid var(--sb-bord-fort);
+  box-shadow: none;
+}
+
+.formation__outils .bouton-texte[data-action="meilleure"]:not(#n) { color: #1a1206; background: var(--sb-or); border-color: transparent; }
+
+/* Boutons « encre pleine » poses dans un panneau devenu sombre : en or */
+:is(
+  .arene__fiche, .etape, .groupe, .boucle, .donjon__maitrise, .hotel, .collectif,
+  .raid__equipes, .carte-reglage, .autel__panneau, .potion, .tour__infos
+) .bouton--principal:not(#n) {
+  color: #1a1206;
+  background: var(--sb-or);
+}
+
+/* Champs de saisie */
+:is(.champ-social input, .champ-compact select, .zone-sauvegarde, .carte-reglage input, .carte-reglage textarea, .hotel input, .hotel select):not(#n) {
+  color: #fff;
+  background: rgb(0 0 0 / 0.3);
+  border: 1px solid var(--sb-bord-fort);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+:is(.champ-social input, .champ-compact select, .zone-sauvegarde, .carte-reglage input, .carte-reglage textarea):focus:not(#n) {
+  outline: none;
+  border-color: #f0b52a;
+  box-shadow: 0 0 0 3px rgb(240 181 42 / 0.2);
+}
+
+:is(.champ-social input, .zone-sauvegarde, .carte-reglage input, .carte-reglage textarea)::placeholder { color: var(--sb-doux); }
+.champ-compact select option { color: #111; }
+
+/* Jauges : rail sombre */
+.barre-xp:not(#n) {
+  background: rgb(0 0 0 / 0.4);
+  border-color: var(--sb-bord);
+}
+
+/* ---------- Etiquettes colorees : verre teinte, texte de la couleur ---------- */
+.chances:not(#n),
+.autel__taux:not(#n) {
+  --t: 154 160 184;
+  color: rgb(var(--t));
+  background: rgb(var(--t) / 0.14);
+  border: 1px solid rgb(var(--t) / 0.45);
+  box-shadow: none;
+}
+
+.chances--facile:not(#n) { --t: 111 224 160; }
+.chances--jouable:not(#n) { --t: 125 182 255; }
+.chances--difficile:not(#n) { --t: 255 184 102; }
+.chances--extreme:not(#n) { --t: 255 120 110; }
+
+.autel__taux--rare:not(#n) { --t: 125 182 255; }
+.autel__taux--epique:not(#n) { --t: 200 160 255; }
+.autel__taux--legendaire:not(#n) { --t: 255 212 94; }
+.autel__taux--bordure:not(#n) { --t: 255 255 255; background: linear-gradient(100deg, rgb(255 120 120 / 0.25), rgb(255 230 120 / 0.25), rgb(120 230 170 / 0.25), rgb(120 170 255 / 0.25), rgb(220 140 255 / 0.25)); }
+
+/* Bandeaux de rarete pastel : texte en encre fonce pour rester lisible */
+.obi-rarete:not(#n) { color: #17192d; }
+
+/* Interrupteurs */
+.interrupteur input:not(#n) {
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid var(--sb-bord-fort);
+}
+
+.interrupteur input:not(#n)::after {
+  top: 2px;
+  left: 2px;
+  background: #fff;
+  border: 0;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+}
+
+.interrupteur input:checked:not(#n) { background: #3fbf78; border-color: transparent; }
+.interrupteur input:focus-visible:not(#n) { outline: 2px solid #f0b52a; outline-offset: 2px; }
+
+/* ==========================================================
+   LES FENETRES (aide, compte, choix et detail d'un objet,
+   tutoriel, choix du donjon, vitrine d'un joueur...)
+   ========================================================== */
+:is(.resultat, .tuto):not(#n) {
+  --papier: var(--sb-surface);
+  --fond: var(--sb-fond);
+  --encre: var(--sb-texte);
+  --encre-douce: var(--sb-doux);
+  color: var(--sb-texte);
+  background-color: var(--sb-fond);
+  background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgb(120 110 220 / 0.14), transparent 70%);
+  border: 1px solid var(--sb-bord-fort);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(0 0 0 / 0.5);
+}
+
+:is(.resultat, .tuto) :is(h2, h3, .resultat__titre, .lexique__titre):not(#n) { color: #fff; }
+
+/* Les blocs poses dans une fenetre : panneaux sombres */
+:is(.resultat, .tuto) :is(
+  .piece-details, .fenetre-piece__bloc, .choix-piece__ligne, .lexique__ressource, .lexique__case,
+  .aide-case, .compte__avantages, .retouche, .donjon__benediction, .tuto__case, .tuto__bulle,
+  article, section > div[class], li[class]
+):not(#n):not(.carte):not(.vignette) {
+  border-color: var(--sb-bord-fort);
+  box-shadow: none;
+}
+
+:is(.resultat, .tuto) :is(.bouton, .filtre, .obi-rarete, .choix-segmente__option):not(#n) { box-shadow: none; }
+
+:is(.resultat, .tuto) .bouton--principal:not(#n) { color: #1a1206; background: var(--sb-or); }
+
+:is(.resultat, .tuto) :is(input, select, textarea):not(#n) {
+  color: #fff;
+  background: rgb(0 0 0 / 0.3);
+  border: 1px solid var(--sb-bord-fort);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+:is(.resultat, .tuto) :is(input, select, textarea):focus:not(#n) { outline: none; border-color: #f0b52a; box-shadow: 0 0 0 3px rgb(240 181 42 / 0.2); }
+:is(.resultat, .tuto) :is(input, textarea)::placeholder { color: var(--sb-doux); }
+
+/* Le bas des cartes d'objet (inventaire, hotel, encyclopedie) */
+.carte-piece__corps:not(#n) {
+  --encre: var(--sb-texte);
+  --encre-douce: var(--sb-doux);
+  --papier: var(--sb-surface);
+  color: var(--sb-texte);
+  background: var(--sb-surface);
+}
+
+/* Les tuiles d'objet gardent leur icone en encre fonce (fond de rarete clair) */
+.tuile-piece:not(#n) { color: #17192d; border-color: rgb(0 0 0 / 0.55); }
+
+/* Retouche a l'encre : papier quadrille devenu ardoise quadrillee */
+.retouche:not(#n) {
+  background:
+    linear-gradient(rgb(140 170 255 / 0.1) 1px, transparent 1px) 0 0 / 100% 14px,
+    linear-gradient(90deg, rgb(140 170 255 / 0.1) 1px, transparent 1px) 0 0 / 14px 100%,
+    var(--sb-surface);
+  border: 1px solid var(--sb-bord-fort);
+  border-radius: 10px;
+}
+
+.retouche__jauge:not(#n) { background: rgb(0 0 0 / 0.4); border: 1px solid var(--sb-bord); border-radius: 999px; }
+.retouche__jauge span:not(#n) { background: linear-gradient(90deg, #6aa8ff, #b28cff); }
+
+/* Index : les noms des persos manquants */
+.index__nom:not(#n) { color: var(--sb-texte); background: rgb(255 255 255 / 0.08); border-color: var(--sb-bord-fort); }
+:is(.index__nom--rare, .index__nom--epique, .index__nom--legendaire):not(#n) { color: #17192d; border-color: transparent; }
+.index__nom--rare:not(#n) { background: #cfe4ff; }
+.index__nom--epique:not(#n) { background: #e6d9ff; }
+.index__nom--legendaire:not(#n) { background: #ffe8a3; }
+.index__nom--secret:not(#n) { color: #fff; background: #7a0f22; }
+
+/* Arene : l'affiche du boss garde son fond d'encre */
+.arene__affiche:not(#n) {
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--p1) 45%, #2a2d4a), #17192d 75%);
+  border-color: rgb(255 255 255 / 0.14);
+}
+
+/* Boutons dores poses dans un panneau sombre : filet fonce, pas clair */
+:is(.bouton--obi, .bouton--obi-petit):not(#n) { border-color: rgb(0 0 0 / 0.35); }
+
+/* Petits numeros d'encre (raid) : pastilles dorees */
+.raid__numero:not(#n) { color: #1a1206; background: var(--sb-or); border-color: transparent; }
+
+/* Rouges et verts eclaircis pour rester lisibles sur la nuit */
+:is(
+  .arene__fiche, .etape, .zone-carte, .zone__titre, .groupe, .zone__butin, .boucle,
+  .donjon__maitrise, .hotel, .coffre, .tour__chiffres > div, .collectif, .raid__equipes,
+  .volume, .carnet__page, .encyclo-objet, .index__source, .index__serie, .lien,
+  .carte-reglage, .atelier__carte, .autel__panneau, .autel__reserve, .potion, .toast,
+  .resultat, .tuto, .donjon, .aventure, .collection, .reglages-page, .social, .tirages
+):not(#n) {
+  --sceau: #ff7a6e;
+  --vert: #4fd18b;
+}
+
+/* Textes sur fond dore : toujours en encre foncee */
+:is(.bouton--obi, .bouton--obi-petit, .badge-dore):not(#n) { color: #1a1206; }
+.badge-boss:not(#n) { color: #fff; background: #c4372b; }
+.autel__chance:not(#n) { color: #5fe39a; }
+.reglage__message--erreur:not(#n),
+.carte-reglage--danger h2:not(#n) { color: #ff8a80; }
+.case__titre small:not(#n) { color: #c3b4ff; }
+.autel__plus:not(#n) { color: #1a1206; }
+
+/* Fin de combat : etiquettes MVP lisibles */
+.etiquette-mvp:not(#n) { color: #1a1206; border-color: rgb(0 0 0 / 0.35); }
+
+/* Combat : les plaques sous les combattants en verre d'encre */
+.combattant__plaque:not(#n) {
+  --papier: #15182f;
+  --encre: #e9e6f2;
+  --encre-douce: #a9a8c4;
+  --sceau: #ff7a6e;
+  color: #e9e6f2;
+  background: rgb(14 16 36 / 0.88);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(4px);
+}
