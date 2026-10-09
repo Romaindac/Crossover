@@ -314,7 +314,9 @@ export function afficherQg(conteneur, { naviguer }) {
 
   // ---------- Guide du debutant ----------
   function texteRecompense(r) {
-    return [r.encre && `${r.encre} d'encre`, r.tickets && `${r.tickets} booster${r.tickets > 1 ? "s" : ""}`, r.energie && `${r.energie} d'énergie`].filter(Boolean).join(" + ");
+    const noms = { chance: "de chance", bordure: "de bordure", vitesse: "de vitesse", lune: "de lune" };
+    return [r.encre && `${r.encre} d'encre`, r.tickets && `${r.tickets} booster${r.tickets > 1 ? "s" : ""}`, r.energie && `${r.energie} d'énergie`,
+      r.invocations && `${r.invocations} invocations`, ...Object.entries(r.potions ?? {}).map(([id, n]) => `${n} potion${n > 1 ? "s" : ""} ${noms[id]}`)].filter(Boolean).join(" + ");
   }
 
   // ---------- Bandeau « joue en ligne » ----------
