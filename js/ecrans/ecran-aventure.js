@@ -29,6 +29,7 @@ import { htmlDecor } from "../ui/decors.js";
 import { iconeEmplacement } from "../ui/equipement-ui.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { creerHasard } from "../moteur/hasard.js";
+import { afficherArene } from "../ui/arene.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
 
 const DUREE_CRENEAU_DORE = 10 * 60 * 1000;
@@ -48,7 +49,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
   let indexChoisi = index;
   let dores = [];      // quels groupes sont dores (fixe pour un creneau de 10 minutes)
   let calcul = 0;
-  let vue = onglet ?? (zoneId ? "chasse" : "campagne");
+  let vue = onglet ?? (zoneId ? "chasse" : chapitre || deluxe ? "campagne" : "arene");
   let chapitreChoisi = chapitre ?? prochaineEtape().chapitre;
   let enDeluxe = deluxe && deluxeOuverte();
 
@@ -58,10 +59,11 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
       <header class="aventure__entete">
         <h1 class="equipe__titre">Aventure</h1>
         <div class="onglets-collection" role="tablist" aria-label="Aventure">
+          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="arene">Arène</button>
           <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="campagne">Campagne</button>
           <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="chasse">Chasse</button>
           <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="tour">Tour</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="raid">Boss</button>
+          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="raid">Raid</button>
         </div>
       </header>
       <div id="vue" class="aventure__vue"></div>
@@ -519,6 +521,11 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
   function rendreVue() {
     conteneur.querySelectorAll("[data-action='vue']").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.vue === vue)));
     if (vue === "campagne") return rendreCampagne();
+    if (vue === "arene") {
+      const zone = document.createElement("div");
+      $("#vue").replaceChildren(zone);
+      return afficherArene(zone, { conteneur, naviguer, majNavigation });
+    }
     if (vue === "chasse" && !chapitreTermine(1)) {
       $("#vue").innerHTML = `
         <div class="tour-fermee">

@@ -1075,6 +1075,6 @@
 }
 
 /* Pendant une ouverture de booster ou le tutoriel, la bulle fermee s'efface */
-body:has(.revelation, .voile--tuto) .bulle-chat:not(.bulle-chat--ouverte) {
+body:has(.revelation, .voile--tuto, .arene-combat) .bulle-chat:not(.bulle-chat--ouverte) {
   display: none;
 }

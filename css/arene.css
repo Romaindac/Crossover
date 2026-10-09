@@ -1,0 +1,736 @@
+/* ==========================================================
+   ARENE DES BOSS (charge en dernier)
+   L'echelle des 8 boss, la fiche du boss choisi, le combat en
+   direct (scene en encre) et la bordure Boss des cartes.
+   ========================================================== */
+
+.arene {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.arene__intro {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* ---------- L'echelle des boss ---------- */
+
+.arene__echelle {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.arene__boss {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.4rem 0.3rem 0.45rem;
+  color: var(--papier);
+  background: linear-gradient(180deg, #2a2d4a, var(--encre));
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+  box-shadow: 2px 3px 0 rgb(0 0 0 / 0.35);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.arene__boss:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.arene__boss:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.arene__boss--choisi {
+  outline: 3px solid var(--obi);
+  outline-offset: 2px;
+}
+
+.arene__boss-portrait {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid var(--papier);
+  border-radius: 50%;
+  background: #3a3d5c;
+}
+
+.arene__boss-portrait .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+.arene__cadenas {
+  font-family: var(--police-titre);
+  font-size: 1.4rem;
+  opacity: 0.7;
+}
+
+.arene__boss-rang {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.25rem;
+  min-width: 1.2rem;
+  font-family: var(--police-titre);
+  font-size: 0.75rem;
+  color: var(--encre);
+  background: var(--obi);
+  border-radius: 99px;
+}
+
+.arene__boss-nom {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arene__boss-niveau {
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+
+.arene__boss-ko {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  translate: -50% 0;
+  rotate: -14deg;
+  padding: 0 0.35rem;
+  font-family: var(--police-titre);
+  font-size: 0.9rem;
+  color: var(--sceau);
+  background: color-mix(in srgb, var(--papier) 88%, transparent);
+  border: 2px solid var(--sceau);
+  border-radius: 4px;
+}
+
+.arene__boss--battu .arene__boss-portrait {
+  filter: grayscale(0.6) brightness(0.8);
+}
+
+/* ---------- La fiche du boss ---------- */
+
+.arene__fiche {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 10rem;
+  gap: 1rem;
+  padding: 0.9rem;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.arene__affiche {
+  position: relative;
+  overflow: hidden;
+  min-height: 14rem;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 45%, color-mix(in srgb, var(--papier) 7%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--p1) 45%, #2a2d4a), var(--encre) 75%);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.arene__affiche-portrait {
+  position: absolute;
+  inset: 0.6rem 0.6rem 2.2rem;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.arene__affiche-portrait .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+.arene__affiche-titre {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.45rem;
+  font-family: var(--police-titre);
+  font-size: 0.95rem;
+  text-align: center;
+  color: var(--obi);
+  letter-spacing: 0.04em;
+}
+
+.arene__infos {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.arene__nom {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-size: 1.5rem;
+}
+
+.arene__nom small {
+  font-family: var(--police-texte);
+  font-size: 0.85rem;
+  color: var(--encre-douce);
+}
+
+.arene__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.arene__ultime,
+.arene__chances {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--encre-douce);
+}
+
+.arene__rubrique {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--encre-douce);
+}
+
+.arene__recompenses ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arene__recompenses li {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  background: color-mix(in srgb, var(--obi) 22%, var(--papier));
+  border: 1.5px solid var(--encre);
+  border-radius: 4px;
+}
+
+.arene__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.arene__lancer {
+  min-width: 0;
+  font-size: 1.15rem;
+}
+
+.arene__lancer small {
+  font-family: var(--police-texte);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.arene__alerte {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--sceau);
+}
+
+.arene__carte-boss {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+
+.arene__carte-boss .carte {
+  width: 100%;
+}
+
+/* ---------- Le combat en direct ---------- */
+
+.arene-combat {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 0.6rem;
+  padding: 1rem max(1rem, calc((100vw - 56rem) / 2)) calc(1rem + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 40%, color-mix(in srgb, var(--papier) 6%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--p1) 35%, #2a2d4a), var(--encre) 72%);
+}
+
+.arene-combat__haut {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.arene-combat__nom {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.arene-combat__nom small {
+  display: block;
+  font-family: var(--police-texte);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--obi);
+}
+
+.arene-combat__pv {
+  position: relative;
+  height: 1.6rem;
+  overflow: hidden;
+  background: #1a0c10;
+  border: 3px solid var(--papier);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--encre);
+}
+
+.arene-combat__pv-retard,
+.arene-combat__pv-plein {
+  position: absolute;
+  inset: 0 auto 0 0;
+}
+
+.arene-combat__pv-retard {
+  background: #ffd36e;
+  transition: width 0.6s 0.25s ease-out;
+}
+
+.arene-combat__pv-plein {
+  background: linear-gradient(180deg, #ff6b5b, #c4372b 60%, #8f1f17);
+  transition: width 0.12s linear;
+}
+
+.arene-combat__pv-texte {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--police-titre);
+  font-size: 0.9rem;
+  text-shadow: 0 1px 2px #000;
+}
+
+.arene-combat__chrono {
+  margin: 0;
+  text-align: right;
+  font-weight: 800;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.arene-combat__scene {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+}
+
+.arene-combat__boss {
+  width: min(18rem, 60vw);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid var(--papier);
+  border-radius: 50%;
+  box-shadow: 0 0 40px 8px color-mix(in srgb, var(--p3) 45%, transparent), 0 0 0 4px var(--encre);
+  animation: arene-respire 2.4s ease-in-out infinite;
+}
+
+.arene-combat__boss .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes arene-respire {
+  50% { transform: scale(1.03); }
+}
+
+.arene-combat__boss--touche {
+  animation: arene-touche 0.18s ease-out;
+}
+
+@keyframes arene-touche {
+  0% { filter: brightness(2.2) saturate(0.4); transform: scale(0.97); }
+  100% { filter: none; transform: none; }
+}
+
+.arene-combat__degats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arene-combat__chiffre {
+  position: absolute;
+  translate: -50% 0;
+  font-family: var(--police-titre);
+  font-size: 1.3rem;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--encre), 0 0 6px var(--encre);
+  pointer-events: none;
+  animation: arene-chiffre 0.9s ease-out both;
+}
+
+.arene-combat__chiffre--crit {
+  font-size: 1.9rem;
+  color: #ffd23f;
+}
+
+.arene-combat__chiffre--subi {
+  font-size: 0.95rem;
+  color: #ff8a7a;
+}
+
+.arene-combat__chiffre--soin {
+  font-size: 0.95rem;
+  color: #7dffa8;
+}
+
+.arene-combat__chiffre--ko {
+  left: 50% !important;
+  top: 35% !important;
+  font-size: 3.4rem;
+  color: var(--obi);
+}
+
+@keyframes arene-chiffre {
+  0% { transform: translateY(8px) scale(0.6); opacity: 0; }
+  20% { transform: translateY(0) scale(1.15); opacity: 1; }
+  100% { transform: translateY(-40px) scale(1); opacity: 0; }
+}
+
+.arene-combat__annonce {
+  position: absolute;
+  left: 50%;
+  bottom: 0.4rem;
+  translate: -50% 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.25rem 0.8rem;
+  font-family: var(--police-titre);
+  font-size: 1.05rem;
+  white-space: nowrap;
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+  opacity: 0;
+}
+
+.arene-combat__annonce--boss {
+  color: #fff;
+  background: var(--sceau);
+}
+
+.arene-combat__annonce--vue {
+  animation: arene-annonce 1.6s ease both;
+}
+
+@keyframes arene-annonce {
+  0% { opacity: 0; transform: scale(1.6); }
+  12%, 80% { opacity: 1; transform: none; }
+  100% { opacity: 0; }
+}
+
+.arene-combat__deck {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.arene-combat__carte {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.35rem;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
+}
+
+.arene-combat__carte--ko {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.arene-combat__portrait {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.arene-combat__portrait .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+.arene-combat__barre {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  background: #d6d2c6;
+  border-radius: 99px;
+}
+
+.arene-combat__barre span {
+  display: block;
+  height: 100%;
+  transition: width 0.15s linear;
+}
+
+.arene-combat__barre--pv span { background: var(--vert); }
+.arene-combat__barre--energie span { background: #4c8dff; }
+
+.arene-combat__carte-nom {
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arene-combat__commandes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.arene-combat__commandes[hidden],
+.arene-combat__fin[hidden] {
+  display: none;
+}
+
+/* ---------- La fin du combat ---------- */
+
+.arene-combat__fin {
+  position: fixed;
+  inset: 0;
+  z-index: 31;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgb(10 10 25 / 0.7);
+}
+
+.arene-fin {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  width: min(26rem, 100%);
+  padding: 1.2rem;
+  color: var(--encre);
+  text-align: center;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 var(--encre);
+  animation: bulle-panneau 0.25s ease both;
+}
+
+.arene-fin__titre {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 2rem;
+}
+
+.arene-fin--victoire .arene-fin__titre { color: #c98a00; }
+.arene-fin--defaite .arene-fin__titre { color: var(--sceau); }
+
+.arene-fin__degats,
+.arene-fin__conseil {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.arene-fin__carte {
+  position: relative;
+  width: 10rem;
+}
+
+.arene-fin__carte .carte {
+  width: 100%;
+}
+
+.arene-fin__carte .badge-variante {
+  position: absolute;
+  left: 50%;
+  bottom: -0.6rem;
+  translate: -50% 0;
+  white-space: nowrap;
+}
+
+.arene-fin__gains {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arene-fin__gains li {
+  padding: 0.15rem 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--obi) 25%, var(--papier));
+  border: 1.5px solid var(--encre);
+  border-radius: 4px;
+}
+
+.arene-fin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.arene-fin__actions .autel__invoquer {
+  min-width: 0;
+  font-size: 1.05rem;
+  padding: 0.6rem 1rem;
+}
+
+/* ---------- Bordure Boss : metal rouge et noir, sceau BOSS ---------- */
+
+.carte--boss[data-motif],
+.tome--boss [data-motif] {
+  --cadre-metal:
+    linear-gradient(125deg, rgb(255 255 255 / 0.35), transparent 30%, transparent 62%, rgb(255 255 255 / 0.2) 80%, transparent),
+    linear-gradient(160deg, #ff6b5b, #8f1f17 30%, #1a0608 52%, #8f1f17 74%, #ff6b5b);
+  border-color: #1a0608;
+  box-shadow: 0 0 12px rgb(196 55 43 / 0.6);
+}
+
+.carte--boss .carte__visuel::after,
+.tome--boss .carte__visuel::after {
+  content: "BOSS";
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 3;
+  padding: 0 0.3rem;
+  font-family: var(--police-titre);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--sceau);
+  border: 1.5px solid #1a0608;
+  border-radius: 3px;
+  rotate: 8deg;
+}
+
+.carte--boss .carte__nom {
+  color: var(--encre);
+}
+
+.badge-variante--boss {
+  color: #fff;
+  background: linear-gradient(100deg, #c4372b, #1a0608, #c4372b);
+  border-color: #1a0608;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 52rem) {
+  .arene__fiche {
+    grid-template-columns: 10rem minmax(0, 1fr);
+  }
+
+  .arene__carte-boss {
+    grid-column: 1 / -1;
+    grid-template-columns: auto 8rem;
+    justify-content: start;
+    align-items: center;
+  }
+}
+
+@media (max-width: 40rem) {
+  .arene__echelle {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .arene__fiche {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .arene__affiche {
+    min-height: 12rem;
+  }
+
+  .arene__affiche-portrait {
+    inset: 0.6rem 25% 2.2rem;
+  }
+
+  .arene-combat__deck {
+    gap: 0.3rem;
+  }
+
+  .arene-combat__carte {
+    padding: 0.2rem;
+  }
+
+  .arene-combat__carte-nom {
+    font-size: 0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arene-combat__boss,
+  .arene-combat__boss--touche,
+  .arene-combat__chiffre,
+  .arene-combat__annonce--vue {
+    animation: none;
+  }
+
+  .arene-combat__annonce--vue {
+    opacity: 1;
+  }
+}
+
+/* Les 5 onglets de l'Aventure tiennent sur une ligne au telephone */
+@media (max-width: 40rem) {
+  .aventure__entete .onglets-collection {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .aventure__entete .onglet-collection {
+    min-width: 0;
+    padding-inline: 0.2rem;
+    font-size: 0.8rem;
+  }
+}
