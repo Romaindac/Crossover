@@ -1,8 +1,8 @@
 // ==========================================================
 // CALIBRAGE DES BOSS DE L'ARENE
 // Pour chaque boss, cherche le coefficient (PV et ATQ) qui donne
-// la victoire visee a une equipe au niveau du boss (2 etoiles,
-// composee au hasard parmi 35 persos). Ecrit js/donnees/calibrage-arene.js.
+// la victoire visee a une equipe au niveau du boss (2 etoiles, composee
+// au hasard parmi 35 persos ; equipe de debutant pour le premier monde). Ecrit js/donnees/calibrage-arene.js.
 // Lancer : node js/outils/calibrer-arene.mjs   (environ 2 min)
 // ==========================================================
 
@@ -15,18 +15,21 @@ import { creerHasard } from "../moteur/hasard.js";
 
 const EQUIPES = 16, COMBATS = 3;
 
-// Les memes equipes de test pour un niveau donne
+// Les memes equipes de test pour un niveau donne. Premier monde : des equipes de
+// debutant (Communs, Peu communs et quelques Rares, 1 etoile), comme en debut de partie.
 const equipesDuNiveau = new Map();
-function equipes(niveau) {
-  if (!equipesDuNiveau.has(niveau)) {
-    equipesDuNiveau.set(niveau, Array.from({ length: EQUIPES }, (_, t) => {
+function equipes(niveau, debutant = false) {
+  const cle = `${niveau}:${debutant}`;
+  if (!equipesDuNiveau.has(cle)) {
+    equipesDuNiveau.set(cle, Array.from({ length: EQUIPES }, (_, t) => {
       const h = creerHasard(t * 31 + 7);
       const coll = {};
-      for (const p of [...PERSOS].sort(() => h.nombre() - 0.5).slice(0, 35)) coll[p.id] = { niveau, etoiles: 2, xp: 0, doublons: 0, eveil: 0, talents: [] };
+      const pool = debutant ? PERSOS.filter((p) => ["commun", "peu_commun"].includes(p.rarete) || (p.rarete === "rare" && h.nombre() < 0.3)) : PERSOS;
+      for (const p of [...pool].sort(() => h.nombre() - 0.5).slice(0, debutant ? 12 : 35)) coll[p.id] = { niveau, etoiles: debutant ? 1 : 2, xp: 0, doublons: 0, eveil: 0, talents: [] };
       return composerEquipe(coll).map((id) => ({ id, ...coll[id] }));
     }));
   }
-  return equipesDuNiveau.get(niveau);
+  return equipesDuNiveau.get(cle);
 }
 
 function taux(b, c) {
@@ -34,7 +37,7 @@ function taux(b, c) {
   const base = PERSOS_PAR_ID[b.perso];
   boss.mods = { ...(base.mods ?? {}), pv: (base.mods?.pv ?? 1) * pvBoss(b.rang) * c, atq: (base.mods?.atq ?? 1) * atqBoss(b.rang) * c };
   let v = 0, n = 0;
-  equipes(b.niveau).forEach((eq, t) => {
+  equipes(b.niveau, b.indexMonde === 0).forEach((eq, t) => {
     for (let g = 0; g < COMBATS; g++) {
       n++;
       if (simulerCombat({ equipeA: eq, equipeB: [b.id], niveauB: b.niveau, graine: t * 100 + g, journal: false }).vainqueur === 0) v++;
@@ -45,7 +48,7 @@ function taux(b, c) {
 
 const resultat = {};
 for (const b of BOSS_ARENE) {
-  const vise = victoireVisee(b.rang);
+  const vise = victoireVisee(b.rang, b.indexMonde);
   let bas = 0.25, haut = 4;
   for (let i = 0; i < 9; i++) {
     const milieu = Math.sqrt(bas * haut);

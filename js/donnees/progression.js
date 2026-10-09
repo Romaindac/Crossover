@@ -18,7 +18,7 @@ export const PART_XP_RESERVE = 0.25;   // les persos hors de l'equipe gagnent 25
 
 // ---------- Etoiles ----------
 export const ETOILES_MAX = 5;
-export const BONUS_ETOILE = 0.06;              // +6 % par etoile au-dela de la premiere
+export const BONUS_ETOILE = 0.12;              // +12 % par etoile au-dela de la premiere (5 etoiles : +48 %)
 export const doublonsPourEtoile = (etoiles) => etoiles;   // 1 doublon pour la 2e, 2 pour la 3e...
 export const ENCRE_PAR_DOUBLON_EN_TROP = 30;
 

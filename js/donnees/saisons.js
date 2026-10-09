@@ -19,13 +19,13 @@ export const NOMS_MOIS = ["janvier", "février", "mars", "avril", "mai", "juin",
 export const nomSaison = (id) => `Saison de ${NOMS_MOIS[Number(id.split("-")[1]) - 1]} ${id.split("-")[0]}`;
 // Points de saison, etales sur le mois :
 // - Tour : 1 point par 5 etages du record de la saison ;
-// - boss de la semaine : 1 point par 50 000 degats, pour CHAQUE semaine du mois (15 au plus par semaine) ;
+// - boss de la semaine : 1 point par 90 000 degats, pour CHAQUE semaine du mois (15 au plus par semaine) ;
 // - jours actifs : 1 point par jour ou les 3 missions du jour sont reclamees.
 // Le rang Legende demande donc de jouer tout le mois, pas une soiree le 1er.
 export const POINTS_RAID_MAX_SEMAINE = 15;
 export const detailPointsSaison = (s) => ({
   tour: Math.floor((s.recordTour ?? 0) / 5),
-  raid: Object.values(s.raidSemaines ?? {}).reduce((t, score) => t + Math.min(POINTS_RAID_MAX_SEMAINE, Math.floor(score / 50000)), 0),
+  raid: Object.values(s.raidSemaines ?? {}).reduce((t, score) => t + Math.min(POINTS_RAID_MAX_SEMAINE, Math.floor(score / 90000)), 0),
   jours: (s.joursActifs ?? []).length,
 });
 export const pointsSaison = (s) => {
