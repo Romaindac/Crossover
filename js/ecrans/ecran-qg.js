@@ -20,10 +20,10 @@ import {
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
   etatPasse, reclamerPasse, etatExplorations, lancerExploration, recupererExploration,
+  etatInvocations, prochainBossArene, etatDonjon,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
-import { htmlDecor } from "../ui/decors.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { ouvrirCompte } from "../ui/compte.js";
 import { ouvrirTutoriel, tutorielVu } from "../ui/tutoriel.js";
@@ -72,18 +72,69 @@ export function afficherQg(conteneur, { naviguer }) {
     .filter(Boolean);
   const progStar = star ? progressionDe(star.id) : null;
 
+  // ---------- Les tuiles du hub : ou jouer maintenant ----------
+  function htmlTuileAutel() {
+    const e = etatInvocations();
+    const plein = e.reserve >= e.max;
+    return `
+      <article class="tuile tuile--autel">
+        <span class="tuile__kanji" aria-hidden="true">召喚</span>
+        <p class="tuile__surtitre">Autel · niveau ${e.niveau}</p>
+        <h2 class="tuile__titre">Invoquer</h2>
+        <p class="tuile__gros"><b>${nombre(e.reserve)}</b> / ${e.max} invocations${plein ? ' <span class="tuile__alerte">pleine</span>' : ""}</p>
+        <span class="tuile__jauge"><span style="--v: ${Math.min(1, e.reserve / e.max)}"></span></span>
+        <p class="tuile__info">${e.phase.nom}${e.phase.id === "calme" ? "" : ` · ${e.phase.serie ? `${e.phase.serie} à l'honneur` : e.phase.texte}`} · chance ×${(Math.round(e.chance.total * 100) / 100).toLocaleString("fr-FR")}</p>
+        <div class="tuile__actions">
+          <button type="button" class="bouton tuile__bouton" data-action="tirages">Aller à l'autel</button>
+        </div>
+      </article>`;
+  }
+
+  function htmlTuileArene() {
+    const a = prochainBossArene();
+    if (!a) return `
+      <article class="tuile tuile--arene">
+        <span class="tuile__kanji" aria-hidden="true">闘技</span>
+        <p class="tuile__surtitre">Arène</p>
+        <h2 class="tuile__titre">Tous les boss sont tombés</h2>
+        <p class="tuile__info">Même en Céleste. Respect.</p>
+        <div class="tuile__actions"><button type="button" class="bouton tuile__bouton" data-action="aller" data-nav="aventure" data-onglet="arene">Revoir l'Arène</button></div>
+      </article>`;
+    const perso = PERSOS_PAR_ID[a.boss.perso];
+    return `
+      <article class="tuile tuile--arene">
+        <span class="tuile__kanji" aria-hidden="true">闘技</span>
+        <span class="tuile__portrait">${htmlPortrait(perso)}</span>
+        <p class="tuile__surtitre">Arène · ${a.monde.nom.replace("Autel ", "Monde ")}${a.difficulte.id === "normal" ? "" : ` · ${a.difficulte.nom}`}</p>
+        <h2 class="tuile__titre">${perso.nom}</h2>
+        <p class="tuile__gros">Boss <b>${a.boss.rang + 1}</b> / 8</p>
+        <span class="tuile__jauge"><span style="--v: ${a.battus / 8}"></span></span>
+        <p class="tuile__info">Premier KO : sa carte Boss, des invocations et une potion</p>
+        <div class="tuile__actions"><button type="button" class="bouton tuile__bouton" data-action="aller" data-nav="aventure" data-onglet="arene">Défier</button></div>
+      </article>`;
+  }
+
+  function htmlTuileDonjon() {
+    const d = etatDonjon();
+    return `
+      <article class="tuile tuile--donjon">
+        <span class="tuile__kanji" aria-hidden="true">迷宮</span>
+        <p class="tuile__surtitre">Donjon d'encre</p>
+        <h2 class="tuile__titre">${d.run ? `Étage ${d.run.etage}` : "Descendre"}</h2>
+        <p class="tuile__gros">Record <b>${d.record}</b></p>
+        <p class="tuile__info">${d.run ? `Descente en cours · ${d.run.vies} vie${d.run.vies > 1 ? "s" : ""}` : `${d.descentesRestantes} descente${d.descentesRestantes > 1 ? "s" : ""} aujourd'hui · butin et cristaux`}</p>
+        <div class="tuile__actions"><button type="button" class="bouton tuile__bouton" data-action="aller" data-nav="aventure" data-onglet="donjon">${d.run ? "Reprendre" : "Entrer"}</button></div>
+      </article>`;
+  }
+
   conteneur.innerHTML = `
     ${htmlNavigation("qg")}
     <main class="qg">
       <h1 class="visuellement-cache">Ton QG</h1>
       <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
-      <div id="bandeau-compte"></div>
-      <div id="guide"></div>
-      <div id="passe"></div>
-      <div class="planche">
-
+      <section class="hub" aria-label="Où jouer maintenant">
         ${star ? `
-        <section class="case case--vedette cadre--${cadreActuel()}" aria-label="Ton perso en vedette : ${star.nom}" style="--aff: ${COULEURS_AFFINITE[star.affinite]}">
+        <div class="case case--vedette hub__vedette cadre--${cadreActuel()}" aria-label="Ton perso en vedette : ${star.nom}" style="--aff: ${COULEURS_AFFINITE[star.affinite]}">
           <div class="vedette__image">${htmlPortrait(star)}</div>
           <p class="vedette__nom">${star.nom}</p>
           <div class="vedette__pied">
@@ -92,24 +143,32 @@ export function afficherQg(conteneur, { naviguer }) {
             <p class="vedette__infos"><span>${star.serie}</span><span>Niv. ${progStar.niveau}</span>${htmlEtoiles(progStar.etoiles)}</p>
             <button type="button" class="vedette__changer" data-action="collection">Changer de vedette</button>
           </div>
-        </section>` : ""}
-
-        <section class="case case--combat" aria-labelledby="titre-prochain">
-          ${htmlDecor(CHAPITRES[prochain.chapitre - 1].decor, { centre: true })}
-          <div class="case--combat__contenu">
-            <p class="case__surtitre">${toutBattu ? "Campagne terminée : rejoue le boss final" : `Campagne, chapitre ${prochain.chapitre}, étape ${prochain.numero}`}</p>
-            <h2 class="case--combat__titre" id="titre-prochain">${prochain.nom}</h2>
-            <p class="case--combat__niveau">Niveau ennemi ${prochain.niveau}</p>
-            <div class="mini-equipe" aria-label="Équipe ennemie">
+        </div>` : ""}
+        <div class="hub__tuiles">
+          ${htmlTuileAutel()}
+          ${htmlTuileArene()}
+          <article class="tuile tuile--campagne">
+            <span class="tuile__kanji" aria-hidden="true">物語</span>
+            <p class="tuile__surtitre">${toutBattu ? "Campagne terminée · boss final" : `Campagne · chapitre ${prochain.chapitre}, étape ${prochain.numero}`}</p>
+            <h2 class="tuile__titre" id="titre-prochain">${prochain.nom}</h2>
+            <div class="mini-equipe tuile__ennemis" aria-label="Équipe ennemie, niveau ${prochain.niveau}">
               ${prochain.equipe.map((id) => `<span class="mini-equipe__perso" title="${PERSOS_PAR_ID[id].nom}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}
             </div>
-            <p id="chances-prochain" class="case--combat__chances">${equipeComplete ? "Estimation des chances..." : "Ton équipe n'est pas complète."}</p>
-            <div class="case__boutons">
-              <button type="button" class="bouton bouton--principal" data-action="combattre" ${equipeComplete ? "" : "disabled"}>Combattre</button>
-              <button type="button" class="bouton bouton--clair" data-action="aventure">Voir la campagne</button>
+            <p id="chances-prochain" class="tuile__info">${equipeComplete ? `Niveau ${prochain.niveau} · estimation…` : "Ton équipe n'est pas complète."}</p>
+            <div class="tuile__actions">
+              <button type="button" class="bouton tuile__bouton" data-action="combattre" ${equipeComplete ? "" : "disabled"}>Combattre</button>
+              <button type="button" class="bouton-texte tuile__lien" data-action="aventure">La campagne</button>
             </div>
-          </div>
-        </section>
+          </article>
+          ${htmlTuileDonjon()}
+        </div>
+      </section>
+      <div class="qg-bandeaux">
+        <div id="guide"></div>
+        <div id="passe"></div>
+      </div>
+      <div id="bandeau-compte"></div>
+      <div class="planche">
 
         <section class="case case--evenements" aria-labelledby="titre-evenements">
           <h2 class="case__titre" id="titre-evenements">Événements</h2>
@@ -149,13 +208,6 @@ export function afficherQg(conteneur, { naviguer }) {
           <div id="missions"></div>
         </section>
 
-        <section class="case case--tirages" aria-labelledby="titre-tirages">
-          <h2 class="case__titre" id="titre-tirages">Boosters</h2>
-          <p class="case__chiffre" id="qg-encre"></p>
-          <p class="case__aide">${etatBoosters().tickets} ticket${etatBoosters().tickets > 1 ? "s" : ""} de booster. Légendaire garanti dans ${etatBoosters().avantLegendaire} boosters au plus.</p>
-          <button type="button" class="bouton bouton--obi-petit" data-action="tirages">Ouvrir des boosters</button>
-        </section>
-
         <section class="case case--collection" aria-labelledby="titre-collection">
           <h2 class="case__titre" id="titre-collection">Collection</h2>
           <p class="case__chiffre">${idsPossedes().length}<span> sur ${PERSOS.length}</span></p>
@@ -183,7 +235,6 @@ export function afficherQg(conteneur, { naviguer }) {
   // ---------- Zones qui changent ----------
 
   function rendreEncre() {
-    $("#qg-encre").innerHTML = `${nombre(encre())}<span> d'encre</span>`;
     majNavigation();
   }
 
@@ -469,7 +520,7 @@ export function afficherQg(conteneur, { naviguer }) {
     if (!conteneur.isConnected) return;
     const taux = tauxVictoire(equipe.map(entreeCombat), prochain);
     const { classe, mot } = libelleChances(taux);
-    $("#chances-prochain").innerHTML = `<span class="chances chances--${classe}">${mot} : ${Math.round(taux * 100)} %</span> de victoire estimée avec ton équipe`;
+    $("#chances-prochain").innerHTML = `Niveau ${prochain.niveau} · <span class="chances chances--${classe}">${mot} : ${Math.round(taux * 100)} %</span>`;
   }
 
   // ---------- Clics ----------

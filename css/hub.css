@@ -1,0 +1,376 @@
+/* ==========================================================
+   LE HUB DU QG : la vedette et les 4 grandes tuiles (ou jouer
+   maintenant), puis la planche des cases rangee proprement.
+   Charge en dernier : il a le dernier mot sur le QG.
+   ========================================================== */
+
+.hub {
+  display: grid;
+  grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+
+.hub__vedette {
+  grid-area: auto;
+  min-height: 0;
+}
+
+.hub__tuiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* Une tuile : une scene d'encre, un grand kanji en filigrane, un titre et une action */
+.tuile {
+  --t1: #2a2f57;
+  --t2: #12142a;
+  --accent: var(--obi);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 13.5rem;
+  padding: 1rem 1.15rem 1.1rem;
+  overflow: hidden;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 85% 30%, color-mix(in srgb, var(--accent) 9%, transparent) 0deg 0.7deg, transparent 0.7deg 5deg),
+    radial-gradient(circle at 85% 30%, var(--t1), var(--t2) 75%);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--encre);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tuile:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--encre);
+}
+
+.tuile--autel { --t1: #5b2f8c; --t2: #1a1030; --accent: #e9c46a; }
+.tuile--arene { --t1: #8c2f2f; --t2: #2a0f12; --accent: #ffb347; }
+.tuile--campagne { --t1: #23557a; --t2: #0f1d30; --accent: #8fd3ff; }
+.tuile--donjon { --t1: #3b2a5c; --t2: #120c22; --accent: #c9a6ff; }
+
+.tuile p { margin: 0; }
+
+.tuile__kanji {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -1.2rem;
+  z-index: -1;
+  font-family: var(--police-mincho);
+  font-size: 7.5rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--accent) 16%, transparent);
+  pointer-events: none;
+}
+
+.tuile__surtitre {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tuile__titre {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  line-height: 1.1;
+  text-shadow: 0.06em 0.06em 0 var(--encre);
+  overflow-wrap: anywhere;
+}
+
+.tuile__gros {
+  font-size: 0.95rem;
+}
+
+.tuile__gros b {
+  font-family: var(--police-titre);
+  font-size: 1.5rem;
+  color: var(--accent);
+}
+
+.tuile__alerte {
+  margin-left: 0.3rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--papier);
+  background: var(--sceau);
+  border-radius: 99px;
+  vertical-align: middle;
+}
+
+.tuile__info {
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--papier) 78%, transparent);
+}
+
+.tuile__info .chances {
+  margin-left: 0.2rem;
+}
+
+.tuile__jauge {
+  display: block;
+  height: 7px;
+  max-width: 16rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--papier) 15%, transparent);
+  border-radius: 99px;
+}
+
+.tuile__jauge > span {
+  display: block;
+  height: 100%;
+  width: calc(var(--v, 0) * 100%);
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+.tuile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.tuile__bouton {
+  padding: 0.45em 1.3em 0.5em;
+  font-size: 1rem;
+  color: var(--encre);
+  background: var(--accent);
+  border: 2px solid var(--encre);
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.tuile__lien {
+  color: var(--papier);
+}
+
+/* Le portrait du boss : grand, a droite, fondu dans la scene */
+.tuile__portrait {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.9rem;
+  z-index: -1;
+  width: 5.5rem;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px var(--encre), 0 0 24px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.tuile--arene .tuile__titre,
+.tuile--arene .tuile__surtitre {
+  padding-right: 6rem;
+}
+
+.tuile__ennemis .mini-equipe__perso {
+  width: 2.3rem;
+  border-color: var(--papier);
+}
+
+/* Le guide et le passe, cote a cote sous le hub */
+.qg-bandeaux {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.qg-bandeaux > div:empty { display: none; }
+.qg-bandeaux > div:only-child,
+.qg-bandeaux:has(> div:empty) > div { grid-column: 1 / -1; }
+
+.qg-bandeaux .guide,
+.qg-bandeaux .passe {
+  height: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.tuile .chances {
+  color: var(--encre);
+}
+
+/* ---------- La planche, rangee : chaque case a sa place ---------- */
+
+.planche {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "events events events events events events events events events events events events"
+    "missions missions missions missions missions bientot bientot bientot bientot bientot bientot bientot"
+    "explo explo explo explo exped exped exped exped equipe equipe equipe equipe"
+    "explo explo explo explo exped exped exped exped collec collec collec collec"
+    "explo explo explo explo stats stats stats stats stats stats stats stats";
+}
+
+.case--explorations { grid-area: explo; }
+
+/* Les cases de la planche : texte d'aide un peu plus lisible */
+.planche .case__aide {
+  color: color-mix(in srgb, var(--encre) 72%, var(--papier));
+}
+
+.explorations__missions {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exploration-mission {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.85rem;
+  background: color-mix(in srgb, var(--encre) 5%, var(--papier));
+  border: 1.5px solid color-mix(in srgb, var(--encre) 25%, transparent);
+  border-radius: 8px;
+}
+
+.exploration-mission small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--encre-douce);
+}
+
+@media (max-width: 64rem) {
+  .qg-bandeaux {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub__vedette {
+    min-height: 20rem;
+  }
+
+  .planche {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "events events"
+      "missions bientot"
+      "explo exped"
+      "explo equipe"
+      "collec stats";
+  }
+}
+
+@media (max-width: 38rem) {
+  .hub__tuiles {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .tuile {
+    min-height: 0;
+  }
+
+  .tuile__kanji {
+    font-size: 5.5rem;
+  }
+
+  .planche {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "events" "missions" "bientot" "explo" "exped" "equipe" "collec" "stats";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuile { transition: none; }
+  .tuile:hover { transform: none; }
+}
+
+/* ---------- Barre du haut sur PC : tout tient sur une ligne ---------- */
+@media (min-width: 40.01rem) and (max-width: 88rem) {
+  .navigation {
+    gap: 0.6rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .navigation__onglets {
+    gap: 0.1rem;
+  }
+
+  .navigation__onglet {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .navigation__compte-nom {
+    display: none;
+  }
+}
+
+/* ---------- Barre du haut sur telephone : plus rien ne depasse ---------- */
+@media (max-width: 40rem) {
+  .navigation {
+    gap: 0.3rem;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  .navigation__logo {
+    font-size: 0.95rem;
+  }
+
+  .compteur-energie,
+  .navigation__encre {
+    padding-left: 0.4rem;
+    padding-right: 0.45rem;
+  }
+}
+
+/* L'heure folle : texte clair sur fond d'encre */
+.evenement--heure .case__aide {
+  color: color-mix(in srgb, var(--papier) 80%, transparent);
+}
+
+@media (max-width: 38rem) {
+  .case--hebdo,
+  .hebdo__couverture {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 38rem) {
+  .hub__tuiles { order: -1; }
+
+  .hub__vedette { min-height: 15rem; }
+
+  .tuile { padding: 0.85rem 1rem 0.95rem; }
+
+  .tuile__portrait { width: 4.2rem; }
+
+  .tuile--arene .tuile__titre,
+  .tuile--arene .tuile__surtitre { padding-right: 4.8rem; }
+
+  .quoi-de-neuf {
+    flex-wrap: nowrap;
+  }
+
+  .quoi-de-neuf ul {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-width: 0;
+  }
+
+  .quoi-de-neuf__lien,
+  .quoi-de-neuf__titre { white-space: nowrap; flex-shrink: 0; }
+}
