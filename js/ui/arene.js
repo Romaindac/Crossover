@@ -43,7 +43,7 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
   const prochainBoss = () => bossDe(monde).find((b) => bossAreneOuvert(b.id, diff) && !bossAreneBattu(b.id, diff)) ?? bossDe(monde).filter((b) => bossAreneOuvert(b.id, diff)).at(-1) ?? bossDe(monde)[0];
 
   zone.innerHTML = `
-    <section class="arene">
+    <section class="arene arene--boss">
       <p class="arene__intro">Ton deck, c'est ton équipe de 5. Bats les 8 boss de chaque monde dans l'ordre : le premier KO te donne la <b>carte Boss</b> du perso (bordure Boss, introuvable ailleurs), des invocations et une potion. Un monde fini ouvre la difficulté suivante : Difficile, Cauchemar, puis Céleste.</p>
       <div class="autel__mondes arene__mondes" role="radiogroup" aria-label="Choisir le monde"></div>
       <div class="arene__difficultes" role="radiogroup" aria-label="Difficulté"></div>

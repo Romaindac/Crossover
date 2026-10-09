@@ -421,3 +421,135 @@ header.entete-page {
     align-items: start;
   }
 }
+
+/* ==========================================================
+   COMBAT : la scene en encre, la barre sombre, une vraie fin
+   ========================================================== */
+.combat {
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--obi) 5%, transparent) 0deg 0.8deg, transparent 0.8deg 6deg),
+    radial-gradient(ellipse at 50% 45%, #2a3366 0%, #141832 50%, #0a0b16 90%);
+}
+
+.combat__barre {
+  color: var(--papier);
+  background: transparent;
+}
+
+.combat__barre .lien-retour {
+  color: color-mix(in srgb, var(--papier) 70%, transparent);
+}
+
+.combat__barre .lien-retour:hover { color: var(--papier); }
+
+.combat__adversaire {
+  color: color-mix(in srgb, var(--papier) 70%, transparent);
+}
+
+.combat__adversaire strong {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  color: var(--papier);
+}
+
+.combat .commande {
+  color: var(--papier);
+  background: color-mix(in srgb, var(--papier) 8%, transparent);
+  border: 2px solid color-mix(in srgb, var(--papier) 30%, transparent);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.combat .commande:hover {
+  border-color: var(--obi);
+}
+
+.combat .commande[aria-pressed="true"] {
+  color: var(--encre);
+  background: var(--obi);
+  border-color: var(--encre);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.combat .commande--arret {
+  color: var(--papier);
+  background: var(--sceau);
+  border-color: var(--encre);
+}
+
+/* La scene : un cadre net, une lueur doree, un vignettage pour la profondeur */
+.combat .scene {
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--obi) 55%, transparent), 0 18px 40px rgb(0 0 0 / 0.45);
+}
+
+.combat .decor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 55%, transparent 40%, rgb(12 14 32 / 0.42) 100%);
+  pointer-events: none;
+}
+
+.combat .tableau-pv {
+  background: linear-gradient(180deg, #1a1d38, var(--encre));
+}
+
+.combat .tableau-pv__nom {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Les plaques sous les cartes : plus nettes */
+.combat .combattant__plaque {
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+/* ---------- La fin du combat ---------- */
+.voile:has(.resultat--combat) {
+  background: rgb(8 9 20 / 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.resultat--combat {
+  position: relative;
+  padding-top: 0;
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px var(--accent-fin, var(--obi)), 10px 10px 0 #000;
+  overflow-x: hidden;
+}
+
+.resultat--combat:has(.resultat__titre--defaite) { --accent-fin: var(--sceau); }
+
+.resultat--combat .resultat__titre {
+  margin: 0 -1.5rem 0.6rem;
+  padding: 1rem 1.5rem 0.85rem;
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 6vw, 3rem);
+  letter-spacing: 0.02em;
+  color: var(--papier);
+  text-shadow: 0.06em 0.06em 0 var(--encre);
+  background:
+    repeating-conic-gradient(from 0deg at 85% 50%, rgb(255 255 255 / 0.08) 0deg 1deg, transparent 1deg 7deg),
+    linear-gradient(120deg, #c98a00, var(--obi));
+  border-bottom: 3px solid var(--encre);
+}
+
+.resultat--combat .resultat__titre--defaite {
+  background:
+    repeating-conic-gradient(from 0deg at 85% 50%, rgb(255 255 255 / 0.06) 0deg 1deg, transparent 1deg 7deg),
+    linear-gradient(120deg, #4a1220, var(--sceau));
+}
+
+.resultat--combat .resultat__titre::after { display: none; }
+
+.resultat--combat .tableau-fin tbody tr:nth-child(odd) {
+  background: color-mix(in srgb, var(--encre) 4%, transparent);
+}
