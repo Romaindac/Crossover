@@ -114,7 +114,7 @@ eid = out.split("|")[0] if out else "0"
 test("offre d'echange (meme rarete)", not err and "Alice" in out, out+err)
 out,err=sql("insert into echanges (donne,veut) values ('naruto','goku');", A); test("raretes differentes refusees", "raretes differentes" in err, err)
 out,err=sql("insert into echanges (donne,veut) values ('naruto','inconnu');", A); test("perso inconnu refuse", "perso inconnu" in err, err)
-out,err=sql("insert into echanges (donne,veut) values ('goku_ui','luffy_gear5');", A); test("un Secret ne s'echange pas", "secret non echangeable" in err, err)
+out,err=sql("insert into echanges (donne,veut) values ('secret01','secret03');", A); test("un Secret ne s'echange pas", "secret non echangeable" in err, err)
 out,err=sql(f"update echanges set veut='sasuke' where id={eid} returning id;", A); test("offre non modifiable directement", out=="", out+err)
 out,err=sql(f"select accepter_echange({eid});", A); test("impossible d'accepter sa propre offre", "indisponible" in err, err)
 out,err=sql(f"select accepter_echange({eid});", B); test("echange accepte", '"donne": "naruto"' in out, out+err)

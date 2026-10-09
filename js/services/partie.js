@@ -7,7 +7,7 @@
 // ==========================================================
 
 import { PERSOS, PERSOS_PAR_ID, PERSOS_SECRETS } from "../donnees/persos.js";
-import { estSecret } from "../donnees/persos-secrets.js";
+import { estSecret, ANCIENS_IDS_SECRETS } from "../donnees/persos-secrets.js";
 import { PALIERS } from "../donnees/ennemis.js";
 import {
   ENCRE_DE_DEPART,
@@ -133,8 +133,18 @@ function validerDonjon(d) {
   return { record: entier(d?.record), cristaux: entier(d?.cristaux), maitrises, jour: d?.jour ?? null, descentes: entier(d?.descentes), run };
 }
 
+// Les Secrets de la premiere version avaient des identifiants parlants : on les convertit partout
+function migrerIdsSecrets(p) {
+  let texte = JSON.stringify(p);
+  for (const [ancien, nouveau] of Object.entries(ANCIENS_IDS_SECRETS)) {
+    if (texte.includes(`"${ancien}`)) texte = texte.replaceAll(`"${ancien}"`, `"${nouveau}"`);
+  }
+  return JSON.parse(texte);
+}
+
 function valider(p) {
   if (!p || p.version !== VERSION || typeof p.encre !== "number" || typeof p.collection !== "object") return null;
+  p = migrerIdsSecrets(p);
   const collection = {};
   for (const [id, prog] of Object.entries(p.collection)) {
     if (PERSOS_PAR_ID[id]) collection[id] = { ...nouvelleProgression(), ...prog };
