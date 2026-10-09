@@ -4,7 +4,7 @@
    direct (scene en encre) et la bordure Boss des cartes.
    ========================================================== */
 
-.arene {
+.arene--boss {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
