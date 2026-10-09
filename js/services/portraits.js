@@ -66,6 +66,8 @@ const TITRES_SERIES = {
   "Hunter x Hunter": ["hunter"], "Fairy Tail": ["fairy tail"], "Frieren": ["frieren", "sousou"],
   "Fullmetal Alchemist": ["hagane", "fullmetal"], "Berserk": ["berserk"], "L'Attaque des Titans": ["shingeki", "attack on titan"],
   "Chainsaw Man": ["chainsaw"], "Tokyo Ghoul": ["tokyo ghoul", "tokyo kushu"], "JoJo": ["jojo"],
+  "Hell's Paradise": ["jigokuraku", "hell's paradise", "hell’s paradise"], "Dandadan": ["dandadan"],
+  "Kaiju n°8": ["kaijuu 8", "kaiju no. 8", "kaijuu 8-gou", "kaiju no 8"], "Spy x Family": ["spy"], "Blue Lock": ["blue lock", "blue lock"],
 };
 
 // Une seule requete demande plusieurs persos a la fois, avec les oeuvres de chaque resultat

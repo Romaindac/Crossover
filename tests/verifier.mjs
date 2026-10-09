@@ -42,7 +42,7 @@ const equipe = ["ronflex", "luffy", "zoro", "sakura", "pikachu"].map((id) => ({ 
 const a = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 const b = simulerCombat({ equipeA: equipe, equipeB: equipe, graine: 42 });
 verifier(JSON.stringify(a.journal) === JSON.stringify(b.journal), "le combat est reproductible (meme graine, meme resultat)");
-verifier(PERSOS.length === 160, `160 persos jouables (${PERSOS.length})`);
+verifier(PERSOS.length === 200, `200 persos jouables (${PERSOS.length})`);
 verifier(new Set(PERSOS.map((p) => p.id)).size === PERSOS.length && PERSOS.every((p) => /^[a-z][a-z0-9]*$/.test(p.id)), "ids de persos uniques et simples (alias AniList)");
 verifier(PERSOS.every((p) => SOURCES_PORTRAITS[p.id]), "chaque perso a une source de portrait");
 verifier(OBJETS.length === 120 && new Set(OBJETS.map((o) => o.id)).size === 120, `120 objets aux ids uniques (${OBJETS.length})`);

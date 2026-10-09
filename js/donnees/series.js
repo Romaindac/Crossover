@@ -28,6 +28,11 @@ export const STYLES_SERIES = {
   "Fullmetal Alchemist":  { abrege: "FMA",  c1: "#b91c1c", c2: "#c9a227", motif: "spirale" },
   "Tokyo Ghoul":          { abrege: "TG",   c1: "#9f1239", c2: "#e5e5e5", motif: "ecailles" },
   "JoJo":                 { abrege: "JOJO", c1: "#7c3aed", c2: "#facc15", motif: "damier" },
+  "Hell's Paradise":      { abrege: "HP",   c1: "#c2185b", c2: "#f3e5ab", motif: "flammes" },
+  "Dandadan":             { abrege: "DDD",  c1: "#e6007e", c2: "#1de9b6", motif: "spirale" },
+  "Kaiju n°8":            { abrege: "K8",   c1: "#1e88e5", c2: "#263238", motif: "ecailles" },
+  "Spy x Family":         { abrege: "SxF",  c1: "#2e7d32", c2: "#f8bbd0", motif: "points" },
+  "Blue Lock":            { abrege: "BL",   c1: "#1565c0", c2: "#e0f7fa", motif: "rayures" },
 };
 
 const PAR_DEFAUT = { abrege: "", c1: "#17192d", c2: "#f2f0ea", motif: "points" };
