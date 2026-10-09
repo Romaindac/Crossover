@@ -7,7 +7,8 @@ import { htmlDevenirFort } from "./aide.js";
 import { nonLusEnMemoire, enLigneDisponible, connecte, pseudoConnecte } from "../services/enligne.js";
 import { ouvrirCompte } from "./compte.js";
 import { ouvrirTutoriel } from "./tutoriel.js";
-import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources, etatInvocations } from "../services/partie.js";
+import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources, etatInvocations, etatDonjon } from "../services/partie.js";
+const partie_cristaux = () => etatDonjon()?.cristaux ?? 0;
 
 // Le lexique des ressources : a quoi sert chaque monnaie et comment l'obtenir
 function lignesLexique() {
@@ -23,6 +24,7 @@ function lignesLexique() {
     ["Tickets de booster", n(b.tickets), "Ouvrir un booster gratuitement.", "1 toutes les 30 min (réserve de 16), chapitres finis, missions, événements, guide."],
     ["Tickets dorés", n(b.dores), "Ouvrir un booster doré : 3 cartes Épiques ou Légendaires.", "Le 7e jour du calendrier, très rarement dans les boosters."],
     ["Poussière", n(b.poussiere), "Fabriquer à l'Atelier la carte de ton choix.", "Chaque booster ouvert, et surtout les doublons (plus la carte est rare, plus elle en donne)."],
+    ["Cristaux du donjon", n(partie_cristaux()), "Acheter les maîtrises permanentes du Donjon d'encre.", "Chaque étage gagné dans le donjon (gardés en entier si tu sors, à moitié si tu tombes)."],
     ["Éclats", n(eclats()), "Améliorer et retoucher les objets d'équipement.", "Recycler les objets, la Tour, la chasse."],
     ["Fragments d'éveil", n(r.fragments), "Éveiller un perso (paliers I à V) pour débloquer ses talents.", "Les boss de la Tour, les coffres de la semaine, le boss de la semaine."],
     ["Encre sacrée", n(r.encreSacree), "Sublimer une ligne parfaite d'un objet : elle dépasse son maximum de 15 %.", "Rare : boss de la Tour à partir de l'étage 30, gros coffres de la semaine."],

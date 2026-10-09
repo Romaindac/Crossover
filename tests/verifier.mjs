@@ -21,6 +21,7 @@ import { CODES_CADEAUX } from "../js/donnees/codes.js";
 import { createHash } from "crypto";
 import { MONDES, PITIE_INVOCATION, BORDURES } from "../js/donnees/invocations.js";
 import { BOSS_ARENE, bossDe } from "../js/donnees/arene.js";
+import { adversaireEtage, bonusDescente } from "../js/moteur/donjon.js";
 import { PERSOS_PAR_ID } from "../js/donnees/persos.js";
 import { CALIBRAGE_BOSS } from "../js/donnees/calibrage-arene.js";
 import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
@@ -86,6 +87,11 @@ verifier(phaseAutel(1.7e12).id === phaseAutel(1.7e12 + 1000).id && phaseAutel(1.
 verifier((() => { const vus = new Set(Array.from({ length: 2000 }, (_, i) => phaseAutel(i * 300000).id)); return vus.size >= 6; })(), "toutes les phases de l'autel finissent par sortir");
 verifier((() => { const h = creerHasard(4); return Array.from({ length: 200 }, () => phaseRelancee(h.nombre, 1).id).every((id) => id !== "calme"); })(), "la potion de lune ne donne jamais le ciel calme");
 verifier(CODES_CADEAUX.some((c) => c.empreinte === createHash("sha256").update("crossover:BIENVENUE").digest("hex")) && new Set(CODES_CADEAUX.map((c) => c.empreinte)).size === CODES_CADEAUX.length, "les codes cadeaux ont des empreintes uniques");
+
+// Donjon : les ennemis d'un etage dependent de la graine, et les benedictions se cumulent
+verifier(JSON.stringify(adversaireEtage(42, 7, 20)) === JSON.stringify(adversaireEtage(42, 7, 20)) && adversaireEtage(42, 7, 20).equipe.length === 5, "les etages du donjon sont reproductibles (5 ennemis)");
+verifier(adversaireEtage(42, 20, 20).multiplicateur > adversaireEtage(42, 2, 20).multiplicateur, "le donjon devient plus dur en descendant");
+verifier(bonusDescente(["vigueur", "vigueur", "crit"], 2).pct === 30 && bonusDescente(["crit"]).crit === 0.1, "les benedictions se cumulent");
 
 // Arene : 8 boss par monde, tous enregistres pour le moteur, calibres entre 0,4 et 2
 verifier(MONDES.every((m) => bossDe(m.edition).length === 8) && BOSS_ARENE.every((b) => PERSOS_PAR_ID[b.id]?.boss && PERSOS_PAR_ID[b.perso]), "8 boss d'arene par monde, connus du moteur");
