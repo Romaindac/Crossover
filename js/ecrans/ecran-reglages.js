@@ -48,6 +48,14 @@ export function afficherReglages(conteneur, { naviguer }) {
         </div>
       </section>
 
+      <section class="carte-reglage" aria-labelledby="titre-sons">
+        <h2 id="titre-sons">Sons</h2>
+        <div class="reglage">
+          <label class="interrupteur"><input type="checkbox" data-action="sons" ${reglage("sons") ? "checked" : ""}><span>Effets sonores</span></label>
+          <p class="reglage__aide">La déchirure du sachet, les cartes qui se retournent, le carillon des grosses raretés.</p>
+        </div>
+      </section>
+
       <section class="carte-reglage" aria-labelledby="titre-sauvegarde">
         <h2 id="titre-sauvegarde">Sauvegarde</h2>
         <p class="reglage__aide">Ta partie est gardée dans ce navigateur. Si tu vides ses données, elle disparaît : exporte-la de temps en temps et garde le texte quelque part (un fichier, un mail à toi-même).</p>
@@ -111,6 +119,7 @@ export function afficherReglages(conteneur, { naviguer }) {
       conteneur.querySelectorAll("[data-action='cases']").forEach((b) => b.setAttribute("aria-checked", String(b === cible)));
     }
     if (action === "secousses") changerReglage("secousses", cible.checked);
+    if (action === "sons") changerReglage("sons", cible.checked);
     if (action === "portraits") {
       changerReglage("portraits", cible.dataset.valeur);
       document.body.classList.toggle("portraits-encre", cible.dataset.valeur === "encre");

@@ -16,6 +16,7 @@ export const REGLAGES = {
   boucleContinuer: { defaut: false },   // la boucle de chasse continue apres une defaite
   recyclageAuto: { defaut: false },     // recycler les Communes libres pendant les boucles
   portraits: { defaut: "couleur", valeurs: ["couleur", "encre"] },   // style des portraits
+  sons: { defaut: true },               // petits effets sonores (boosters)
 };
 
 export const NOMS_PORTRAITS = {
