@@ -68,6 +68,11 @@ import {
   DIFFICULTES, DIFFICULTES_PAR_ID, cleBoss,
 } from "../donnees/arene.js";
 import { PALIERS_PASSE, XP_PAR_PALIER, XP_INVOCATION, XP_VICTOIRE, XP_MISSION } from "../donnees/passe.js";
+import {
+  DESCENTES_PAR_JOUR, VIES_DEPART, ETAGES_PAR_BENEDICTION, PART_GARDEE_SI_KO, butinEtage, typeEtage,
+  BENEDICTIONS, BENEDICTIONS_PAR_ID, MAITRISES_PAR_ID, CHANCE_PAR_10_ETAGES_DONJON, CHANCE_DONJON_MAX,
+} from "../donnees/donjon.js";
+import { adversaireEtage, bonusDescente } from "../moteur/donjon.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -105,6 +110,22 @@ function validerInvocations(v) {
     points: Object.fromEntries(BRANCHES_AUTEL.map((b) => [b.id, Math.min(b.max, entier(v?.points?.[b.id]))])),
     phaseForcee: v?.phaseForcee && typeof v.phaseForcee.id === "string" && definitionPhase(v.phaseForcee.id) ? v.phaseForcee : null,
   };
+}
+
+// Le donjon : record, cristaux, maitrises, descentes du jour, descente en cours
+function validerDonjon(d) {
+  const entier = (x) => Math.max(0, Math.floor(Number(x) || 0));
+  const maitrises = {};
+  for (const [id, n] of Object.entries(d?.maitrises ?? {})) if (MAITRISES_PAR_ID[id]) maitrises[id] = Math.min(MAITRISES_PAR_ID[id].max, entier(n));
+  const r = d?.run;
+  const run = r && Array.isArray(r.deck) && r.deck.length === 5 && r.deck.every((id) => PERSOS_PAR_ID[id]) ? {
+    graine: entier(r.graine), etage: Math.max(1, entier(r.etage)), vies: entier(r.vies), niveauDeck: Math.max(1, entier(r.niveauDeck)),
+    deck: r.deck, benedictions: Array.isArray(r.benedictions) ? r.benedictions.filter((id) => BENEDICTIONS_PAR_ID[id]) : [],
+    choix: Array.isArray(r.choix) ? r.choix.filter((id) => BENEDICTIONS_PAR_ID[id]) : null,
+    sac: { encre: entier(r.sac?.encre), cristaux: entier(r.sac?.cristaux), invocations: entier(r.sac?.invocations) },
+    journal: Array.isArray(r.journal) ? r.journal.slice(-30) : [],
+  } : null;
+  return { record: entier(d?.record), cristaux: entier(d?.cristaux), maitrises, jour: d?.jour ?? null, descentes: entier(d?.descentes), run };
 }
 
 function valider(p) {
@@ -157,6 +178,7 @@ function valider(p) {
     guide: Array.isArray(p.guide) ? p.guide : [],
     completions: Array.isArray(p.completions) ? p.completions : [],
     codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
+    donjon: validerDonjon(p.donjon),
     passe: p.passe && typeof p.passe.saison === "string"
       ? { saison: p.passe.saison, xp: Math.max(0, Math.floor(Number(p.passe.xp) || 0)), reclames: Array.isArray(p.passe.reclames) ? p.passe.reclames.filter(Number.isInteger) : [] }
       : null,
@@ -2106,7 +2128,8 @@ export function chanceIndex() {
   const mondesDifficiles = DIFFICULTES.slice(1).reduce((t, d) => t + finis(d.id), 0);
   const tour = Math.min(CHANCE_TOUR_MAX, Math.floor((partie.tour.record || 0) / 10) * CHANCE_PAR_10_ETAGES);
   const eveils = Math.min(CHANCE_EVEIL_MAX, Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0) * CHANCE_PAR_EVEIL);
-  const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + mondesDifficiles * CHANCE_MONDE_DIFFICILE + tour + eveils;
+  const donjon = Math.min(CHANCE_DONJON_MAX, Math.floor((partie.donjon?.record || 0) / 10) * CHANCE_PAR_10_ETAGES_DONJON);
+  const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + mondesDifficiles * CHANCE_MONDE_DIFFICILE + tour + eveils + donjon;
   const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures, combats };
   return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, total: pts.series + pts.editions + pts.bordures + pts.combats };
 }
@@ -2455,4 +2478,149 @@ export function recevoirCarte(id) {
   verifierCompletions();
   sauver();
   return r;
+}
+
+// ==========================================================
+// DONJON D'ENCRE (roguelite)
+// 3 descentes par jour. Le deck enchaine les etages ; tous les 3
+// etages, une benediction a choisir. Le butin attend dans le sac :
+// sortir le garde, tomber sans vie n'en garde que la moitie.
+// ==========================================================
+
+const niveauMaitrise = (id) => partie?.donjon.maitrises[id] ?? 0;
+
+function assurerDonjon() {
+  const d = partie.donjon;
+  const jour = aujourdhui();
+  if (d.jour !== jour) { d.jour = jour; d.descentes = 0; }
+  return d;
+}
+
+export function etatDonjon() {
+  if (!partie) return null;
+  const d = assurerDonjon();
+  const run = d.run;
+  let prochain = null;
+  if (run) {
+    const b = bonusDescente(run.benedictions, niveauMaitrise("vigueur"));
+    prochain = { ...adversaireEtage(run.graine, run.etage, run.niveauDeck, b.ennemis), type: typeEtage(run.etage), bonus: b };
+  }
+  return {
+    record: d.record, cristaux: d.cristaux, maitrises: { ...d.maitrises },
+    descentesRestantes: Math.max(0, DESCENTES_PAR_JOUR - d.descentes),
+    run: run ? { ...run, sac: { ...run.sac }, benedictions: [...run.benedictions] } : null,
+    prochain,
+  };
+}
+
+function tirerBenedictions(nombre, sauf = []) {
+  const liste = BENEDICTIONS.filter((b) => !sauf.includes(b.id) || b.id === "vigueur" || b.id === "vie");
+  const choix = [];
+  while (choix.length < nombre && liste.length) choix.push(liste.splice(Math.floor(Math.random() * liste.length), 1)[0].id);
+  return choix;
+}
+
+export function entrerDonjon() {
+  if (!partie) return { ok: false, erreur: "Pas de partie." };
+  const d = assurerDonjon();
+  if (d.run) return { ok: false, erreur: "Une descente est déjà en cours." };
+  if (d.descentes >= DESCENTES_PAR_JOUR) return { ok: false, erreur: "Plus de descente aujourd'hui : reviens demain !" };
+  const deck = equipeSauvee();
+  if (deck.some((id) => !id || !possede(id))) return { ok: false, erreur: "Ton deck n'est pas complet : choisis 5 persos dans l'écran Équipe." };
+  const niveauDeck = Math.round(deck.reduce((t, id) => t + partie.collection[id].niveau, 0) / 5);
+  d.descentes += 1;
+  d.run = {
+    graine: Math.floor(Math.random() * 2147483647), etage: 1, vies: VIES_DEPART + niveauMaitrise("vies"), niveauDeck, deck,
+    benedictions: niveauMaitrise("depart") ? tirerBenedictions(1, ["vie"]) : [], choix: null,
+    sac: { encre: 0, cristaux: 0, invocations: 0 }, journal: [],
+  };
+  partie.stats.descentes = (partie.stats.descentes ?? 0) + 1;
+  sauver();
+  return { ok: true };
+}
+
+export function combattreEtage() {
+  const d = partie && assurerDonjon();
+  const run = d?.run;
+  if (!run || run.choix) return null;
+  const n = run.etage;
+  const b = bonusDescente(run.benedictions, niveauMaitrise("vigueur"));
+  const adv = adversaireEtage(run.graine, n, run.niveauDeck, b.ennemis);
+  const deck = run.deck.filter(possede);
+  const r = simulerCombat({
+    equipeA: deck.map((id, i) => ({ ...entreeCombat(id, i, deck), bonusPct: (entreeCombat(id, i, deck).bonusPct ?? 0) + b.pct })),
+    equipeB: adv.equipe, niveauB: adv.niveau, multiplicateurB: adv.multiplicateur,
+    graine: (run.graine + n * 7919 + run.vies * 131) >>> 0, journal: false,
+    bonusA: { crit: b.crit, esquive: b.esquive, volDeVie: b.volDeVie, energieDepart: b.energieDepart },
+  });
+  const victoire = r.vainqueur === 0;
+  const resultat = { etage: n, victoire, duree: r.duree, type: typeEtage(n), koAllies: r.unites.filter((u) => u.camp === 0 && u.pv <= 0).length };
+  partie.stats.combats += 1;
+  const gainXp = victoire ? 20 + 4 * adv.niveau : 8 + adv.niveau;
+  for (const id of deck) donnerXp(id, gainXp);
+  if (victoire) {
+    const g = butinEtage(n);
+    const mult = 1 + b.butin + niveauMaitrise("fortune") * 0.1;
+    resultat.butin = { encre: Math.round(g.encre * mult), cristaux: Math.round(g.cristaux * mult), invocations: g.invocations };
+    run.sac.encre += resultat.butin.encre;
+    run.sac.cristaux += resultat.butin.cristaux;
+    run.sac.invocations += resultat.butin.invocations;
+    run.etage += 1;
+    partie.stats.victoires += 1;
+    signaler("victoire");
+    gagnerXpPasse(XP_VICTOIRE);
+    if (n % ETAGES_PAR_BENEDICTION === 0) run.choix = tirerBenedictions(3 + niveauMaitrise("choix"), run.benedictions);
+    resultat.choix = run.choix;
+  } else {
+    run.vies -= 1;
+    if (run.vies <= 0) resultat.fin = finirDescente(false);
+  }
+  if (partie.donjon.run) partie.donjon.run.journal = [...run.journal, resultat].slice(-30);
+  sauver();
+  return resultat;
+}
+
+export function choisirBenediction(id) {
+  const run = partie?.donjon.run;
+  if (!run?.choix?.includes(id)) return false;
+  run.benedictions.push(id);
+  if (BENEDICTIONS_PAR_ID[id].vie) run.vies += BENEDICTIONS_PAR_ID[id].vie;
+  run.choix = null;
+  sauver();
+  return true;
+}
+
+function finirDescente(sorti) {
+  const d = partie.donjon;
+  const run = d.run;
+  const part = sorti ? 1 : PART_GARDEE_SI_KO;
+  const gains = {
+    encre: Math.floor(run.sac.encre * part), cristaux: Math.floor(run.sac.cristaux * part), invocations: Math.floor(run.sac.invocations * part),
+    etages: run.etage - 1, sorti,
+  };
+  partie.encre += gains.encre;
+  d.cristaux += gains.cristaux;
+  if (gains.invocations) donnerInvocations(gains.invocations);
+  gains.record = gains.etages > d.record;
+  d.record = Math.max(d.record, gains.etages);
+  d.run = null;
+  return gains;
+}
+
+export function sortirDonjon() {
+  if (!partie?.donjon.run || partie.donjon.run.choix) return null;
+  const g = finirDescente(true);
+  sauver();
+  return g;
+}
+
+export function acheterMaitrise(id) {
+  const m = MAITRISES_PAR_ID[id];
+  if (!partie || !m) return false;
+  const n = niveauMaitrise(id);
+  if (n >= m.max || partie.donjon.cristaux < m.cout(n)) return false;
+  partie.donjon.cristaux -= m.cout(n);
+  partie.donjon.maitrises[id] = n + 1;
+  sauver();
+  return true;
 }

@@ -72,6 +72,7 @@ export function creerCombat({
   multiplicateurA = 1, multiplicateurB = 1, niveauB = null,
   avecRarete = true, autoA = true, journal = true,
   modificateurs = null,   // regles speciales (arcs de la Tour) : { critMult, soinsMult, energieDepart, esquive, atqEnnemis }
+  bonusA = null,          // bonus du camp A seulement (donjon) : { crit, esquive, volDeVie, energieDepart }
 }) {
   const hasard = creerHasard(graine);
   const etat = {
@@ -99,6 +100,14 @@ export function creerCombat({
     if (mods.energieDepart) u.energie = Math.max(u.energie, Math.min(ENERGIE_MAX, mods.energieDepart));
     if (mods.esquive) u.stats.esquive = (u.stats.esquive || 0) + mods.esquive;
     if (mods.atqEnnemis && u.camp === 1) u.stats.atq = Math.round(u.stats.atq * mods.atqEnnemis);
+  }
+  if (bonusA) {
+    for (const u of etat.equipes[0]) {
+      if (bonusA.crit) u.stats.crit = (u.stats.crit || 0) + bonusA.crit;
+      if (bonusA.esquive) u.stats.esquive = (u.stats.esquive || 0) + bonusA.esquive;
+      if (bonusA.volDeVie) u.stats.volDeVie = (u.stats.volDeVie || 0) + bonusA.volDeVie;
+      if (bonusA.energieDepart) u.energie = Math.max(u.energie, Math.min(ENERGIE_MAX, bonusA.energieDepart));
+    }
   }
   emettre(etat, { type: "debut" });
 
