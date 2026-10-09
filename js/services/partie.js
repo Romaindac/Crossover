@@ -76,6 +76,7 @@ import { adversaireEtage, bonusDescente, facteurRarete } from "../moteur/donjon.
 import {
   EQUIPES_EXPLORATION, BONUS_SERIE_EXPLORATION, PERSOS_SERIE_BONUS, MISSIONS_EXPLORATION, MISSIONS_EXPLORATION_PAR_ID,
 } from "../donnees/explorations.js";
+import { ETAPES_QUETE } from "../donnees/quetes.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -182,6 +183,7 @@ function valider(p) {
     completions: Array.isArray(p.completions) ? p.completions : [],
     codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
     donjon: validerDonjon(p.donjon),
+    quetes: p.quetes && typeof p.quetes === "object" ? p.quetes : {},
     explorations: Array.isArray(p.explorations)
       ? p.explorations.filter((x) => x && MISSIONS_EXPLORATION_PAR_ID[x.mission] && Array.isArray(x.ids) && Number(x.debut)).slice(0, EQUIPES_EXPLORATION)
       : [],
@@ -1509,6 +1511,7 @@ export const victoiresLien = (cle) => partie?.liens[cle] ?? 0;
 function noterInsolites(ids, duree, koAllies, mode) {
   if (koAllies === 0) signaler("victoire-sans-ko");
   dernierBonus = noterVictoireEvenements(ids);
+  compterVictoiresQuete(ids);
   gagnerXpPasse(XP_VICTOIRE);
   gainsVictoireAutel();
   const ins = (partie.stats.insolites = partie.stats.insolites ?? {});
@@ -2590,6 +2593,7 @@ export function combattreEtage() {
     run.sac.cristaux += resultat.butin.cristaux;
     run.sac.invocations += resultat.butin.invocations;
     run.etage += 1;
+    compterVictoiresQuete(deck);
     partie.stats.victoires += 1;
     signaler("victoire");
     gagnerXpPasse(XP_VICTOIRE);
@@ -2685,6 +2689,7 @@ export function recompenserDuel(victoire) {
   partie.stats.combats += 1;
   if (!victoire) { sauver(); return null; }
   partie.stats.victoires += 1;
+  compterVictoiresQuete(equipeSauvee().filter(Boolean));
   partie.encre += RECOMPENSE_DUEL.encre;
   donnerInvocations(RECOMPENSE_DUEL.invocations);
   signaler("victoire");
@@ -2777,3 +2782,53 @@ export function recupererExploration(index) {
 }
 
 export const explorationsFinies = () => (partie?.explorations ?? []).filter((x) => Date.now() >= x.debut + MISSIONS_EXPLORATION_PAR_ID[x.mission].heures * MS_HEURE).length;
+
+// ==========================================================
+// QUETES DE PERSONNAGE
+// ==========================================================
+
+function compterVictoiresQuete(ids) {
+  for (const id of ids) {
+    if (!partie.collection[id]) continue;
+    const q = partie.quetes[id] ?? (partie.quetes[id] = { victoires: 0, faites: 0 });
+    q.victoires += 1;
+  }
+}
+
+function valeurQuete(id, si) {
+  const prog = partie.collection[id];
+  if (si === "victoires") return partie.quetes[id]?.victoires ?? 0;
+  if (si === "niveau") return prog.niveau;
+  if (si === "etoiles") return prog.etoiles;
+  if (si === "eveil") return prog.eveil ?? 0;
+  return 0;
+}
+
+// L'etape en cours de la quete d'un perso (null s'il n'est pas possede)
+export function etatQuete(id) {
+  if (!partie?.collection[id]) return null;
+  const faites = partie.quetes[id]?.faites ?? 0;
+  const etape = ETAPES_QUETE[faites] ?? null;
+  return {
+    faites, total: ETAPES_QUETE.length, finie: !etape, etape,
+    valeur: etape ? valeurQuete(id, etape.si) : 0,
+    prete: etape ? valeurQuete(id, etape.si) >= etape.cible : false,
+  };
+}
+
+export function reclamerQuete(id) {
+  const e = etatQuete(id);
+  if (!e?.prete) return null;
+  const r = { ...e.etape.recompense };
+  if (r.bordure) {
+    const prog = partie.collection[id];
+    prog.variantes = [...new Set([...(prog.variantes ?? []), r.bordure])];
+    delete r.bordure;
+  }
+  donnerRecompense(r);
+  const q = partie.quetes[id] ?? (partie.quetes[id] = { victoires: 0, faites: 0 });
+  q.faites += 1;
+  partie.stats.quetes = (partie.stats.quetes ?? 0) + 1;
+  sauver();
+  return e.etape.recompense;
+}

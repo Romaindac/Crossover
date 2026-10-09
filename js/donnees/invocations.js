@@ -34,8 +34,10 @@ export const BORDURES = [
 ];
 // La bordure Boss ne s'invoque pas : seul le premier KO d'un boss de l'Arene la donne
 export const BORDURE_BOSS = { id: "boss", nom: "Boss", chance: 0 };
-export const BORDURES_PAR_ID = Object.fromEntries([...BORDURES, BORDURE_BOSS].map((b) => [b.id, b]));
-export const ORDRE_BORDURES = ["holo", "doree", "arcenciel", "neant", "boss"];   // de la plus courante a la plus prestigieuse
+// La bordure Eveille non plus : seule la quete du perso la donne
+export const BORDURE_EVEILLE = { id: "eveille", nom: "Éveillé", chance: 0 };
+export const BORDURES_PAR_ID = Object.fromEntries([...BORDURES, BORDURE_BOSS, BORDURE_EVEILLE].map((b) => [b.id, b]));
+export const ORDRE_BORDURES = ["holo", "doree", "arcenciel", "eveille", "neant", "boss"];   // de la plus courante a la plus prestigieuse
 
 // ---------- Niveau d'autel : il monte avec le nombre d'invocations ----------
 // Chaque niveau donne des points d'autel a repartir ; certains debloquent un pouvoir.
@@ -86,7 +88,7 @@ export const PHASES_PAR_ID = Object.fromEntries(PHASES.map((p) => [p.id, p]));
 // ---------- Index : la collection donne de la chance pour toujours ----------
 export const CHANCE_SERIE_COMPLETE = 0.04;     // 20 series : +80 %
 export const CHANCE_EDITION_COMPLETE = 0.1;    // 4 editions : +40 %
-export const CHANCE_PAR_BORDURE = { holo: 0.002, doree: 0.005, arcenciel: 0.02, neant: 0.05, boss: 0.01 };   // par perso et par bordure
+export const CHANCE_PAR_BORDURE = { holo: 0.002, doree: 0.005, arcenciel: 0.02, neant: 0.05, boss: 0.01, eveille: 0.02 };   // par perso et par bordure
 // Les combats aussi rendent chanceux : boss de l'arene, mondes finis, Tour, eveils
 export const CHANCE_BOSS_ARENE = 0.005;        // par boss vaincu (32 : +16 %)
 export const CHANCE_MONDE_FINI = 0.05;         // les 8 boss d'un monde (4 : +20 %)

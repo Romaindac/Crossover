@@ -1761,3 +1761,73 @@
     opacity: 1;
   }
 }
+
+/* ---------- Quete de personnage (fiche) ---------- */
+
+.quete {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.6rem 0;
+  padding: 0.6rem 0.7rem;
+  background: color-mix(in srgb, #ffd23f 10%, var(--papier));
+  border: 2px solid var(--encre);
+  border-left: 6px solid #e0a800;
+  border-radius: 6px;
+}
+
+.quete--finie {
+  border-left-color: var(--vert);
+}
+
+.quete__etapes {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.82rem;
+  color: var(--encre-douce);
+}
+
+.quete__etape--faite {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.quete__etape--cours {
+  font-weight: 800;
+  color: var(--encre);
+}
+
+.quete__suivi,
+.quete__fin {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.quete .bouton {
+  justify-self: start;
+}
+
+/* ---------- Bordure Eveille : or blanc et halo ---------- */
+
+.carte--eveille[data-motif],
+.tome--eveille [data-motif] {
+  --cadre-metal:
+    linear-gradient(125deg, rgb(255 255 255 / 0.7), transparent 30%, transparent 60%, rgb(255 255 255 / 0.5) 80%, transparent),
+    linear-gradient(160deg, #fffbe6, #f4d77a 30%, #fff 50%, #f4d77a 70%, #fffbe6);
+  box-shadow: 0 0 14px rgb(255 214 102 / 0.85);
+}
+
+.carte--eveille .portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 30%, rgb(255 244 200 / 0.55), transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.badge-variante--eveille {
+  background: linear-gradient(100deg, #fffbe6, #f4d77a, #fffbe6);
+}
