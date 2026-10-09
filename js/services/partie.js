@@ -891,6 +891,21 @@ export function piecesDe(id) {
   return ORDRE_EMPLACEMENTS.map((e) => pieces.find((p) => p.emplacement === e)).filter(Boolean);
 }
 
+// ---------- Puissance : un seul chiffre pour comparer les cartes (comme un jeu de cartes) ----------
+// ATQ x 4 + PV / 3 + DEF x 5, avec les stats finales (niveau, etoiles, eveil, rarete, equipement).
+// Sans bonus d'equipe : la meme carte affiche la meme puissance partout.
+export const formulePuissance = (s) => Math.round(s.atq * 4 + s.pv / 3 + s.def * 5);
+
+export function statsCarte(perso, prog = progressionDe(perso.id)) {
+  const s = calculerStatsFinales(perso, {
+    niveau: prog?.niveau ?? 1, etoiles: prog?.etoiles ?? 1, eveil: prog?.eveil ?? 0, talents: prog?.talents ?? [],
+    equipement: possede(perso.id) ? piecesDe(perso.id) : [],
+  });
+  return { puissance: formulePuissance(s), pv: s.pv, atq: s.atq, def: s.def, vit: s.vit };
+}
+export const puissancePerso = (id) => (PERSOS_PAR_ID[id] ? statsCarte(PERSOS_PAR_ID[id]).puissance : 0);
+export const puissanceDeMonEquipe = (ids = equipeSauvee()) => ids.filter(Boolean).reduce((t, id) => t + puissancePerso(id), 0);
+
 // Ce que le moteur de combat doit savoir d'un de tes persos
 export const entreeCombat = (id, _index, equipe = []) => ({ id, ...progressionDe(id), equipement: piecesDe(id), bonusPct: bonusCombat(id, equipe) });
 

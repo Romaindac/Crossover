@@ -11,6 +11,7 @@ import { ETOILES_MAX } from "../donnees/progression.js";
 import { portraitDe, estPokemon } from "../services/portraits.js";
 import { SOURCES_PORTRAITS } from "../donnees/portraits.js";
 import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
+import { statsCarte } from "../services/partie.js";
 
 export const COULEURS_AFFINITE = {
   puissance: "#e8772e",
@@ -119,11 +120,20 @@ export const meilleureVariante = (progression) =>
   [...ORDRE_BORDURES].reverse().find((v) => progression?.variantes?.includes(v)) ?? null;
 export const nomBordure = (v) => BORDURES_PAR_ID[v]?.nom ?? v;
 
+const ECLAIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg>';
+// 1234 -> "1 234", 12345 -> "12,3 k", 1234567 -> "1,2 M"
+export const nombreCourt = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".", ",")} M`
+  : n >= 1e4 ? `${(n / 1e3).toFixed(1).replace(".", ",")} k` : Math.round(n).toLocaleString("fr-FR"));
+
 export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}) {
   const variante = meilleureVariante(progression);
   const meta = progression
     ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles)}`
     : `<span class="carte__meta">${ROLES[perso.role].nom}</span>`;
+  // La puissance et les stats, comme sur une carte a collectionner
+  const st = statsCarte(perso, progression ?? { niveau: 1, etoiles: 1 });
+  const puissance = `<span class="carte__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5">${ECLAIR}<b>${nombreCourt(st.puissance)}</b></span>`;
+  const stats = `<span class="carte__stats"><span><i>PV</i>${nombreCourt(st.pv)}</span><span><i>ATQ</i>${nombreCourt(st.atq)}</span></span>`;
   return `
     <button type="button" class="carte carte--${perso.rarete} ${variante ? `carte--${variante}` : ""} ${dansEquipe ? "carte--prise" : ""}"
       data-action="choisir-perso" data-perso="${perso.id}" draggable="true" data-motif="${motifSerie(perso.serie)}"
@@ -134,8 +144,10 @@ export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}
       <span class="carte__infos">
         <span class="carte__bande" aria-hidden="true"></span>
         <span class="carte__serie" aria-hidden="true">${styleSerie(perso.serie).abrege}</span>
+        ${puissance}
         <span class="carte__nom">${perso.nom}</span>
         <span class="carte__ligne">${meta}</span>
+        ${stats}
       </span>
       ${dansEquipe ? '<span class="carte__bandeau">Dans l\'équipe</span>' : ""}
     </button>
