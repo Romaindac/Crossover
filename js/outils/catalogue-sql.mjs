@@ -2,14 +2,16 @@
 // CATALOGUE DES OBJETS POUR LE SERVEUR (outil, hors du jeu)
 // Lancer avec : node js/outils/catalogue-sql.mjs
 // Ecrit supabase/catalogue.sql : la liste des objets et de leurs
-// fourchettes, pour que l'hotel des ventes refuse les objets impossibles.
+// fourchettes, pour que l'hotel des ventes refuse les objets impossibles,
+// et la liste des persos avec leur rarete (echanges de cartes).
 // Ecrit aussi supabase/a-coller.sql : schema.sql + catalogue, en un seul
 // fichier a coller d'un coup dans Supabase.
-// A relancer (et a recoller dans Supabase) si on change objets.js ou schema.sql.
+// A relancer (et a recoller dans Supabase) si on change objets.js, les persos ou schema.sql.
 // ==========================================================
 
 import { writeFileSync, readFileSync } from "node:fs";
 import { OBJETS } from "../donnees/objets.js";
+import { PERSOS } from "../donnees/persos.js";
 
 export function catalogueSql() {
   const lignes = OBJETS.map((o) => {
@@ -21,6 +23,11 @@ export function catalogueSql() {
 insert into public.objets_catalogue (id, rarete, emplacement, lignes) values
 ${lignes.join(",\n")}
 on conflict (id) do update set rarete = excluded.rarete, emplacement = excluded.emplacement, lignes = excluded.lignes;
+
+-- Les persos et leur rarete (pour les echanges de cartes)
+insert into public.persos_catalogue (id, rarete) values
+${PERSOS.map((p) => `  ('${p.id}', '${p.rarete}')`).join(",\n")}
+on conflict (id) do update set rarete = excluded.rarete;
 `;
 }
 

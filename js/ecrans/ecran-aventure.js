@@ -15,10 +15,12 @@ import {
   etoilesEtape, etapeBattue, etapeOuverte, chapitreOuvert, etoilesChapitre, prochaineEtape,
   coffreOuvert, ouvrirCoffre, sceneVue, tourOuverte, etatTour, ouvrirCoffreSemaine, ressources,
   raidOuvert, etatRaid, equipesRaid, tenterRaid, reclamerPalierRaid,
+  etatCollectif, reclamerPalierCollectif, noterContributionCollective,
   deluxeOuverte, etoilesDeluxe, etapeDeluxeBattue, etapeDeluxeOuverte, etapeDeluxe, chapitreTermine,
 } from "../services/partie.js";
 import { reglage, changerReglage } from "../services/reglages.js";
-import { PALIERS_RAID, NIVEAU_BOSS_RAID } from "../donnees/raid.js";
+import { PALIERS_RAID, NIVEAU_BOSS_RAID, PALIERS_COLLECTIFS } from "../donnees/raid.js";
+import { enLigneDisponible, connecte, totalBossCollectif, contribuerBossCollectif } from "../services/enligne.js";
 import { etageTour, estBoss, finDeSemaine, COFFRES_SEMAINE, numeroSemaine } from "../donnees/tour.js";
 import { MOMENTS, ORDRE_MOMENTS } from "../donnees/histoire.js";
 import { jouerScene } from "../ui/scene.js";
@@ -452,6 +454,38 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
 
   const nombreFr = (n) => Math.round(n).toLocaleString("fr-FR");
 
+  // Le boss collectif : la barre commune a tous les joueurs (en ligne)
+  let totalCollectif = 0;
+  function texteRecompenseCollective(r) {
+    const noms = { chance: "de chance", bordure: "de bordure", vitesse: "de vitesse", lune: "de lune" };
+    return [r.invocations && `${r.invocations} invocations`, r.ticketsDores && `${r.ticketsDores} booster doré`,
+      ...Object.entries(r.potions ?? {}).map(([id, n]) => `${n} potion${n > 1 ? "s" : ""} ${noms[id]}`)].filter(Boolean).join(", ");
+  }
+  async function rendreCollectif(message = "") {
+    const zone = $("#boss-collectif");
+    if (!zone) return;
+    if (!enLigneDisponible()) { zone.hidden = true; return; }
+    let info = null;
+    try { info = await totalBossCollectif(numeroSemaine()); } catch { info = null; }
+    if (!zone.isConnected) return;
+    totalCollectif = Number(info?.total ?? 0);
+    const e = etatCollectif(totalCollectif);
+    const max = PALIERS_COLLECTIFS.at(-1).total;
+    zone.innerHTML = `
+      <h3 class="case__titre">Boss collectif : tous les joueurs ensemble</h3>
+      <p class="case__aide">Avec un compte connecté, chaque tentative ajoute tes dégâts au total de tous les joueurs (3 par jour). Chaque palier atteint récompense tous ceux qui ont participé cette semaine.</p>
+      <div class="collectif__barre"><span style="--v: ${Math.min(1, totalCollectif / max)}"></span>
+        ${PALIERS_COLLECTIFS.map((p) => `<i style="--x: ${p.total / max}" aria-hidden="true"></i>`).join("")}</div>
+      <p class="collectif__total">${info ? `<b>${nombreFr(totalCollectif)}</b> dégâts · ${info.joueurs} joueur${info.joueurs > 1 ? "s" : ""}` : "Serveur injoignable pour l'instant."}${e.contribue ? " · tu as participé" : connecte() ? " · lance une tentative pour participer" : " · connecte-toi pour participer"}</p>
+      <div class="collectif__paliers">${e.paliers.map((p, i) => `
+        <button type="button" class="coffre ${p.pris ? "coffre--ouvert" : p.atteint && e.contribue ? "coffre--pret" : ""}" data-action="collectif-palier" data-index="${i}" ${p.atteint && e.contribue && !p.pris ? "" : "disabled"}>
+          <span class="coffre__etoiles">${nombreFr(p.total)}</span>
+          <span class="coffre__contenu">${texteRecompenseCollective(p.recompense)}</span>
+          <span class="coffre__etat">${p.pris ? "Récupéré" : p.atteint ? (e.contribue ? "À récupérer !" : "Participe pour l'avoir") : "À atteindre"}</span>
+        </button>`).join("")}</div>
+      ${message ? `<p class="case__message" role="status">${message}</p>` : ""}`;
+  }
+
   function rendreRaid(resultat = null, message = "") {
     if (!raidOuvert()) {
       $("#vue").innerHTML = `
@@ -501,6 +535,8 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
           <button type="button" class="bouton bouton--principal" data-action="raid-tenter" ${r.tentativesRestantes > 0 ? "" : "disabled"}>${r.tentativesRestantes > 0 ? "Lancer une tentative" : "Reviens demain"}</button>
         </section>
 
+        <section class="collectif" id="boss-collectif" aria-live="polite"></section>
+
         <div class="paliers-raid">
           ${PALIERS_RAID.map((p, i) => {
             const pris = r.paliers.includes(i);
@@ -516,6 +552,7 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
         <p class="case__message" role="status" aria-live="polite">${message}</p>
       </div>`;
     chargerPortraits((id) => rafraichirPortrait(conteneur, id));
+    rendreCollectif();
   }
 
   function rendreVue() {
@@ -578,7 +615,20 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
     }
     if (action === "raid-tenter") {
       const r = tenterRaid();
-      return r.ok ? rendreRaid(r) : rendreRaid(null, r.erreur);
+      if (!r.ok) return rendreRaid(null, r.erreur);
+      rendreRaid(r);
+      // En ligne : le score part au boss collectif
+      if (enLigneDisponible() && connecte()) {
+        contribuerBossCollectif(numeroSemaine(), r.score)
+          .then(() => { noterContributionCollective(); rendreCollectif("Tes dégâts ont rejoint le total de tous les joueurs !"); })
+          .catch((err) => rendreCollectif(err.message));
+      }
+      return;
+    }
+    if (action === "collectif-palier") {
+      const rec = reclamerPalierCollectif(Number(cible.dataset.index), totalCollectif);
+      if (rec) majNavigation();
+      return rendreCollectif(rec ? `Reçu : ${texteRecompenseCollective(rec)} !` : "");
     }
     if (action === "raid-palier") {
       const p = reclamerPalierRaid(Number(cible.dataset.index));

@@ -90,6 +90,7 @@ export const CHANCE_PAR_BORDURE = { holo: 0.002, doree: 0.005, arcenciel: 0.02, 
 // Les combats aussi rendent chanceux : boss de l'arene, mondes finis, Tour, eveils
 export const CHANCE_BOSS_ARENE = 0.005;        // par boss vaincu (32 : +16 %)
 export const CHANCE_MONDE_FINI = 0.05;         // les 8 boss d'un monde (4 : +20 %)
+export const CHANCE_MONDE_DIFFICILE = 0.03;    // les memes en Difficile, Cauchemar, Celeste (12 : +36 %)
 export const CHANCE_PAR_10_ETAGES = 0.01;      // record de la Tour, plafond +15 %
 export const CHANCE_TOUR_MAX = 0.15;
 export const CHANCE_PAR_EVEIL = 0.005;         // par palier d'eveil, tous persos confondus, plafond +15 %

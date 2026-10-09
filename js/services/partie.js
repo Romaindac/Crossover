@@ -14,6 +14,7 @@ import {
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX, MISSIONS_PAR_JOUR, BONUS_TOUTES_MISSIONS,
 } from "../donnees/progression.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
+import { doublonsPourEtoile } from "../donnees/progression.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { MISSIONS, MISSIONS_PAR_ID } from "../donnees/missions.js";
 import { creerPiece, objetAuHasard, tirerButin, coutAmelioration, eclatsInvestis, scorePiece, bonusEquipement, coutRetouche, nouveauJet, peutSublimer, fourchetteLigne, BONUS_SUBLIMAGE } from "../moteur/equipement.js";
@@ -26,7 +27,7 @@ import {
 } from "../donnees/campagne.js";
 import { OBJETS } from "../donnees/objets.js";
 import { EVEILS, niveauMaxDe, COUT_CHANGER_TALENT } from "../donnees/eveil.js";
-import { bossDeLaSemaine, NIVEAU_BOSS_RAID, TENTATIVES_PAR_JOUR, PALIERS_RAID } from "../donnees/raid.js";
+import { bossDeLaSemaine, NIVEAU_BOSS_RAID, TENTATIVES_PAR_JOUR, PALIERS_RAID, PALIERS_COLLECTIFS } from "../donnees/raid.js";
 import { LIENS, niveauLien, BONUS_PAR_NIVEAU_LIEN, VICTOIRES_DECOUVERTE } from "../donnees/liens.js";
 import { TAMPONS, PAGES, TITRE_DE_DEPART } from "../donnees/tampons.js";
 import { serieDeLaSemaine, BONUS_HONNEUR, BUTIN_HONNEUR, MISSIONS_SEMAINE, SERIES } from "../donnees/hebdo.js";
@@ -57,14 +58,16 @@ import {
   INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_PLAFOND,
   NIVEAUX_AUTEL, INVOCATIONS_PAR_NIVEAU_EN_PLUS, POINTS_PAR_NIVEAU, BRANCHES_AUTEL, CHANCE_PAR_POINT, VITESSE_PAR_POINT,
   POTIONS_PAR_POINT, BORDURE_PAR_POINT, COUT_REDISTRIBUTION, FUSION,
-  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX,
+  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE, CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX,
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE,
   POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
   POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
 } from "../donnees/invocations.js";
 import {
   BOSS_ARENE, BOSS_ARENE_PAR_ID, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE,
+  DIFFICULTES, DIFFICULTES_PAR_ID, cleBoss,
 } from "../donnees/arene.js";
+import { PALIERS_PASSE, XP_PAR_PALIER, XP_INVOCATION, XP_VICTOIRE, XP_MISSION } from "../donnees/passe.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -122,7 +125,7 @@ function valider(p) {
     boosters: validerBoosters(p.boosters),
     invocations: validerInvocations(p.invocations),
     arene: {
-      battus: Array.isArray(p.arene?.battus) ? p.arene.battus.filter((id) => BOSS_ARENE_PAR_ID[id]) : [],
+      battus: Array.isArray(p.arene?.battus) ? p.arene.battus.filter((cle) => { const [id, diff = "normal"] = String(cle).split("@"); return BOSS_ARENE_PAR_ID[id] && DIFFICULTES_PAR_ID[diff]; }) : [],
       kos: Math.max(0, Math.floor(Number(p.arene?.kos) || 0)),
     },
     energie: {
@@ -154,6 +157,9 @@ function valider(p) {
     guide: Array.isArray(p.guide) ? p.guide : [],
     completions: Array.isArray(p.completions) ? p.completions : [],
     codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
+    passe: p.passe && typeof p.passe.saison === "string"
+      ? { saison: p.passe.saison, xp: Math.max(0, Math.floor(Number(p.passe.xp) || 0)), reclames: Array.isArray(p.passe.reclames) ? p.passe.reclames.filter(Number.isInteger) : [] }
+      : null,
     tamponsNouveaux: Array.isArray(p.tamponsNouveaux) ? p.tamponsNouveaux : [],
     titre: p.titre ?? TITRE_DE_DEPART,
     tour: {
@@ -490,11 +496,11 @@ export function coutEnergie(mode) {
 
 // Gratuit : la premiere victoire d'une etape de campagne et les etages de la Tour
 // pas encore battus cette semaine. Progresser ne coute rien, seul le farm coute.
-export function combatGratuit({ campagne = null, tour = null, arene = null } = {}) {
+export function combatGratuit({ campagne = null, tour = null, arene = null, difficulte = "normal" } = {}) {
   if (!partie) return false;
   if (campagne && !campagne.deluxe) return !etapeBattue(campagne.chapitre, campagne.numero);
   if (tour) return !assurerSemaine().etagesSemaine.includes(tour.etage);
-  if (arene) return !bossAreneBattu(arene);
+  if (arene) return !bossAreneBattu(arene, difficulte);
   return false;
 }
 
@@ -735,6 +741,7 @@ export function reclamerMission(id) {
   m.reclamee = true;
   partie.encre += def.recompense;
   partie.stats.missions = (partie.stats.missions ?? 0) + 1;
+  gagnerXpPasse(XP_MISSION);
   if (assurerMissions().liste.every((x) => x.reclamee)) {
     const saison = assurerSaison();
     const jour = aujourdhui();
@@ -813,7 +820,7 @@ export function quelqueChoseAReclamer() {
   const mission = missions.liste.some((m) => !m.reclamee && m.progres >= m.cible)
     || (!missions.bonusReclame && missions.liste.every((m) => m.reclamee));
   const expedition = etatExpedition();
-  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0 || Boolean(etatGuide()?.atteint);
+  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0 || Boolean(etatGuide()?.atteint) || etatPasse().aReclamer > 0;
 }
 
 // ---------- Equipement ----------
@@ -1381,7 +1388,8 @@ function assurerRaid() {
   const semaine = numeroSemaine();
   const jour = aujourdhui();
   partie.raid = partie.raid ?? { semaine, jour, tentatives: 0, meilleur: 0, paliers: [], records: {} };
-  if (partie.raid.semaine !== semaine) Object.assign(partie.raid, { semaine, meilleur: 0, paliers: [] });
+  if (partie.raid.semaine !== semaine) Object.assign(partie.raid, { semaine, meilleur: 0, paliers: [], contribue: false, collectifs: [] });
+  partie.raid.collectifs ??= [];
   if (partie.raid.jour !== jour) Object.assign(partie.raid, { jour, tentatives: 0 });
   return partie.raid;
 }
@@ -1473,6 +1481,7 @@ export const victoiresLien = (cle) => partie?.liens[cle] ?? 0;
 function noterInsolites(ids, duree, koAllies, mode) {
   if (koAllies === 0) signaler("victoire-sans-ko");
   dernierBonus = noterVictoireEvenements(ids);
+  gagnerXpPasse(XP_VICTOIRE);
   gainsVictoireAutel();
   const ins = (partie.stats.insolites = partie.stats.insolites ?? {});
   const persos = ids.map((id) => PERSOS_PAR_ID[id]).filter(Boolean);
@@ -2091,11 +2100,13 @@ export function chanceIndex() {
   const editions = EDITIONS.filter((e) => PERSOS.filter((p) => e.series.includes(p.serie)).every((p) => partie.collection[p.id])).length;
   let bordures = 0;
   for (const prog of Object.values(partie.collection)) for (const v of prog.variantes ?? []) bordures += CHANCE_PAR_BORDURE[v] ?? 0;
-  const boss = partie.arene.battus.length;
-  const mondesFinis = MONDES.filter((m) => BOSS_ARENE.filter((b) => b.monde === m.edition).every((b) => partie.arene.battus.includes(b.id))).length;
+  const boss = partie.arene.battus.filter((cle) => !cle.includes("@")).length;
+  const finis = (diff) => MONDES.filter((m) => BOSS_ARENE.filter((b) => b.monde === m.edition).every((b) => bossAreneBattu(b.id, diff))).length;
+  const mondesFinis = finis("normal");
+  const mondesDifficiles = DIFFICULTES.slice(1).reduce((t, d) => t + finis(d.id), 0);
   const tour = Math.min(CHANCE_TOUR_MAX, Math.floor((partie.tour.record || 0) / 10) * CHANCE_PAR_10_ETAGES);
   const eveils = Math.min(CHANCE_EVEIL_MAX, Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0) * CHANCE_PAR_EVEIL);
-  const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + tour + eveils;
+  const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + mondesDifficiles * CHANCE_MONDE_DIFFICILE + tour + eveils;
   const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures, combats };
   return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, total: pts.series + pts.editions + pts.bordures + pts.combats };
 }
@@ -2178,6 +2189,7 @@ export function invoquerJoueur(nombre = 1) {
   partie.stats.invocations = (partie.stats.invocations ?? 0) + cartes.length;
   partie.stats.legendaires += cartes.filter((c) => c.rarete === "legendaire").length;
   signaler("invocation", cartes.length);
+  gagnerXpPasse(XP_INVOCATION * cartes.length);
   signalerSemaine("invocation", cartes.length);
   const completions = verifierCompletions();
   const niveau = niveauAutel();
@@ -2266,13 +2278,21 @@ export async function utiliserCode(texte) {
 // invocations et une potion ; les KO suivants coutent de l'energie.
 // ==========================================================
 
-export const bossAreneBattu = (id) => Boolean(partie?.arene.battus.includes(id));
+export const bossAreneBattu = (id, diff = "normal") => Boolean(partie?.arene.battus.includes(cleBoss(id, diff)));
 
-export function bossAreneOuvert(id) {
+// Une difficulte est ouverte pour un monde quand ses 8 boss sont tombes dans la difficulte d'avant
+export function difficulteOuverte(edition, diff = "normal") {
+  const i = DIFFICULTES.findIndex((d) => d.id === diff);
+  if (i < 0 || !mondeOuvert(edition)) return false;
+  if (i === 0) return true;
+  return BOSS_ARENE.filter((b) => b.monde === edition).every((b) => bossAreneBattu(b.id, DIFFICULTES[i - 1].id));
+}
+
+export function bossAreneOuvert(id, diff = "normal") {
   const b = BOSS_ARENE_PAR_ID[id];
-  if (!b || !mondeOuvert(b.monde)) return false;
+  if (!b || !difficulteOuverte(b.monde, diff)) return false;
   if (b.rang === 0) return true;
-  return bossAreneBattu(BOSS_ARENE.find((x) => x.monde === b.monde && x.rang === b.rang - 1).id);
+  return bossAreneBattu(BOSS_ARENE.find((x) => x.monde === b.monde && x.rang === b.rang - 1).id, diff);
 }
 
 export function etatArene() {
@@ -2282,18 +2302,20 @@ export function etatArene() {
 
 const potionAuHasard = () => { const ids = Object.keys(POTIONS_PAR_ID); return ids[Math.floor(Math.random() * ids.length)]; };
 
-export function appliquerResultatArene({ bossId, victoire, ids, duree = 90, ultimesManuels = 0, koAllies = 5, degats = 0 }) {
+export function appliquerResultatArene({ bossId, difficulte = "normal", victoire, ids, duree = 90, ultimesManuels = 0, koAllies = 5, degats = 0 }) {
   const b = BOSS_ARENE_PAR_ID[bossId];
-  if (!partie || !b) return null;
-  const premier = victoire && !bossAreneBattu(bossId);
+  const d = DIFFICULTES_PAR_ID[difficulte];
+  if (!partie || !b || !d) return null;
+  const premier = victoire && !bossAreneBattu(bossId, difficulte);
   const r = { premier, encre: 0, invocations: 0, potion: null, carte: null, xp: [] };
   // XP : comme une etape de campagne du meme niveau
-  const gain = victoire ? 45 + 12 * b.niveau : 15 + 3 * b.niveau;
+  const niveau = b.niveau + d.niveau;
+  const gain = victoire ? 45 + 12 * niveau : 15 + 3 * niveau;
   r.xp = ids.filter(possede).map((id) => donnerXp(id, gain));
   for (const id of idsPossedes()) if (!ids.includes(id)) donnerXp(id, Math.round(gain * PART_XP_RESERVE));
   partie.stats.combats += 1;
   if (victoire) {
-    const rec = premier ? recompensePremierKo(b) : recompenseKo(b);
+    const rec = premier ? recompensePremierKo(b, d) : recompenseKo(b, d);
     r.encre = rec.encre;
     r.invocations = rec.invocations;
     partie.encre += rec.encre;
@@ -2306,7 +2328,7 @@ export function appliquerResultatArene({ bossId, victoire, ids, duree = 90, ulti
       const perso = PERSOS_PAR_ID[b.perso];
       r.carte = ajouterCarte({ id: perso.id, rarete: perso.rarete, variante: "boss" });
     }
-    if (premier) partie.arene.battus.push(bossId);
+    if (premier) partie.arene.battus.push(cleBoss(bossId, difficulte));
     partie.arene.kos += 1;
     partie.stats.victoires += 1;
     signaler("victoire");
@@ -2319,6 +2341,118 @@ export function appliquerResultatArene({ bossId, victoire, ids, duree = 90, ulti
   signaler("ultime-manuel", ultimesManuels);
   signaler("niveau", r.xp.reduce((t, x) => t + (x.niveauApres - x.niveauAvant), 0));
   r.degats = degats;
+  sauver();
+  return r;
+}
+
+// ==========================================================
+// PASSE DE SAISON : il avance en jouant (invocations, victoires,
+// missions) et repart a zero chaque mois avec la saison.
+// ==========================================================
+
+function assurerPasse() {
+  const id = saisonActuelle();
+  if (!partie.passe || partie.passe.saison !== id) partie.passe = { saison: id, xp: 0, reclames: [] };
+  return partie.passe;
+}
+
+function gagnerXpPasse(n) {
+  if (!partie || n <= 0) return;
+  assurerPasse().xp += n;
+}
+
+export function etatPasse() {
+  if (!partie) return null;
+  const p = assurerPasse();
+  const atteints = Math.min(PALIERS_PASSE.length, Math.floor(p.xp / XP_PAR_PALIER));
+  return {
+    saison: p.saison, xp: p.xp, atteints, total: PALIERS_PASSE.length, xpParPalier: XP_PAR_PALIER,
+    paliers: PALIERS_PASSE.map((r, i) => ({ recompense: r, atteint: i < atteints, reclame: p.reclames.includes(i) })),
+    aReclamer: PALIERS_PASSE.filter((_, i) => i < atteints && !p.reclames.includes(i)).length,
+  };
+}
+
+// Reclame tous les paliers atteints ; renvoie le total des recompenses
+export function reclamerPasse() {
+  if (!partie) return null;
+  const p = assurerPasse();
+  const atteints = Math.min(PALIERS_PASSE.length, Math.floor(p.xp / XP_PAR_PALIER));
+  const total = { encre: 0, invocations: 0, tickets: 0, ticketsDores: 0, potions: {} };
+  for (let i = 0; i < atteints; i++) {
+    if (p.reclames.includes(i)) continue;
+    const r = PALIERS_PASSE[i];
+    donnerRecompense(r);
+    p.reclames.push(i);
+    for (const k of ["encre", "invocations", "tickets", "ticketsDores"]) total[k] += r[k] ?? 0;
+    for (const [id, n] of Object.entries(r.potions ?? {})) total.potions[id] = (total.potions[id] ?? 0) + n;
+  }
+  sauver();
+  return total;
+}
+
+// ---------- Boss collectif (en ligne) ----------
+// Le serveur additionne les degats de tous ; ici, on garde seulement si
+// le joueur a participe cette semaine et les paliers deja recuperes.
+export function noterContributionCollective() {
+  if (!partie) return;
+  assurerRaid().contribue = true;
+  sauver();
+}
+
+export function etatCollectif(total = 0) {
+  if (!partie) return null;
+  const r = assurerRaid();
+  return {
+    contribue: Boolean(r.contribue),
+    paliers: PALIERS_COLLECTIFS.map((p, i) => ({ ...p, atteint: total >= p.total, pris: r.collectifs.includes(i) })),
+  };
+}
+
+export function reclamerPalierCollectif(index, total) {
+  const r = assurerRaid();
+  const p = PALIERS_COLLECTIFS[index];
+  if (!p || !r.contribue || total < p.total || r.collectifs.includes(index)) return null;
+  r.collectifs.push(index);
+  donnerRecompense(p.recompense);
+  sauver();
+  return p.recompense;
+}
+
+// ==========================================================
+// ECHANGES DE CARTES : on echange une COPIE en trop (un doublon),
+// jamais le perso lui-meme. Une copie en trop : un doublon en reserve
+// (au-dela de 5 etoiles), un doublon en cours vers l'etoile suivante,
+// ou une etoile au-dessus de la premiere.
+// ==========================================================
+
+export function copiesEnTrop(id) {
+  const prog = partie?.collection[id];
+  if (!prog) return 0;
+  let n = (prog.surplus ?? 0) + (prog.doublons ?? 0);
+  for (let e = 1; e < (prog.etoiles ?? 1); e++) n += doublonsPourEtoile(e);
+  return n;
+}
+
+// Retire une copie en trop (le surplus d'abord, puis les doublons, puis une etoile)
+export function retirerCopie(id) {
+  const prog = partie?.collection[id];
+  if (!prog || copiesEnTrop(id) <= 0) return false;
+  if ((prog.surplus ?? 0) > 0) prog.surplus -= 1;
+  else if (prog.doublons > 0) prog.doublons -= 1;
+  else {
+    prog.etoiles -= 1;
+    prog.doublons = doublonsPourEtoile(prog.etoiles) - 1;
+  }
+  sauver();
+  return true;
+}
+
+// Recoit une carte par echange : nouveau perso, ou un doublon
+export function recevoirCarte(id) {
+  const perso = PERSOS_PAR_ID[id];
+  if (!partie || !perso || !PERSOS.includes(perso)) return null;
+  const r = ajouterCarte({ id, rarete: perso.rarete });
+  verifierCompletions();
   sauver();
   return r;
 }

@@ -734,3 +734,310 @@
     font-size: 0.8rem;
   }
 }
+
+/* ---------- Difficultes ---------- */
+
+.arene__difficultes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.arene__difficulte {
+  padding: 0.3rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+.arene__difficulte:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.arene__difficulte[aria-checked="true"] { color: var(--papier); background: var(--encre); }
+.arene__difficulte--difficile[aria-checked="true"] { background: #b8611a; }
+.arene__difficulte--cauchemar[aria-checked="true"] { background: var(--sceau); }
+.arene__difficulte--celeste[aria-checked="true"] { color: var(--encre); background: linear-gradient(100deg, #c9dcff, #fff1b8, #ecd1ff); }
+
+/* ---------- Passe de saison (QG) ---------- */
+
+.passe {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-left: 7px solid #7a5cff;
+  border-radius: 6px;
+}
+
+.passe__tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.passe__titre {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.passe__aide {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--encre-douce);
+}
+
+.passe .autel__jauge > span {
+  background: linear-gradient(90deg, #7a5cff, #c4b5fd);
+}
+
+.passe__paliers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passe__palier {
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  background: color-mix(in srgb, var(--encre) 5%, var(--papier));
+  border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent);
+  border-radius: 5px;
+}
+
+.passe__palier b {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.passe__palier--gros {
+  background: color-mix(in srgb, var(--obi) 25%, var(--papier));
+  border-color: var(--encre);
+}
+
+.passe__palier--pret {
+  box-shadow: 0 0 0 2px var(--obi);
+}
+
+.passe__palier--pris {
+  opacity: 0.5;
+}
+
+@media (max-width: 40rem) {
+  .passe__paliers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .passe__palier:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+/* ---------- Boss collectif (onglet Raid) ---------- */
+
+.collectif {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-left: 7px solid var(--sceau);
+  border-radius: 6px;
+}
+
+.collectif[hidden] {
+  display: none;
+}
+
+.collectif:empty {
+  display: none;
+}
+
+.collectif__barre {
+  position: relative;
+  height: 1.2rem;
+  overflow: hidden;
+  background: #2a1016;
+  border: 2px solid var(--encre);
+  border-radius: 6px;
+}
+
+.collectif__barre > span {
+  display: block;
+  height: 100%;
+  width: calc(var(--v) * 100%);
+  background: linear-gradient(90deg, #ff6b5b, #c4372b);
+  transition: width 0.6s ease-out;
+}
+
+.collectif__barre i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--x) * 100% - 1px);
+  width: 2px;
+  background: var(--obi);
+}
+
+.collectif__total {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.collectif__paliers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 40rem) {
+  .collectif__paliers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Echanges de cartes (onglet Social) ---------- */
+
+.echanges__liste {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 0.6rem;
+}
+
+.echange {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.7rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.echange--annule {
+  opacity: 0.55;
+}
+
+.echange--accepte {
+  border-color: var(--vert);
+}
+
+.echange__auteur {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--encre-douce);
+}
+
+.echange__sens,
+.echanges__apercu {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.echanges__apercu:empty {
+  display: none;
+}
+
+.echange__fleche {
+  font-family: var(--police-titre);
+  font-size: 1.4rem;
+}
+
+.echange__carte {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.4rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--s1, var(--encre)) 10%, var(--papier));
+  border: 1.5px solid color-mix(in srgb, var(--s1, var(--encre)) 60%, var(--encre));
+  border-radius: 6px;
+}
+
+.echange__portrait {
+  display: block;
+  width: 4rem;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid var(--encre);
+}
+
+.echange__portrait .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+.echange__nom {
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.echange__info {
+  font-size: 0.7rem;
+}
+
+.echange__legende {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.echanges__formulaire {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.echanges__formulaire select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.45rem;
+  font: inherit;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+}
+
+.echanges__formulaire .echanges__apercu,
+.echanges__formulaire [type="submit"] {
+  grid-column: 1 / -1;
+}
+
+.echanges__formulaire [type="submit"] {
+  justify-self: start;
+}
+
+@media (max-width: 40rem) {
+  .echanges__formulaire {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

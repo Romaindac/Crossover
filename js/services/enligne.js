@@ -58,7 +58,14 @@ function messageErreur(corps, statut) {
   if (brut.includes("objet refuse")) return "Le serveur refuse cet objet : ses stats sont impossibles.";
   if (brut.includes("limite ventes jour")) return "5 mises en vente par jour au maximum.";
   if (brut.includes("limite ventes actives")) return "8 objets en vente en même temps au maximum.";
-  if (brut.includes("indisponible")) return "Cet objet n'est plus disponible.";
+  if (brut.includes("indisponible")) return "Ce n'est plus disponible (déjà pris, annulé ou expiré).";
+  if (brut.includes("limite tentatives")) return "Déjà 3 tentatives comptées aujourd'hui pour le boss collectif.";
+  if (brut.includes("degats refuses")) return "Score refusé par le serveur.";
+  if (brut.includes("semaine refusee")) return "La semaine du boss a changé : recharge la page.";
+  if (brut.includes("raretes differentes")) return "Un échange se fait entre deux cartes de même rareté.";
+  if (brut.includes("perso inconnu")) return "Perso inconnu du serveur : recolle le fichier SQL dans Supabase.";
+  if (brut.includes("limite echanges jour")) return "10 offres d'échange par jour au maximum.";
+  if (brut.includes("limite echanges ouverts")) return "5 offres d'échange ouvertes en même temps au maximum.";
   if (brut.includes("trop rapide")) return "Doucement : un message toutes les 2 secondes.";
   if (brut.includes("bloque")) return "Ce joueur ne reçoit pas tes messages.";
   if (statut === 429) return "Trop d'essais : attends une minute.";
@@ -290,3 +297,28 @@ export async function mettreEnVente(objet, prix) {
 export const acheterVente = (id) => appel("/rest/v1/rpc/acheter_vente", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
 export const retirerVente = (id) => appel("/rest/v1/rpc/retirer_vente", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
 export const recupererGains = () => appel("/rest/v1/rpc/recuperer_gains", { methode: "POST", authentifie: true, corps: {} });
+
+// ---------- Boss collectif ----------
+// Les degats de tous les joueurs contre le boss de la semaine s'additionnent
+
+export const totalBossCollectif = (semaine) => appel("/rest/v1/rpc/total_boss", { methode: "POST", corps: { p_semaine: Number(semaine) } });
+export const contribuerBossCollectif = (semaine, degats) => appel("/rest/v1/rpc/contribuer_boss", { methode: "POST", authentifie: true, corps: { p_semaine: Number(semaine), p_degats: Math.round(degats) } });
+
+// ---------- Echanges de cartes ----------
+
+export const DUREE_ECHANGE_JOURS = 7;
+const champsEchange = "id,auteur,pseudo,donne,veut,statut,accepteur,pseudo_accepteur,cree,accepte,recupere";
+
+export async function offresEchange() {
+  const depuis = new Date(Date.now() - DUREE_ECHANGE_JOURS * 86400000).toISOString();
+  return appel(`/rest/v1/echanges?select=${champsEchange}&statut=eq.ouvert&cree=gt.${encodeURIComponent(depuis)}&order=cree.desc&limit=80`, { authentifie: true });
+}
+export async function mesEchanges() {
+  return appel(`/rest/v1/echanges?select=${champsEchange}&or=(auteur.eq.${session.id},accepteur.eq.${session.id})&order=cree.desc&limit=40`, { authentifie: true });
+}
+export async function proposerEchange(donne, veut) {
+  await appel("/rest/v1/echanges", { methode: "POST", authentifie: true, entetes: minimal, corps: { donne, veut } });
+}
+export const accepterEchange = (id) => appel("/rest/v1/rpc/accepter_echange", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
+export const annulerEchange = (id) => appel("/rest/v1/rpc/annuler_echange", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
+export const recupererEchanges = () => appel("/rest/v1/rpc/recuperer_echanges", { methode: "POST", authentifie: true, corps: {} });

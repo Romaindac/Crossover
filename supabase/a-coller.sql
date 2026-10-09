@@ -318,6 +318,167 @@ grant execute on function public.acheter_vente(bigint) to authenticated;
 grant execute on function public.retirer_vente(bigint) to authenticated;
 grant execute on function public.recuperer_gains() to authenticated;
 
+-- ==========================================================
+-- BOSS COLLECTIF : les degats de tous les joueurs contre le boss
+-- de la semaine s'additionnent. Chaque joueur envoie le score de
+-- ses tentatives (3 par jour au plus, 3 millions au plus chacune).
+-- ==========================================================
+
+create table if not exists public.boss_collectif (
+  joueur uuid not null references public.joueurs (id) on delete cascade,
+  semaine integer not null,
+  degats bigint not null default 0,
+  jour date not null default current_date,
+  tentatives_jour integer not null default 0,
+  maj timestamptz not null default now(),
+  primary key (joueur, semaine)
+);
+alter table public.boss_collectif enable row level security;
+drop policy if exists "boss collectif lisible" on public.boss_collectif;
+create policy "boss collectif lisible" on public.boss_collectif for select using (true);
+-- Aucune ecriture directe : tout passe par contribuer_boss()
+
+-- La semaine du jeu (le 1er janvier 2024, lundi, heure de Paris = semaine 0)
+create or replace function public.semaine_serveur() returns integer
+language sql stable as $$
+  select floor((extract(epoch from now()) - extract(epoch from (timestamp '2024-01-01 00:00' at time zone 'Europe/Paris'))) / 604800)::integer;
+$$;
+
+create or replace function public.total_boss(p_semaine integer) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('semaine', p_semaine, 'total', coalesce(sum(degats), 0), 'joueurs', count(*))
+  from public.boss_collectif where semaine = p_semaine and degats > 0;
+$$;
+
+create or replace function public.contribuer_boss(p_semaine integer, p_degats bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare ligne record;
+begin
+  if auth.uid() is null then raise exception 'connexion requise'; end if;
+  if p_degats < 0 or p_degats > 3000000 then raise exception 'degats refuses'; end if;
+  if abs(p_semaine - public.semaine_serveur()) > 1 then raise exception 'semaine refusee'; end if;
+  insert into public.boss_collectif (joueur, semaine) values (auth.uid(), p_semaine) on conflict do nothing;
+  select * into ligne from public.boss_collectif where joueur = auth.uid() and semaine = p_semaine for update;
+  if ligne.jour <> current_date then
+    update public.boss_collectif set jour = current_date, tentatives_jour = 0 where joueur = auth.uid() and semaine = p_semaine;
+    ligne.tentatives_jour := 0;
+  end if;
+  if ligne.tentatives_jour >= 3 then raise exception 'limite tentatives'; end if;
+  update public.boss_collectif set degats = degats + p_degats, tentatives_jour = tentatives_jour + 1, maj = now()
+    where joueur = auth.uid() and semaine = p_semaine;
+  return public.total_boss(p_semaine);
+end $$;
+
+grant execute on function public.total_boss(integer) to authenticated, anon;
+grant execute on function public.contribuer_boss(integer, bigint) to authenticated;
+
+-- ==========================================================
+-- ECHANGES DE CARTES : je donne une copie d'un perso, je veux
+-- une copie d'un autre, de la meme rarete. La premiere personne
+-- qui accepte recoit ma carte et me donne la sienne.
+-- Les collections restent dans le navigateur : le serveur verifie
+-- seulement que les persos existent et que les raretes sont egales.
+-- ==========================================================
+
+create table if not exists public.persos_catalogue (
+  id text primary key,
+  rarete text not null
+);
+alter table public.persos_catalogue enable row level security;
+drop policy if exists "persos lisibles" on public.persos_catalogue;
+create policy "persos lisibles" on public.persos_catalogue for select using (true);
+
+create table if not exists public.echanges (
+  id bigint generated always as identity primary key,
+  auteur uuid not null default auth.uid() references public.joueurs (id) on delete cascade,
+  pseudo text not null default '',
+  donne text not null,
+  veut text not null,
+  statut text not null default 'ouvert' check (statut in ('ouvert', 'accepte', 'annule')),
+  accepteur uuid references public.joueurs (id) on delete set null,
+  pseudo_accepteur text,
+  cree timestamptz not null default now(),
+  accepte timestamptz,
+  recupere boolean not null default false,
+  check (donne <> veut)
+);
+create index if not exists echanges_statut on public.echanges (statut, cree desc);
+create index if not exists echanges_auteur on public.echanges (auteur, statut);
+alter table public.echanges enable row level security;
+
+create or replace function public.avant_echange() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare r1 text; r2 text;
+begin
+  new.auteur := auth.uid();
+  select pseudo into new.pseudo from public.joueurs where id = auth.uid();
+  if new.pseudo is null then raise exception 'profil introuvable'; end if;
+  select rarete into r1 from public.persos_catalogue where id = new.donne;
+  select rarete into r2 from public.persos_catalogue where id = new.veut;
+  if r1 is null or r2 is null then raise exception 'perso inconnu'; end if;
+  if r1 <> r2 then raise exception 'raretes differentes'; end if;
+  if (select count(*) from public.echanges where auteur = auth.uid() and cree > now() - interval '1 day') >= 10 then
+    raise exception 'limite echanges jour';
+  end if;
+  if (select count(*) from public.echanges where auteur = auth.uid() and statut = 'ouvert') >= 5 then
+    raise exception 'limite echanges ouverts';
+  end if;
+  new.statut := 'ouvert';
+  new.accepteur := null;
+  new.pseudo_accepteur := null;
+  new.accepte := null;
+  new.recupere := false;
+  new.cree := now();
+  return new;
+end $$;
+drop trigger if exists avant_echange on public.echanges;
+create trigger avant_echange before insert on public.echanges for each row execute function public.avant_echange();
+
+drop policy if exists "echanges lus" on public.echanges;
+create policy "echanges lus" on public.echanges for select using (auth.uid() is not null and (statut = 'ouvert' or auteur = auth.uid() or accepteur = auth.uid()));
+drop policy if exists "echanges crees" on public.echanges;
+create policy "echanges crees" on public.echanges for insert with check (auth.uid() is not null);
+
+-- Une offre reste ouverte 7 jours
+create or replace function public.accepter_echange(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare r record; moi text;
+begin
+  select pseudo into moi from public.joueurs where id = auth.uid();
+  if moi is null then raise exception 'profil introuvable'; end if;
+  update public.echanges set statut = 'accepte', accepteur = auth.uid(), pseudo_accepteur = moi, accepte = now()
+    where id = p_id and statut = 'ouvert' and auteur <> auth.uid() and cree > now() - interval '7 days'
+    returning donne, veut into r;
+  if not found then raise exception 'indisponible'; end if;
+  return jsonb_build_object('donne', r.donne, 'veut', r.veut);
+end $$;
+
+create or replace function public.annuler_echange(p_id bigint) returns text
+language plpgsql security definer set search_path = public as $$
+declare d text;
+begin
+  update public.echanges set statut = 'annule'
+    where id = p_id and statut = 'ouvert' and auteur = auth.uid()
+    returning donne into d;
+  if not found then raise exception 'indisponible'; end if;
+  return d;
+end $$;
+
+-- Les cartes recues pour mes offres acceptees (une seule fois chacune)
+create or replace function public.recuperer_echanges() returns jsonb
+language sql security definer set search_path = public as $$
+  with faits as (
+    update public.echanges set recupere = true
+      where auteur = auth.uid() and statut = 'accepte' and not recupere
+      returning veut, pseudo_accepteur
+  )
+  select coalesce(jsonb_agg(jsonb_build_object('veut', veut, 'de', pseudo_accepteur)), '[]'::jsonb) from faits;
+$$;
+
+grant execute on function public.accepter_echange(bigint) to authenticated;
+grant execute on function public.annuler_echange(bigint) to authenticated;
+grant execute on function public.recuperer_echanges() to authenticated;
+
 -- Fichier genere par node js/outils/catalogue-sql.mjs : ne pas modifier a la main.
 -- A coller dans Supabase (SQL Editor) apres schema.sql.
 insert into public.objets_catalogue (id, rarete, emplacement, lignes) values
@@ -442,3 +603,167 @@ insert into public.objets_catalogue (id, rarete, emplacement, lignes) values
   ('plume-dernier-mot', 'legendaire', 'arme', '[["atq",40,53],["atqPct",5.4,7.2],["critPct",3.6,4.8]]'::jsonb),
   ('signet-temps', 'legendaire', 'accessoire', '[["vit",8,11],["energie",14,18],["critPct",3.6,4.8]]'::jsonb)
 on conflict (id) do update set rarete = excluded.rarete, emplacement = excluded.emplacement, lignes = excluded.lignes;
+
+-- Les persos et leur rarete (pour les echanges de cartes)
+insert into public.persos_catalogue (id, rarete) values
+  ('goku', 'legendaire'),
+  ('vegeta', 'epique'),
+  ('piccolo', 'peu_commun'),
+  ('naruto', 'rare'),
+  ('sasuke', 'epique'),
+  ('sakura', 'commun'),
+  ('luffy', 'rare'),
+  ('zoro', 'rare'),
+  ('chopper', 'commun'),
+  ('pikachu', 'peu_commun'),
+  ('ronflex', 'commun'),
+  ('mewtwo', 'legendaire'),
+  ('guts', 'epique'),
+  ('griffith', 'rare'),
+  ('zodd', 'commun'),
+  ('gojo', 'legendaire'),
+  ('yuji', 'peu_commun'),
+  ('megumi', 'commun'),
+  ('tanjiro', 'rare'),
+  ('nezuko', 'peu_commun'),
+  ('zenitsu', 'peu_commun'),
+  ('gon', 'commun'),
+  ('killua', 'peu_commun'),
+  ('kurapika', 'epique'),
+  ('c18', 'rare'),
+  ('tsunade', 'legendaire'),
+  ('nami', 'rare'),
+  ('dracaufeu', 'epique'),
+  ('chevalier', 'legendaire'),
+  ('nobara', 'rare'),
+  ('shinobu', 'epique'),
+  ('hisoka', 'epique'),
+  ('krilin', 'commun'),
+  ('freezer', 'epique'),
+  ('kakashi', 'epique'),
+  ('hinata', 'peu_commun'),
+  ('sanji', 'peu_commun'),
+  ('robin', 'rare'),
+  ('lucario', 'rare'),
+  ('florizarre', 'commun'),
+  ('casca', 'peu_commun'),
+  ('schierke', 'rare'),
+  ('sukuna', 'legendaire'),
+  ('todo', 'peu_commun'),
+  ('rengoku', 'epique'),
+  ('inosuke', 'commun'),
+  ('netero', 'epique'),
+  ('leorio', 'commun'),
+  ('ichigo', 'epique'),
+  ('rukia', 'rare'),
+  ('orihime', 'peu_commun'),
+  ('byakuya', 'legendaire'),
+  ('kenpachi', 'peu_commun'),
+  ('deku', 'rare'),
+  ('bakugo', 'epique'),
+  ('allmight', 'legendaire'),
+  ('uraraka', 'commun'),
+  ('todoroki', 'peu_commun'),
+  ('eren', 'epique'),
+  ('mikasa', 'rare'),
+  ('livai', 'legendaire'),
+  ('armin', 'commun'),
+  ('hange', 'peu_commun'),
+  ('denji', 'rare'),
+  ('power', 'peu_commun'),
+  ('makima', 'legendaire'),
+  ('aki', 'rare'),
+  ('kobeni', 'commun'),
+  ('frieren', 'legendaire'),
+  ('fern', 'rare'),
+  ('stark', 'peu_commun'),
+  ('himmel', 'rare'),
+  ('heiter', 'commun'),
+  ('natsu', 'epique'),
+  ('lucy', 'peu_commun'),
+  ('erza', 'epique'),
+  ('gray', 'peu_commun'),
+  ('wendy', 'commun'),
+  ('gohan', 'rare'),
+  ('yamcha', 'commun'),
+  ('itachi', 'rare'),
+  ('rocklee', 'commun'),
+  ('shanks', 'legendaire'),
+  ('ace', 'epique'),
+  ('ectoplasma', 'rare'),
+  ('tortank', 'peu_commun'),
+  ('serpico', 'peu_commun'),
+  ('isidro', 'commun'),
+  ('nanami', 'epique'),
+  ('maki', 'rare'),
+  ('muzan', 'legendaire'),
+  ('giyu', 'rare'),
+  ('meruem', 'legendaire'),
+  ('biscuit', 'rare'),
+  ('aizen', 'legendaire'),
+  ('uryu', 'rare'),
+  ('renji', 'commun'),
+  ('shigaraki', 'epique'),
+  ('iida', 'peu_commun'),
+  ('kirishima', 'commun'),
+  ('erwin', 'epique'),
+  ('reiner', 'rare'),
+  ('jean', 'commun'),
+  ('reze', 'epique'),
+  ('kishibe', 'rare'),
+  ('himeno', 'commun'),
+  ('ubel', 'epique'),
+  ('aura', 'peu_commun'),
+  ('eisen', 'commun'),
+  ('zeref', 'legendaire'),
+  ('gajeel', 'rare'),
+  ('juvia', 'rare'),
+  ('saga', 'legendaire'),
+  ('shaka', 'epique'),
+  ('seiya', 'rare'),
+  ('ikki', 'rare'),
+  ('shiryu', 'peu_commun'),
+  ('aldebaran', 'peu_commun'),
+  ('hyoga', 'commun'),
+  ('shun', 'commun'),
+  ('julius', 'legendaire'),
+  ('yami', 'epique'),
+  ('asta', 'rare'),
+  ('yuno', 'rare'),
+  ('noelle', 'peu_commun'),
+  ('mereoleona', 'peu_commun'),
+  ('luck', 'commun'),
+  ('finral', 'commun'),
+  ('jinwoo', 'legendaire'),
+  ('chahaein', 'epique'),
+  ('igris', 'rare'),
+  ('beru', 'rare'),
+  ('choijongin', 'peu_commun'),
+  ('gogunhee', 'peu_commun'),
+  ('leejoohee', 'commun'),
+  ('yoojinho', 'commun'),
+  ('bradley', 'legendaire'),
+  ('roy', 'epique'),
+  ('edward', 'rare'),
+  ('riza', 'rare'),
+  ('alphonse', 'peu_commun'),
+  ('scar', 'peu_commun'),
+  ('armstrong', 'commun'),
+  ('winry', 'commun'),
+  ('arima', 'legendaire'),
+  ('kaneki', 'epique'),
+  ('touka', 'rare'),
+  ('juuzou', 'rare'),
+  ('amon', 'peu_commun'),
+  ('rize', 'peu_commun'),
+  ('hinami', 'commun'),
+  ('nishiki', 'commun'),
+  ('dio', 'legendaire'),
+  ('jotaro', 'epique'),
+  ('joseph', 'rare'),
+  ('giorno', 'rare'),
+  ('kakyoin', 'peu_commun'),
+  ('polnareff', 'peu_commun'),
+  ('josuke', 'commun'),
+  ('jonathan', 'commun')
+on conflict (id) do update set rarete = excluded.rarete;
