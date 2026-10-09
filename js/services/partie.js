@@ -2360,6 +2360,17 @@ export function bossAreneOuvert(id, diff = "normal") {
   return bossAreneBattu(BOSS_ARENE.find((x) => x.monde === b.monde && x.rang === b.rang - 1).id, diff);
 }
 
+// Le prochain boss a battre dans l'Arene : tous les mondes en Normal d'abord, puis les difficultes
+export function prochainBossArene() {
+  if (!partie) return null;
+  for (const d of DIFFICULTES) for (const m of MONDES) {
+    if (!difficulteOuverte(m.edition, d.id)) continue;
+    const b = BOSS_ARENE.find((x) => x.monde === m.edition && !bossAreneBattu(x.id, d.id));
+    if (b) return { boss: b, difficulte: d, monde: m, battus: BOSS_ARENE.filter((x) => x.monde === m.edition && bossAreneBattu(x.id, d.id)).length };
+  }
+  return null;
+}
+
 export function etatArene() {
   if (!partie) return null;
   return { battus: [...partie.arene.battus], kos: partie.arene.kos, total: BOSS_ARENE.length };
