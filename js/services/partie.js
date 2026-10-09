@@ -48,7 +48,7 @@ import { COFFRES_SEMAINE as COFFRES_SEMAINE_TOUR } from "../donnees/tour.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../moteur/boosters.js";
 import {
-  EDITIONS_PAR_ID, PRIX_BOOSTER, MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
+  EDITIONS, EDITIONS_PAR_ID, PRIX_BOOSTER, MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
   POUSSIERE_PAR_BOOSTER, POUSSIERE_DOUBLON, COUT_FABRICATION, PITIE_BOOSTER, TICKETS_CHAPITRE,
 } from "../donnees/boosters.js";
 import { lire, ecrire } from "./sauvegarde.js";
@@ -112,6 +112,7 @@ function valider(p) {
     liens: p.liens && typeof p.liens === "object" ? p.liens : {},
     tampons: Array.isArray(p.tampons) ? p.tampons : [],
     guide: Array.isArray(p.guide) ? p.guide : [],
+    completions: Array.isArray(p.completions) ? p.completions : [],
     tamponsNouveaux: Array.isArray(p.tamponsNouveaux) ? p.tamponsNouveaux : [],
     titre: p.titre ?? TITRE_DE_DEPART,
     tour: {
@@ -385,8 +386,9 @@ export function ouvrirBoosterJoueur(editionId) {
   partie.stats.legendaires += cartes.filter((c) => c.rarete === "legendaire").length;
   signaler("tirage");
   signalerSemaine("tirage");
+  const completions = verifierCompletions();
   sauver();
-  return { cartes, dore: r.dore, paiement, poussiereBooster: POUSSIERE_PAR_BOOSTER };
+  return { cartes, dore: r.dore, paiement, poussiereBooster: POUSSIERE_PAR_BOOSTER, completions };
 }
 
 // Atelier : fabriquer la carte de son choix avec de la poussiere
@@ -399,8 +401,9 @@ export function fabriquerCarte(id) {
   if (partie.boosters.poussiere < cout) return { ok: false, erreur: `Il te manque ${cout - partie.boosters.poussiere} poussière.` };
   partie.boosters.poussiere -= cout;
   const carte = ajouterCarte({ id, rarete: perso.rarete });
+  const completions = verifierCompletions();
   sauver();
-  return { ok: true, cout, carte };
+  return { ok: true, cout, carte, completions };
 }
 
 // Tickets de booster gagnes en recompense (chapitres, missions)
@@ -1911,3 +1914,36 @@ export function gagnerEncre(n) {
   partie.encre += Math.floor(n);
   sauver();
 }
+
+// ---------- Collection : series et editions completes ----------
+
+export const RECOMPENSE_SERIE = { dores: 1, encre: 300 };
+export const RECOMPENSE_EDITION = { dores: 3, encre: 1000 };
+
+export function progressionSerie(serie) {
+  const membres = PERSOS.filter((p) => p.serie === serie);
+  return { n: membres.filter((p) => partie?.collection[p.id]).length, total: membres.length };
+}
+
+// Donne les recompenses des series (8/8) et editions (40/40) tout juste completees
+function verifierCompletions() {
+  const nouvelles = [];
+  const donner = (cle, nom, type, r) => {
+    if (partie.completions.includes(cle)) return;
+    partie.completions.push(cle);
+    partie.boosters.dores += r.dores;
+    partie.encre += r.encre;
+    nouvelles.push({ type, nom, recompense: r });
+  };
+  for (const serie of new Set(PERSOS.map((p) => p.serie))) {
+    const { n, total } = progressionSerie(serie);
+    if (n === total) donner(`serie:${serie}`, serie, "serie", RECOMPENSE_SERIE);
+  }
+  for (const e of EDITIONS) {
+    const membres = PERSOS.filter((p) => e.series.includes(p.serie));
+    if (membres.every((p) => partie.collection[p.id])) donner(`edition:${e.id}`, e.nom, "edition", RECOMPENSE_EDITION);
+  }
+  return nouvelles;
+}
+
+export const completionFaite = (cle) => Boolean(partie?.completions.includes(cle));

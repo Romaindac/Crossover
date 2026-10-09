@@ -17,13 +17,14 @@ import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
 import { serieDeLaSemaine } from "../donnees/hebdo.js";
 import {
   encre, idsPossedes, possede, progressionDe, etatBoosters, ouvrirBoosterJoueur, fabriquerCarte, coutFabrication,
-  verifierTampons,
+  verifierTampons, progressionSerie,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { htmlSachet } from "../ui/sachet.js";
 import { annoncerTampons } from "../ui/toast.js";
+import { sonDechirure, sonCarte, sonSuspense, sonRarete, sonNouveau, sonComplete } from "../ui/sons.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -116,6 +117,7 @@ export function afficherTirages(conteneur, { naviguer }) {
           <p class="booster__progression"><strong>${obtenus}</strong> / ${persos.length} persos</p>
           <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" style="--xp: ${obtenus / persos.length}"></span></span>
           <button type="button" class="bouton bouton--principal booster__ouvrir" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}>${payer}</button>
+          ${b.dores + b.tickets >= 2 ? `<button type="button" class="bouton bouton--clair bouton--petit-texte booster__multi" data-action="ouvrir" data-edition="${edition.id}" data-nombre="${Math.min(10, b.dores + b.tickets)}">Ouvrir ×${Math.min(10, b.dores + b.tickets)} d'un coup</button>` : ""}
         </div>
       </article>`;
   }
@@ -199,7 +201,7 @@ export function afficherTirages(conteneur, { naviguer }) {
   function htmlCarteRevelee(c, index) {
     const perso = PERSOS_PAR_ID[c.id];
     return `
-      <button type="button" class="tome tome--carte tome--${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}" data-action="reveler" data-index="${index}"
+      <button type="button" class="tome tome--carte tome--${c.rarete} tome--lueur-${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}" data-action="reveler" data-index="${index}"
         aria-label="Carte ${index + 1}, à révéler" style="--i: ${index}; --p1: ${revelation.edition.couleurs[0]}; --p2: ${revelation.edition.couleurs[1]}; --p3: ${revelation.edition.couleurs[2]}">
         <span class="tome__halo" aria-hidden="true"></span>
         <span class="tome__interieur">
@@ -219,91 +221,234 @@ export function afficherTirages(conteneur, { naviguer }) {
       </button>`;
   }
 
+  // ---------- Effets : particules, secousse ----------
+
+  const COULEURS_ECLATS = { rare: ["#5fa8ff", "#cfe4ff"], epique: ["#b38cff", "#efe4ff", "#ff9bd8"], legendaire: ["#ffd23f", "#fff3b0", "#ff9f1c", "#ffffff"] };
+
+  function eclater(element, rarete) {
+    if (mouvementReduit || !COULEURS_ECLATS[rarete]) return;
+    const zone = $("#revelation .revelation");
+    const r = element.getBoundingClientRect();
+    const z = zone.getBoundingClientRect();
+    const boite = document.createElement("span");
+    boite.className = "eclats-particules";
+    boite.style.left = `${r.left - z.left + r.width / 2}px`;
+    boite.style.top = `${r.top - z.top + r.height / 2}px`;
+    const n = rarete === "legendaire" ? 42 : rarete === "epique" ? 26 : 14;
+    const couleurs = COULEURS_ECLATS[rarete];
+    boite.innerHTML = Array.from({ length: n }, (_, k) => {
+      const angle = (k / n) * 360 + Math.random() * 20;
+      const distance = (rarete === "legendaire" ? 140 : 90) + Math.random() * 90;
+      const taille = 4 + Math.random() * (rarete === "legendaire" ? 9 : 6);
+      return `<span style="--a: ${angle}deg; --d: ${distance}px; --t: ${taille}px; --c: ${couleurs[k % couleurs.length]}; --delai: ${Math.random() * 120}ms"></span>`;
+    }).join("");
+    zone.appendChild(boite);
+    setTimeout(() => boite.remove(), 1300);
+  }
+
+  function secouer(force = 1) {
+    if (mouvementReduit) return;
+    $("#revelation .revelation")?.animate(
+      [{ transform: "translate(0,0)" }, { transform: `translate(${-8 * force}px, ${4 * force}px)` }, { transform: `translate(${7 * force}px, ${-5 * force}px)` }, { transform: `translate(${-4 * force}px, ${3 * force}px)` }, { transform: "translate(0,0)" }],
+      { duration: 380, easing: "ease-out" });
+  }
+
+  // ---------- Retourner une carte ----------
+
   async function reveler(index, rapide = false) {
     const etat = revelation;
-    if (!etat || etat.reveles.has(index)) return;
+    if (!etat || etat.phase !== "cartes" || etat.reveles.has(index)) return;
     etat.reveles.add(index);
     const carte = $(`.tome[data-index="${index}"]`);
     const c = etat.cartes[index];
     const perso = PERSOS_PAR_ID[c.id];
     carte.classList.add("tome--obi");
-    if (!rapide && !mouvementReduit) await pause(c.rarete === "legendaire" ? 900 : c.rarete === "epique" ? 600 : 380);
+    const grosse = c.rarete === "legendaire" || c.rarete === "epique";
+    if (!mouvementReduit) {
+      if (grosse && !rapide) {
+        carte.classList.add("tome--suspense");
+        sonSuspense();
+        await pause(c.rarete === "legendaire" ? 1150 : 780);
+        carte.classList.remove("tome--suspense");
+      } else {
+        await pause(rapide ? 60 : 260);
+      }
+    }
+    if (revelation !== etat) return;
+    sonCarte();
     carte.classList.add("tome--revele");
     carte.setAttribute("aria-label", `${perso.nom}, ${RARETES[c.rarete].nom}. ${texteResultat(c)}`);
-    if (c.rarete === "legendaire" && !rapide) {
-      const flash = document.createElement("span");
-      flash.className = "flash-legendaire";
-      $("#revelation .revelation").appendChild(flash);
-      flash.animate([{ opacity: 0.9 }, { opacity: 0 }], { duration: 700 }).onfinish = () => flash.remove();
-      const ono = document.createElement("span");
-      ono.className = "onomatopee onomatopee--tome";
-      ono.textContent = ONOMATOPEES_LEGENDAIRE[Math.floor(Math.random() * ONOMATOPEES_LEGENDAIRE.length)];
-      carte.appendChild(ono);
+    setTimeout(() => {
+      if (!rapide || grosse || etat.reveles.size === etat.cartes.length) sonRarete(c.rarete);
+      if (c.nouveau && !rapide) setTimeout(sonNouveau, 260);
+      eclater(carte, c.rarete);
+      if (c.rarete === "legendaire") {
+        secouer(1.4);
+        const flash = document.createElement("span");
+        flash.className = "flash-legendaire";
+        $("#revelation .revelation")?.appendChild(flash);
+        flash.animate([{ opacity: 0.95 }, { opacity: 0 }], { duration: 800 }).onfinish = () => flash.remove();
+        const ono = document.createElement("span");
+        ono.className = "onomatopee onomatopee--tome";
+        ono.textContent = ONOMATOPEES_LEGENDAIRE[Math.floor(Math.random() * ONOMATOPEES_LEGENDAIRE.length)];
+        carte.appendChild(ono);
+      } else if (c.rarete === "epique") {
+        secouer(0.6);
+      }
+    }, mouvementReduit ? 0 : 280);
+    if (etat.reveles.size === etat.cartes.length) setTimeout(() => { if (revelation === etat) terminerRevelation(); }, mouvementReduit ? 0 : 650);
+  }
+
+  // Tout retourner : les petites d'abord, la plus belle en dernier (avec son suspense)
+  async function toutReveler() {
+    const etat = revelation;
+    if (!etat) return;
+    if (etat.phase === "sachet") await dechirer();
+    const ordre = etat.cartes.map((c, i) => ({ i, r: ORDRE_RARETES.length - ORDRE_RARETES.indexOf(c.rarete) }))
+      .filter(({ i }) => !etat.reveles.has(i)).sort((a, b) => a.r - b.r);
+    const derniere = ordre.pop();
+    for (const { i } of ordre) {
+      if (revelation !== etat) return;
+      reveler(i, true);
+      await pause(mouvementReduit ? 0 : etat.cartes.length > 6 ? 70 : 140);
     }
-    if (etat.reveles.size === etat.cartes.length) terminerRevelation();
+    if (derniere && revelation === etat) { await pause(mouvementReduit ? 0 : 300); reveler(derniere.i, false); }
   }
 
   function terminerRevelation() {
     const etat = revelation;
-    const nouveaux = etat.cartes.filter((c) => c.nouveau).length;
+    if (!etat || etat.fini) return;
+    etat.fini = true;
+    const nouveaux = etat.cartes.filter((c) => c.nouveau);
     const etoiles = etat.cartes.filter((c) => c.etoilesApres > c.etoilesAvant).length;
     const variantes = etat.cartes.filter((c) => c.nouvelleVariante).length;
-    const resume = [
-      nouveaux ? `${nouveaux} nouveau${nouveaux > 1 ? "x" : ""} perso${nouveaux > 1 ? "s" : ""}` : null,
-      etoiles ? `${etoiles} étoile${etoiles > 1 ? "s" : ""} gagnée${etoiles > 1 ? "s" : ""}` : null,
-      variantes ? `${variantes} nouvelle${variantes > 1 ? "s" : ""} version${variantes > 1 ? "s" : ""}` : null,
-    ].filter(Boolean).join(", ") || "Que des doublons, cette fois";
-    $("#revelation-resume").textContent = `${resume}. +${POUSSIERE_PAR_BOOSTER} poussière. Collection : ${idsPossedes().length} sur ${PERSOS.length}.`;
+    const apres = idsPossedes().length;
+    const lignes = [
+      nouveaux.length ? `<strong>${nouveaux.length}</strong> nouveau${nouveaux.length > 1 ? "x" : ""} perso${nouveaux.length > 1 ? "s" : ""}` : null,
+      etoiles ? `<strong>${etoiles}</strong> étoile${etoiles > 1 ? "s" : ""} gagnée${etoiles > 1 ? "s" : ""}` : null,
+      variantes ? `<strong>${variantes}</strong> nouvelle${variantes > 1 ? "s" : ""} version${variantes > 1 ? "s" : ""}` : null,
+      `+${POUSSIERE_PAR_BOOSTER * etat.nombre} poussière`,
+    ].filter(Boolean);
+    const series = [...new Set(nouveaux.map((c) => PERSOS_PAR_ID[c.id].serie))].map((serie) => {
+      const { n, total } = progressionSerie(serie);
+      return `<span class="bilan__serie ${n === total ? "bilan__serie--complete" : ""}" style="${varsSerie(serie)}"><b>${styleSerie(serie).abrege}</b> ${serie} ${n}/${total}</span>`;
+    });
+    $("#revelation-resume").innerHTML = `
+      <span class="bilan__lignes">${nouveaux.length || etoiles || variantes ? lignes.join(" · ") : `Que des doublons, cette fois · ${lignes.at(-1)}`}</span>
+      <span class="bilan__collection">Collection <strong data-compteur="${etat.avant}">${etat.avant}</strong> / ${PERSOS.length}</span>
+      ${series.length ? `<span class="bilan__series">${series.join("")}</span>` : ""}
+      ${etat.completions.map((x) => `<span class="bilan__complete">${x.type === "edition" ? "Édition complète" : "Série complète"} : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre</span>`).join("")}`;
+    // Le compteur de collection defile jusqu'au nouveau total
+    const compteur = $("#revelation-resume [data-compteur]");
+    if (compteur && apres > etat.avant && !mouvementReduit) {
+      let v = etat.avant;
+      const pas = setInterval(() => { v += 1; compteur.textContent = v; compteur.classList.add("bilan__plus"); if (v >= apres) clearInterval(pas); }, Math.max(60, 500 / (apres - etat.avant)));
+    } else if (compteur) compteur.textContent = apres;
+    if (etat.completions.length) setTimeout(sonComplete, 300);
     $("#revelation-actions").hidden = false;
     $("#tout-reveler").hidden = true;
+    $("#revelation-aide").hidden = true;
     const b = etatBoosters();
-    $("#revelation [data-action='ouvrir']").disabled = !(b.dores > 0 || b.tickets > 0 || encre() >= b.prix);
+    const encore = $("#revelation [data-action='ouvrir']");
+    const dispo = b.dores + b.tickets;
+    if (etat.nombre > 1) {
+      encore.dataset.nombre = String(Math.min(etat.nombre, dispo));
+      encore.textContent = dispo >= 2 ? `Encore ×${Math.min(etat.nombre, dispo)}` : "Encore un booster";
+      if (dispo < 2) encore.dataset.nombre = "1";
+    }
+    encore.disabled = !(b.dores > 0 || b.tickets > 0 || encre() >= b.prix);
     annoncerTampons(verifierTampons());
     rendre();
   }
 
-  async function ouvrir(editionId) {
-    const r = ouvrirBoosterJoueur(editionId);
-    if (!r) return rendre();
+  // ---------- Ouvrir : le sachet a dechirer ----------
+
+  async function dechirer() {
+    const etat = revelation;
+    if (!etat || etat.phase !== "sachet") return;
+    etat.phase = "dechirure";
+    sonDechirure();
+    const sachet = $("#sachet-ouverture .sachet");
+    if (!mouvementReduit && sachet) {
+      sachet.style.setProperty("--dechirure", "1");
+      sachet.classList.add("sachet--dechire");
+      await pause(560);
+    }
+    if (revelation !== etat) return;
+    $("#sachet-ouverture").hidden = true;
+    $("#cartes-booster").hidden = false;
+    $("#revelation-aide").textContent = etat.cartes.length > 3 ? "Touche les cartes pour les retourner, ou « Tout révéler »." : "Touche chaque carte pour la retourner.";
+    etat.phase = "cartes";
+    sonCarte();
+  }
+
+  function brancherDechirure() {
+    const zone = $("#sachet-ouverture");
+    let depart = null;
+    zone.addEventListener("pointerdown", (e) => {
+      if (revelation?.phase !== "sachet") return;
+      depart = { x: e.clientX, largeur: zone.getBoundingClientRect().width, bouge: 0 };
+      zone.setPointerCapture?.(e.pointerId);
+    });
+    zone.addEventListener("pointermove", (e) => {
+      if (!depart || revelation?.phase !== "sachet") return;
+      const dx = Math.abs(e.clientX - depart.x);
+      depart.bouge = Math.max(depart.bouge, dx);
+      const p = Math.min(1, dx / (depart.largeur * 0.55));
+      $("#sachet-ouverture .sachet")?.style.setProperty("--dechirure", p.toFixed(3));
+      if (p >= 1) { depart = null; dechirer(); }
+    });
+    const fin = () => {
+      if (!depart) return;
+      const toucher = depart.bouge < 10;
+      depart = null;
+      if (toucher) dechirer();
+      else $("#sachet-ouverture .sachet")?.style.setProperty("--dechirure", "0");
+    };
+    zone.addEventListener("pointerup", fin);
+    zone.addEventListener("pointercancel", fin);
+    zone.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dechirer(); } });
+  }
+
+  async function ouvrir(editionId, nombre = 1) {
+    const avant = idsPossedes().length;
+    const resultats = [];
+    for (let k = 0; k < nombre; k++) {
+      const r = ouvrirBoosterJoueur(editionId);
+      if (!r) break;
+      resultats.push(r);
+    }
+    if (!resultats.length) return rendre();
     rendre();
     const edition = EDITIONS.find((e) => e.id === editionId);
-    revelation = { edition, cartes: r.cartes, reveles: new Set(), dore: r.dore };
+    const cartes = resultats.flatMap((r) => r.cartes);
+    const dore = resultats.some((r) => r.dore);
+    revelation = { edition, cartes, reveles: new Set(), dore, avant, nombre: resultats.length, completions: resultats.flatMap((r) => r.completions ?? []), phase: "sachet" };
+    const multi = resultats.length > 1;
     $("#revelation").innerHTML = `
-      <div class="revelation ${r.dore ? "revelation--doree" : ""}" role="dialog" aria-modal="true" aria-labelledby="titre-revelation">
-        <h2 class="revelation__titre" id="titre-revelation">${r.dore ? "Booster doré !" : `Booster ${edition.nom}`}</h2>
-        <div class="revelation__sachet" id="sachet-ouverture">${htmlSachet(edition, { attributs: r.dore ? 'data-dore="1"' : "" })}</div>
-        <div class="revelation__tomes revelation__tomes--dix" id="cartes-booster" hidden>
-          ${r.cartes.map(htmlCarteRevelee).join("")}
+      <div class="revelation ${dore ? "revelation--doree" : ""}" role="dialog" aria-modal="true" aria-labelledby="titre-revelation">
+        <h2 class="revelation__titre" id="titre-revelation">${dore ? "Booster doré !" : `${multi ? `${resultats.length} boosters` : "Booster"} ${edition.nom}`}</h2>
+        <div class="revelation__sachet ${multi ? "revelation__sachet--pile" : ""}" id="sachet-ouverture" tabindex="0" role="button" aria-label="Déchirer le sachet" style="--n: ${Math.min(resultats.length, 5)}">
+          ${multi ? `<span class="sachet-pile__dos" aria-hidden="true"></span><span class="sachet-pile__compte">×${resultats.length}</span>` : ""}
+          ${htmlSachet(edition, { attributs: dore ? 'data-dore="1"' : "" })}
+          <span class="sachet__ligne-dechirure" aria-hidden="true"></span>
+        </div>
+        <p class="revelation__aide" id="revelation-aide">Glisse le doigt sur le sachet pour le déchirer, ou touche-le.</p>
+        <div class="revelation__tomes revelation__tomes--dix ${multi ? "revelation__tomes--multi" : ""}" id="cartes-booster" hidden>
+          ${cartes.map(htmlCarteRevelee).join("")}
         </div>
         <p class="revelation__resume" id="revelation-resume" role="status" aria-live="polite"></p>
         <div class="revelation__barre">
           <button type="button" class="bouton bouton--clair" id="tout-reveler" data-action="tout-reveler">Tout révéler</button>
           <div class="revelation__actions" id="revelation-actions" hidden>
-            <button type="button" class="bouton bouton--secondaire" data-action="ouvrir" data-edition="${editionId}">Encore un booster</button>
+            <button type="button" class="bouton bouton--secondaire" data-action="ouvrir" data-edition="${editionId}" data-nombre="${resultats.length}">${multi ? `Encore ×${resultats.length}` : "Encore un booster"}</button>
             <button type="button" class="bouton bouton--clair" data-action="fermer">Fermer</button>
           </div>
         </div>
       </div>`;
     chargerPortraits((id) => rafraichirPortrait(conteneur, id));
-    $("#tout-reveler").focus({ preventScroll: true });
-    const etat = revelation;
-    // Le sachet tremble, se dechire, puis les cartes sortent
-    if (!mouvementReduit) {
-      const sachet = $("#sachet-ouverture .sachet");
-      sachet.classList.add("sachet--tremble");
-      await pause(650);
-      sachet.classList.add("sachet--dechire");
-      await pause(550);
-    }
-    if (revelation !== etat) return;
-    $("#sachet-ouverture").hidden = true;
-    $("#cartes-booster").hidden = false;
-    await pause(mouvementReduit ? 100 : 450);
-    for (let i = 0; i < r.cartes.length; i++) {
-      if (revelation !== etat) return;
-      await reveler(i);
-      if (!mouvementReduit) await pause(200);
-    }
+    brancherDechirure();
+    $("#sachet-ouverture").focus({ preventScroll: true });
   }
 
   function fermer() {
@@ -317,20 +462,21 @@ export function afficherTirages(conteneur, { naviguer }) {
     if (!cible || cible.disabled) return;
     const action = cible.dataset.action;
     if (action === "vue") { vue = cible.dataset.vue; messageAtelier = ""; rendre(); }
-    if (action === "ouvrir") ouvrir(cible.dataset.edition);
-    if (action === "reveler") reveler(Number(cible.dataset.index), true);
-    if (action === "tout-reveler" && revelation) {
-      $("#sachet-ouverture").hidden = true;
-      $("#cartes-booster").hidden = false;
-      revelation.cartes.forEach((_, i) => reveler(i, true));
-    }
+    if (action === "ouvrir") ouvrir(cible.dataset.edition, Number(cible.dataset.nombre) || 1);
+    if (action === "reveler") reveler(Number(cible.dataset.index));
+    if (action === "tout-reveler" && revelation) toutReveler();
     if (action === "fermer") fermer();
     if (action === "filtre-atelier") { filtreAtelier = cible.dataset.valeur; rendreAtelier(); }
     if (action === "fabriquer") {
       const r = fabriquerCarte(cible.dataset.perso);
       const perso = PERSOS_PAR_ID[cible.dataset.perso];
       messageAtelier = r.ok ? `${perso.nom} fabriqué : ${texteResultat(r.carte)}` : r.erreur;
-      if (r.ok) annoncerTampons(verifierTampons());
+      if (r.ok) {
+        sonRarete(r.carte.rarete);
+        for (const x of r.completions ?? []) messageAtelier += ` ${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre.`;
+        if (r.completions?.length) sonComplete();
+        annoncerTampons(verifierTampons());
+      }
       rendre();
     }
   });
