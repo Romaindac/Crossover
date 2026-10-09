@@ -648,3 +648,89 @@ button:where(
     animation: none;
   }
 }
+
+/* ==========================================================
+   PUISSANCE ET STATS SUR LES CARTES
+   ========================================================== */
+.carte__puissance {
+  justify-self: start;
+  margin-bottom: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.12rem 0.45rem 0.12rem 0.3rem;
+  font-family: var(--police-titre);
+  font-size: 0.78rem;
+  line-height: 1.1;
+  color: var(--encre);
+  background: linear-gradient(180deg, #ffe58a, var(--obi) 55%, #c98a00);
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.6);
+}
+
+.carte__puissance svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.carte__puissance b { font-weight: 400; }
+
+.carte--epique .carte__puissance { background: linear-gradient(180deg, #e6d6ff, #a77bff 55%, #6b3fd0); color: #fff; text-shadow: 0 1px 0 rgb(0 0 0 / 0.5); }
+.carte--legendaire .carte__puissance { background: linear-gradient(180deg, #fff3b0, #ffcf3f 50%, #e08a00); }
+.carte--secret .carte__puissance { background: linear-gradient(180deg, #ff8a9a, #e0213f 50%, #6a0816); color: #fff; text-shadow: 0 1px 0 rgb(0 0 0 / 0.6); }
+
+.carte[data-motif] .carte__infos { padding-top: 0.55rem; }
+
+.carte__stats {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.9);
+}
+
+.carte__stats i {
+  margin-right: 0.2rem;
+  font-style: normal;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.55);
+}
+
+/* Petites cartes (equipe, combat, revelation a 3) : on garde l'essentiel */
+.autel__carte--trois .carte__stats,
+.revelation__tomes--multi .carte__stats { display: none; }
+
+/* Puissance de l'equipe et de la fiche */
+.puissance-equipe,
+.detail__puissance {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.6rem;
+  font-family: var(--police-texte);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--encre);
+  background: linear-gradient(180deg, #ffe58a, var(--obi));
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.puissance-equipe b,
+.detail__puissance b {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.detail__puissance { margin: 0.4rem 0 0; justify-self: start; }
+.qg-puissance { font-family: var(--police-titre); color: #c98a00; }
+.place__puissance { color: var(--obi); font-weight: 800; }

@@ -20,7 +20,7 @@ import {
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
   etatPasse, reclamerPasse, etatExplorations, lancerExploration, recupererExploration,
-  etatInvocations, prochainBossArene, etatDonjon, nbPersosCollection, secretsPossedes,
+  etatInvocations, prochainBossArene, etatDonjon, nbPersosCollection, secretsPossedes, puissanceDeMonEquipe,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
@@ -183,6 +183,7 @@ export function afficherQg(conteneur, { naviguer }) {
               : '<span class="qg-equipe__perso qg-equipe__perso--vide"></span>').join("")}
           </div>
           <dl class="qg-resume">
+            <div><dt>Puissance</dt><dd class="qg-puissance">${puissanceDeMonEquipe(equipe).toLocaleString("fr-FR")}</dd></div>
             <div><dt>Niveau moyen</dt><dd>${niveauMoyen}</dd></div>
             <div><dt>Rôles</dt><dd class="qg-resume__roles">${roles.map(([r, n]) => `<span title="${ROLES[r].nom}">${iconeRole(r)}${n > 1 ? `x${n}` : ""}</span>`).join("")}</dd></div>
           </dl>

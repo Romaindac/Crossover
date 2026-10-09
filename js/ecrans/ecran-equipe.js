@@ -17,6 +17,7 @@ import {
   possede, progressionDe, idsPossedes, equipeSauvee, palierSauve,
   definirEquipe, definirPalier, palierMaxDebloque, estBattu, entreeCombat, equiperMeilleur, equiperMeilleurEquipe, prochaineEtape,
   eveiller, choisirTalent, equipesEnregistrees, enregistrerEquipe, chargerEquipe,
+  puissancePerso, puissanceDeMonEquipe,
 } from "../services/partie.js";
 import { chargerPortraits, nombrePortraits } from "../services/portraits.js";
 import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
@@ -61,7 +62,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
       <div class="equipe__haut">
         <section class="formation" aria-labelledby="titre-formation">
           <div class="formation__titre-ligne">
-            <h2 id="titre-formation">Formation</h2>
+            <h2 id="titre-formation">Formation <span class="puissance-equipe" id="puissance-equipe"></span></h2>
             <div class="formation__outils">
               <button type="button" class="bouton-texte" data-action="meilleure" title="Cherche, par combats simulés, la meilleure équipe et le meilleur placement contre la prochaine étape">Équipe conseillée</button>
               <button type="button" class="bouton-texte" data-action="equiper-equipe">Équiper toute l'équipe</button>
@@ -142,6 +143,8 @@ export function afficherEquipe(conteneur, { naviguer }) {
 
   function rendreFormation() {
     rendreEquipesEnregistrees();
+    const total = $("#puissance-equipe");
+    if (total) total.innerHTML = `Puissance <b>${puissanceDeMonEquipe(equipe).toLocaleString("fr-FR")}</b>`;
     const vises = visesParPlace();
     const htmlVise = (i) => (vises[i].length
       ? `<span class="place__vise${vises[i].length >= 3 ? " place__vise--danger" : ""}" title="Visé au début du prochain combat par : ${vises[i].join(", ")}">Visé par ${vises[i].length}</span>`
@@ -163,7 +166,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
           ${htmlPortrait(perso)}
           <span class="place__infos">
             <span class="place__perso">${perso.nom}</span>
-            <span class="place__nom">Niv. ${prog.niveau}</span>
+            <span class="place__nom">Niv. ${prog.niveau} · <b class="place__puissance">${puissancePerso(id).toLocaleString("fr-FR")}</b></span>
             ${htmlVise(i)}
           </span>
         </button>`;
@@ -197,7 +200,9 @@ export function afficherEquipe(conteneur, { naviguer }) {
   function rendreGrille() {
     const visibles = persosObtenus()
       .filter((p) => filtre === "tous" || p.role === filtre)
-      .sort((a, b) => RARETES[b.rarete].ordre - RARETES[a.rarete].ordre || progressionDe(b.id).niveau - progressionDe(a.id).niveau);
+      .map((p) => ({ p, pui: puissancePerso(p.id) }))
+      .sort((a, b) => b.pui - a.pui)
+      .map((x) => x.p);   // les plus puissants d'abord
     $("#grille").innerHTML = visibles.length
       ? visibles.map((p) => htmlCarte(p, { dansEquipe: equipe.includes(p.id), progression: progressionDe(p.id) })).join("")
       : '<p class="grille__vide">Aucun perso de ce rôle pour l\'instant.</p>';

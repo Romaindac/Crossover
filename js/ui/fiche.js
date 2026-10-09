@@ -11,7 +11,7 @@ import { ressources, eclats } from "../services/partie.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./cartes.js";
 import { htmlEmplacements } from "./equipement-ui.js";
-import { piecesDe, etatQuete, reclamerQuete } from "../services/partie.js";
+import { piecesDe, etatQuete, reclamerQuete, formulePuissance } from "../services/partie.js";
 import { ETAPES_QUETE } from "../donnees/quetes.js";
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 
@@ -57,6 +57,7 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
       <span class="detail__xp">${auMax ? "Niveau maximum atteint" : `${nombre(prog.xp)} / ${nombre(besoin)} XP`}</span>
       ${avecDoublons ? `<span class="detail__xp">${etoilesMax ? "Étoiles au maximum : les doublons donnent de l'encre." : `Doublons : ${prog.doublons} sur ${doublonsPourEtoile(prog.etoiles)} pour la ${prog.etoiles + 1}e étoile.`}</span>` : ""}
     </div>
+    <p class="detail__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5">Puissance <b>${nombre(formulePuissance(stats))}</b></p>
     <dl class="detail__stats">
       <div><dt>PV</dt><dd>${nombre(stats.pv)}</dd></div>
       <div><dt>ATQ</dt><dd>${stats.atq}</dd></div>
