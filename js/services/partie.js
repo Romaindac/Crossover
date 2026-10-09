@@ -73,6 +73,9 @@ import {
   BENEDICTIONS, BENEDICTIONS_PAR_ID, MAITRISES_PAR_ID, CHANCE_PAR_10_ETAGES_DONJON, CHANCE_DONJON_MAX,
 } from "../donnees/donjon.js";
 import { adversaireEtage, bonusDescente } from "../moteur/donjon.js";
+import {
+  EQUIPES_EXPLORATION, BONUS_SERIE_EXPLORATION, PERSOS_SERIE_BONUS, MISSIONS_EXPLORATION, MISSIONS_EXPLORATION_PAR_ID,
+} from "../donnees/explorations.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -179,6 +182,9 @@ function valider(p) {
     completions: Array.isArray(p.completions) ? p.completions : [],
     codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
     donjon: validerDonjon(p.donjon),
+    explorations: Array.isArray(p.explorations)
+      ? p.explorations.filter((x) => x && MISSIONS_EXPLORATION_PAR_ID[x.mission] && Array.isArray(x.ids) && Number(x.debut)).slice(0, EQUIPES_EXPLORATION)
+      : [],
     passe: p.passe && typeof p.passe.saison === "string"
       ? { saison: p.passe.saison, xp: Math.max(0, Math.floor(Number(p.passe.xp) || 0)), reclames: Array.isArray(p.passe.reclames) ? p.passe.reclames.filter(Number.isInteger) : [] }
       : null,
@@ -842,7 +848,7 @@ export function quelqueChoseAReclamer() {
   const mission = missions.liste.some((m) => !m.reclamee && m.progres >= m.cible)
     || (!missions.bonusReclame && missions.liste.every((m) => m.reclamee));
   const expedition = etatExpedition();
-  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0 || Boolean(etatGuide()?.atteint) || etatPasse().aReclamer > 0;
+  return mission || Boolean(expedition && expedition.heures >= 1) || evenementsAReclamer() > 0 || Boolean(etatGuide()?.atteint) || etatPasse().aReclamer > 0 || explorationsFinies() > 0;
 }
 
 // ---------- Equipement ----------
@@ -2668,3 +2674,87 @@ export function recompenserDuel(victoire) {
   sauver();
   return RECOMPENSE_DUEL;
 }
+
+// ==========================================================
+// EXPLORATIONS : des persos en mission, meme jeu ferme
+// ==========================================================
+
+const ORDRE_RARETE = { commun: 1, peu_commun: 2, rare: 3, epique: 4, legendaire: 5 };
+const MS_HEURE = 3600000;
+
+// La serie du jour de chaque mission (la meme pour tous, change chaque jour)
+export function serieDuJourExploration(missionId, jour = aujourdhui()) {
+  const series = [...new Set(PERSOS.map((p) => p.serie))];
+  let h = 0;
+  for (const c of `${jour}:${missionId}`) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return series[h % series.length];
+}
+
+export const persosEnExploration = () => new Set((partie?.explorations ?? []).flatMap((x) => x.ids));
+
+// Choisit automatiquement les persos : ceux de la serie du jour d'abord, sans gacher les grosses raretes
+export function equipeAutoExploration(missionId) {
+  const m = MISSIONS_EXPLORATION_PAR_ID[missionId];
+  if (!partie || !m) return null;
+  const occupes = persosEnExploration();
+  const serie = serieDuJourExploration(missionId);
+  const libres = idsPossedes().filter((id) => PERSOS_PAR_ID[id] && !occupes.has(id)).map((id) => PERSOS_PAR_ID[id]);
+  const choisis = [];
+  if (m.exige) {
+    const [rarete, n] = m.exige;
+    const ok = libres.filter((p) => ORDRE_RARETE[p.rarete] >= ORDRE_RARETE[rarete])
+      .sort((a, b) => Number(b.serie === serie) - Number(a.serie === serie) || ORDRE_RARETE[a.rarete] - ORDRE_RARETE[b.rarete]);
+    if (ok.length < n) return null;
+    choisis.push(...ok.slice(0, n));
+  }
+  const reste = libres.filter((p) => !choisis.includes(p))
+    .sort((a, b) => Number(b.serie === serie) - Number(a.serie === serie) || ORDRE_RARETE[a.rarete] - ORDRE_RARETE[b.rarete]);
+  while (choisis.length < m.persos && reste.length) choisis.push(reste.shift());
+  return choisis.length === m.persos ? choisis.map((p) => p.id) : null;
+}
+
+export function etatExplorations(maintenant = Date.now()) {
+  if (!partie) return null;
+  return {
+    max: EQUIPES_EXPLORATION,
+    enCours: partie.explorations.map((x, i) => {
+      const m = MISSIONS_EXPLORATION_PAR_ID[x.mission];
+      const fin = x.debut + m.heures * MS_HEURE;
+      return { index: i, ...x, mission: m, fin, finie: maintenant >= fin, bonus: x.bonus };
+    }),
+    missions: MISSIONS_EXPLORATION.map((m) => ({ ...m, serie: serieDuJourExploration(m.id), possible: Boolean(equipeAutoExploration(m.id)) })),
+  };
+}
+
+export function lancerExploration(missionId) {
+  const m = MISSIONS_EXPLORATION_PAR_ID[missionId];
+  if (!partie || !m || partie.explorations.length >= EQUIPES_EXPLORATION) return null;
+  const ids = equipeAutoExploration(missionId);
+  if (!ids) return null;
+  const serie = serieDuJourExploration(missionId);
+  const bonus = ids.filter((id) => PERSOS_PAR_ID[id].serie === serie).length >= PERSOS_SERIE_BONUS;
+  partie.explorations.push({ mission: missionId, ids, debut: Date.now(), bonus });
+  sauver();
+  return { ids, bonus };
+}
+
+export function recupererExploration(index) {
+  const x = partie?.explorations[index];
+  if (!x) return null;
+  const m = MISSIONS_EXPLORATION_PAR_ID[x.mission];
+  if (Date.now() < x.debut + m.heures * MS_HEURE) return null;
+  const mult = x.bonus ? 1 + BONUS_SERIE_EXPLORATION : 1;
+  const gains = {};
+  for (const [k, v] of Object.entries(m.recompense)) gains[k] = Math.round(v * mult);
+  if (m.potion && Math.random() < m.potion) {
+    const ids = Object.keys(POTIONS_PAR_ID);
+    gains.potions = { [ids[Math.floor(Math.random() * ids.length)]]: 1 };
+  }
+  donnerRecompense(gains);
+  partie.explorations.splice(index, 1);
+  partie.stats.explorations = (partie.stats.explorations ?? 0) + 1;
+  sauver();
+  return gains;
+}
+
+export const explorationsFinies = () => (partie?.explorations ?? []).filter((x) => Date.now() >= x.debut + MISSIONS_EXPLORATION_PAR_ID[x.mission].heures * MS_HEURE).length;

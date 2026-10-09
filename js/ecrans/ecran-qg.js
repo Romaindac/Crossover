@@ -19,7 +19,7 @@ import {
   cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes, etatGuide, reclamerGuide,
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
-  etatPasse, reclamerPasse,
+  etatPasse, reclamerPasse, etatExplorations, lancerExploration, recupererExploration,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
@@ -136,6 +136,11 @@ export function afficherQg(conteneur, { naviguer }) {
           <div id="expedition"></div>
         </section>
 
+        <section class="case case--explorations" aria-labelledby="titre-explorations">
+          <h2 class="case__titre" id="titre-explorations">Explorations</h2>
+          <div id="explorations"></div>
+        </section>
+
         <section class="case case--missions" aria-labelledby="titre-missions">
           <div class="case__entete">
             <h2 class="case__titre" id="titre-missions">Missions du jour</h2>
@@ -197,6 +202,33 @@ export function afficherQg(conteneur, { naviguer }) {
       <p class="case__message" role="status" aria-live="polite">${message}</p>
       ${htmlExpeditionsCiblees()}
     `;
+  }
+
+  // Explorations : jusqu'a 3 equipes en mission, meme jeu ferme
+  const NOMS_RARETE = { rare: "Rare", epique: "Épique", legendaire: "Légendaire" };
+  function texteGains(r) {
+    return [r.invocations && `${r.invocations} invocations`, r.encre && `${r.encre} encre`, r.poussiere && `${r.poussiere} poussière`, r.potions && "une potion"].filter(Boolean).join(", ");
+  }
+  function rendreExplorations(message = "") {
+    const e = etatExplorations();
+    const libre = e.enCours.length < e.max;
+    $("#explorations").innerHTML = `
+      <p class="case__aide">Envoie tes persos en mission, même jeu fermé (${e.max} équipes à la fois). Ils rapportent des invocations ; 3 persos de la série du jour : +50 %.</p>
+      ${e.enCours.map((x) => `
+        <div class="exploration exploration--${x.finie ? "finie" : "cours"}">
+          <p class="exploration__nom"><b>${x.mission.nom}</b>${x.bonus ? ' <span class="exploration__bonus">+50 %</span>' : ""}</p>
+          <div class="mini-equipe">${x.ids.map((id) => `<span class="mini-equipe__perso" title="${PERSOS_PAR_ID[id]?.nom ?? id}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}</div>
+          ${x.finie ? `<button type="button" class="bouton bouton--obi-petit" data-action="exploration-recuperer" data-index="${x.index}">Récupérer</button>` : `<span class="case__aide">Retour dans ${duree((x.fin - Date.now()) / 3600000)}</span>`}
+        </div>`).join("")}
+      ${libre ? `
+        <ul class="explorations__missions">${e.missions.map((m) => `
+          <li class="exploration-mission">
+            <span><b>${m.nom}</b> · ${m.heures} h · ${m.persos} persos${m.exige ? ` dont ${m.exige[1]} ${NOMS_RARETE[m.exige[0]]}${m.exige[1] > 1 ? "s" : ""} ou mieux` : ""}
+              <small>${texteGains(m.recompense)}${m.potion ? `, ${Math.round(m.potion * 100)} % une potion` : ""} · série du jour : ${m.serie}</small></span>
+            <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="exploration-lancer" data-mission="${m.id}" ${m.possible ? "" : "disabled"} title="${m.possible ? "Les persos sont choisis automatiquement (série du jour d'abord, sans gâcher tes plus rares)" : "Pas assez de persos libres de cette rareté"}">Envoyer</button>
+          </li>`).join("")}</ul>` : '<p class="case__aide">Toutes tes équipes sont en mission.</p>'}
+      <p class="case__message" role="status" aria-live="polite">${message}</p>`;
+    chargerPortraits((id) => rafraichirPortrait(conteneur, id));
   }
 
   // Quoi de neuf : tout ce qui attend le joueur, en un coup d'oeil
@@ -451,6 +483,18 @@ export function afficherQg(conteneur, { naviguer }) {
     if (action === "aventure") naviguer("aventure", { onglet: "campagne" });
     if (action === "tirages") naviguer("tirages");
     if (action === "collection") naviguer("collection");
+    if (action === "exploration-lancer") {
+      const r = lancerExploration(cible.dataset.mission);
+      rendreExplorations(r ? `Équipe envoyée${r.bonus ? " (bonus de série : +50 %)" : ""} !` : "Impossible : pas assez de persos libres.");
+      majNavigation();
+      return;
+    }
+    if (action === "exploration-recuperer") {
+      const g = recupererExploration(Number(cible.dataset.index));
+      rendreExplorations(g ? `Retour de mission : ${texteGains(g)} !` : "");
+      majNavigation();
+      return;
+    }
     if (action === "expedition") {
       const r = recupererExpedition();
       if (!r) return;
@@ -535,6 +579,7 @@ export function afficherQg(conteneur, { naviguer }) {
   rendreNouveautes();
   rendreEncre();
   rendreExpedition();
+  rendreExplorations();
   rendreBandeauCompte();
   rendreGuide();
   rendrePasse();
