@@ -339,7 +339,7 @@
 
 .case--bientot {
   grid-area: bientot;
-  background: repeating-linear-gradient(135deg, transparent 0 10px, color-mix(in srgb, var(--encre) 5%, transparent) 10px 12px), var(--papier);
+  background: linear-gradient(transparent, transparent), var(--papier);
 }
 
 .bientot {
@@ -638,7 +638,7 @@
   overflow: hidden;
   color: var(--papier);
   background:
-    repeating-conic-gradient(from 0deg at 50% 60%, rgba(239, 189, 43, 0.25) 0deg 1deg, transparent 1deg 7deg),
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
     #c4372b;
   border: 3px solid var(--encre);
   border-radius: 3px;

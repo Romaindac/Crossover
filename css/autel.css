@@ -86,7 +86,7 @@
   overflow: hidden;
   color: var(--papier);
   background:
-    repeating-conic-gradient(from 0deg at 50% 46%, color-mix(in srgb, var(--papier) 6%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
     radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--p1, #f08a1c) 30%, #2a2d4a), var(--encre) 72%);
   border: 3px solid var(--encre);
   border-radius: 14px;
@@ -1271,7 +1271,7 @@ body:has(.revelation, .voile--tuto, .arene-combat, .combat-direct) .bulle-chat:n
   padding: 1rem 1.2rem;
   color: var(--papier);
   background:
-    repeating-conic-gradient(from 0deg at 12% 50%, color-mix(in srgb, var(--obi) 10%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
     radial-gradient(circle at 12% 50%, #2c3d6b, var(--encre) 72%);
   border: 3px solid var(--encre);
   border-radius: 12px;

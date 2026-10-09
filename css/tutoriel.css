@@ -33,7 +33,7 @@
   padding: 1rem;
   color: var(--papier);
   background:
-    repeating-conic-gradient(from 0deg at 50% 120%, rgb(255 255 255 / 0.05) 0 4deg, transparent 4deg 12deg),
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
     var(--encre);
   border-bottom: 3px solid var(--obi);
 }
