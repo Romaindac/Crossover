@@ -324,3 +324,12 @@
   box-shadow: 0 6px 14px rgb(0 0 0 / 0.45);
   backdrop-filter: blur(4px);
 }
+
+/* Collection : les series hors de l'ecran ne sont pas dessinees (plus fluide). */
+.etagere--cartes {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 24rem;
+}
+
+/* (le halo d'une carte au bord ne doit pas faire defiler la page de cote) */
+.collection { overflow-x: clip; }
