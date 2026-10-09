@@ -10,7 +10,7 @@
 export const ENERGIE_MAX = 150;                 // la jauge se remplit seule jusque-la (les cadeaux peuvent depasser)
 export const MINUTES_PAR_ENERGIE = 3;           // +1 toutes les 3 minutes : pleine en 7 h 30
 export const ENERGIE_PLAFOND = 999;
-export const COUT_ENERGIE = { campagne: 6, deluxe: 6, chasse: 3, tour: 4, palier: 3 };
+export const COUT_ENERGIE = { campagne: 6, deluxe: 6, chasse: 3, tour: 4, palier: 3, arene: 5 };
 export const RECHARGE_ENCRE = { energie: 60, prix: 150, parJour: 3 };
 export const ENERGIE_BONUS_MISSIONS = 30;       // avec le bonus des 3 missions du jour
 

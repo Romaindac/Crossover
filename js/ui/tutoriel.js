@@ -35,7 +35,7 @@ function pages() {
       titre: "Les combats",
       illustration: schemaFormation(),
       texte: "Les combats se jouent tout seuls : place bien tes 5 persos, ils frappent et lancent leur ultime quand leur jauge est pleine. En mode manuel, c'est toi qui les déclenches.",
-      plus: pastilles([["Placement : ", "tank devant, assassins et soutiens derrière."], ["Campagne : ", "5 chapitres de 8 étapes, dans l'onglet Aventure."], ["Énergie : ", `${ENERGIE_MAX} max, +1 toutes les ${MINUTES_PAR_ENERGIE} min, payée seulement si tu gagnes. La première victoire d'une étape est gratuite.`]]),
+      plus: pastilles([["Placement : ", "tank devant, assassins et soutiens derrière."], ["Arène : ", "ton deck contre des boss géants, 8 par monde. Le premier KO donne la carte Boss du perso."], ["Campagne : ", "5 chapitres de 8 étapes : chaque chapitre fini ouvre un nouveau monde (autel et boss)."], ["Énergie : ", `${ENERGIE_MAX} max, +1 toutes les ${MINUTES_PAR_ENERGIE} min, payée seulement si tu gagnes. La première victoire d'une étape est gratuite.`]]),
     },
     {
       titre: "Invocations et boosters",

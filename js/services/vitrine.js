@@ -12,13 +12,13 @@ import { lire, ecrire } from "./sauvegarde.js";
 export const TAILLE_VITRINE = 6;
 const CLE = "vitrine";
 
-const varianteDe = (prog) => ["neant", "arcenciel", "doree", "holo"].find((v) => prog.variantes?.includes(v)) ?? null;
+const varianteDe = (prog) => ["boss", "neant", "arcenciel", "doree", "holo"].find((v) => prog.variantes?.includes(v)) ?? null;
 
 // Note d'une carte pour le choix automatique : rarete, variante, etoiles, niveau
 function note(id) {
   const prog = progressionDe(id);
   const v = varianteDe(prog);
-  return (ORDRE_RARETES.length - ORDRE_RARETES.indexOf(PERSOS_PAR_ID[id].rarete)) * 1000 + ({ neant: 900, arcenciel: 800, doree: 600, holo: 300 }[v] ?? 0)
+  return (ORDRE_RARETES.length - ORDRE_RARETES.indexOf(PERSOS_PAR_ID[id].rarete)) * 1000 + ({ boss: 950, neant: 900, arcenciel: 800, doree: 600, holo: 300 }[v] ?? 0)
     + (prog.etoiles ?? 1) * 40 + (prog.niveau ?? 1);
 }
 

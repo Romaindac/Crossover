@@ -58,6 +58,9 @@ import {
   POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
   POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
 } from "../donnees/invocations.js";
+import {
+  BOSS_ARENE, BOSS_ARENE_PAR_ID, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE,
+} from "../donnees/arene.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -112,6 +115,10 @@ function valider(p) {
     collection,
     boosters: validerBoosters(p.boosters),
     invocations: validerInvocations(p.invocations),
+    arene: {
+      battus: Array.isArray(p.arene?.battus) ? p.arene.battus.filter((id) => BOSS_ARENE_PAR_ID[id]) : [],
+      kos: Math.max(0, Math.floor(Number(p.arene?.kos) || 0)),
+    },
     energie: {
       valeur: Math.min(ENERGIE_PLAFOND, Math.max(0, Number(p.energie?.valeur ?? ENERGIE_MAX) || 0)),
       maj: Number(p.energie?.maj) || Date.now(),
@@ -475,10 +482,11 @@ export function coutEnergie(mode) {
 
 // Gratuit : la premiere victoire d'une etape de campagne et les etages de la Tour
 // pas encore battus cette semaine. Progresser ne coute rien, seul le farm coute.
-export function combatGratuit({ campagne = null, tour = null } = {}) {
+export function combatGratuit({ campagne = null, tour = null, arene = null } = {}) {
   if (!partie) return false;
   if (campagne && !campagne.deluxe) return !etapeBattue(campagne.chapitre, campagne.numero);
   if (tour) return !assurerSemaine().etagesSemaine.includes(tour.etage);
+  if (arene) return !bossAreneBattu(arene);
   return false;
 }
 
@@ -2142,4 +2150,69 @@ export function fabriquerPotion(id) {
   partie.invocations.potions[id] += 1;
   sauver();
   return true;
+}
+
+// ==========================================================
+// ARENE DES BOSS
+// Ton equipe (le deck) contre un boss geant. 8 boss par monde, a
+// battre dans l'ordre. Le premier KO donne la carte Boss du perso
+// (la bordure Boss, introuvable ailleurs), de l'encre, des
+// invocations et une potion ; les KO suivants coutent de l'energie.
+// ==========================================================
+
+export const bossAreneBattu = (id) => Boolean(partie?.arene.battus.includes(id));
+
+export function bossAreneOuvert(id) {
+  const b = BOSS_ARENE_PAR_ID[id];
+  if (!b || !mondeOuvert(b.monde)) return false;
+  if (b.rang === 0) return true;
+  return bossAreneBattu(BOSS_ARENE.find((x) => x.monde === b.monde && x.rang === b.rang - 1).id);
+}
+
+export function etatArene() {
+  if (!partie) return null;
+  return { battus: [...partie.arene.battus], kos: partie.arene.kos, total: BOSS_ARENE.length };
+}
+
+const potionAuHasard = () => { const ids = Object.keys(POTIONS_PAR_ID); return ids[Math.floor(Math.random() * ids.length)]; };
+
+export function appliquerResultatArene({ bossId, victoire, ids, duree = 90, ultimesManuels = 0, koAllies = 5, degats = 0 }) {
+  const b = BOSS_ARENE_PAR_ID[bossId];
+  if (!partie || !b) return null;
+  const premier = victoire && !bossAreneBattu(bossId);
+  const r = { premier, encre: 0, invocations: 0, potion: null, carte: null, xp: [] };
+  // XP : comme une etape de campagne du meme niveau
+  const gain = victoire ? 45 + 12 * b.niveau : 15 + 3 * b.niveau;
+  r.xp = ids.filter(possede).map((id) => donnerXp(id, gain));
+  for (const id of idsPossedes()) if (!ids.includes(id)) donnerXp(id, Math.round(gain * PART_XP_RESERVE));
+  partie.stats.combats += 1;
+  if (victoire) {
+    const rec = premier ? recompensePremierKo(b) : recompenseKo(b);
+    r.encre = rec.encre;
+    r.invocations = rec.invocations;
+    partie.encre += rec.encre;
+    donnerInvocations(rec.invocations);
+    if (rec.potion || Math.random() < CHANCE_POTION_REJOUE) {
+      r.potion = potionAuHasard();
+      partie.invocations.potions[r.potion] += 1;
+    }
+    if (premier || Math.random() < CHANCE_CARTE_BOSS_REJOUE) {
+      const perso = PERSOS_PAR_ID[b.perso];
+      r.carte = ajouterCarte({ id: perso.id, rarete: perso.rarete, variante: "boss" });
+    }
+    if (premier) partie.arene.battus.push(bossId);
+    partie.arene.kos += 1;
+    partie.stats.victoires += 1;
+    signaler("victoire");
+    if (duree < 30) signaler("victoire-rapide");
+    noterInsolites(ids, duree, koAllies, "appliquerResultatArene");
+    if (ids.some(estALHonneur)) { signalerSemaine("victoire-honneur"); signaler("victoire-honneur"); }
+    r.liens = compterLiens(ids);
+    r.completions = verifierCompletions();
+  }
+  signaler("ultime-manuel", ultimesManuels);
+  signaler("niveau", r.xp.reduce((t, x) => t + (x.niveauApres - x.niveauAvant), 0));
+  r.degats = degats;
+  sauver();
+  return r;
 }

@@ -18,6 +18,9 @@ import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../js/moteur/boosters.js";
 import { invoquer, tableAvecChance } from "../js/moteur/invocations.js";
 import { MONDES, PITIE_INVOCATION, BORDURES } from "../js/donnees/invocations.js";
+import { BOSS_ARENE, bossDe } from "../js/donnees/arene.js";
+import { PERSOS_PAR_ID } from "../js/donnees/persos.js";
+import { CALIBRAGE_BOSS } from "../js/donnees/calibrage-arene.js";
 import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
 import { creerHasard } from "../js/moteur/hasard.js";
 import { STYLES_SERIES } from "../js/donnees/series.js";
@@ -76,6 +79,9 @@ verifier(tableAvecChance(2).legendaire > tableAvecChance(1).legendaire && tableA
 verifier(invoquer(creerHasard(5).nombre, "vague", { pitie: PITIE_INVOCATION - 1 }).rarete === "legendaire", "la pitie de l'autel garantit un Legendaire");
 verifier(MONDES.every((m) => EDITIONS.some((e) => e.id === m.edition)) && MONDES.length === EDITIONS.length, "un autel par edition");
 verifier((() => { const h = creerHasard(11); return Array.from({ length: 300 }, () => invoquer(h.nombre, "tenebres")).every((r) => EDITIONS.find((e) => e.id === "tenebres").series.includes(PERSOS.find((p) => p.id === r.id).serie) && (r.variante === null || BORDURES.some((b) => b.id === r.variante))); })(), "les invocations restent dans leur autel, avec des bordures connues");
+// Arene : 8 boss par monde, tous enregistres pour le moteur, calibres entre 0,4 et 2
+verifier(MONDES.every((m) => bossDe(m.edition).length === 8) && BOSS_ARENE.every((b) => PERSOS_PAR_ID[b.id]?.boss && PERSOS_PAR_ID[b.perso]), "8 boss d'arene par monde, connus du moteur");
+verifier(Object.values(CALIBRAGE_BOSS).length === BOSS_ARENE.length && Object.values(CALIBRAGE_BOSS).every((c) => c >= 0.4 && c <= 2), "les boss d'arene sont calibres (sinon : node js/outils/calibrer-arene.mjs)");
 verifier(OBJETS.every((o) => TYPES_ICONES.includes(ICONE_DE_OBJET[o.id])), "chaque objet a son icone");
 verifier(readFileSync(new URL("../supabase/catalogue.sql", import.meta.url), "utf8") === catalogueSql(), "supabase/catalogue.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf8") === toutSql(), "supabase/a-coller.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
