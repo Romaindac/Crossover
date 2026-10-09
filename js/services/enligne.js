@@ -59,6 +59,11 @@ function messageErreur(corps, statut) {
   if (brut.includes("limite ventes jour")) return "5 mises en vente par jour au maximum.";
   if (brut.includes("limite ventes actives")) return "8 objets en vente en même temps au maximum.";
   if (brut.includes("indisponible")) return "Ce n'est plus disponible (déjà pris, annulé ou expiré).";
+  if (brut.includes("limite duels jour")) return "10 duels par jour au maximum : reviens demain !";
+  if (brut.includes("limite meme cible")) return "3 duels par jour contre la même défense au maximum.";
+  if (brut.includes("defense requise")) return "Enregistre d'abord ta propre défense.";
+  if (brut.includes("equipe refusee")) return "Défense refusée par le serveur (équipe impossible).";
+  if (brut.includes("cible refusee")) return "Cet adversaire n'est plus disponible.";
   if (brut.includes("limite tentatives")) return "Déjà 3 tentatives comptées aujourd'hui pour le boss collectif.";
   if (brut.includes("degats refuses")) return "Score refusé par le serveur.";
   if (brut.includes("semaine refusee")) return "La semaine du boss a changé : recharge la page.";
@@ -156,19 +161,36 @@ export async function recupererSauvegarde() {
 
 // Met a jour la ligne publique : scores et vitrine
 export async function publierProfil(resume, vitrine) {
-  await appel("/rest/v1/joueurs", { methode: "POST", authentifie: true, entetes: upsert,
-    corps: { id: session.id, pseudo: session.pseudo, ...resume, vitrine, maj: new Date().toISOString() } });
+  const envoyer = (r) => appel("/rest/v1/joueurs", { methode: "POST", authentifie: true, entetes: upsert,
+    corps: { id: session.id, pseudo: session.pseudo, ...r, vitrine, maj: new Date().toISOString() } });
+  try {
+    await envoyer(resume);
+  } catch (e) {
+    // Base pas encore mise a jour (colonne donjon absente) : on publie sans
+    if (!String(e.message).includes("donjon")) throw e;
+    const { donjon, ...reste } = resume;
+    void donjon;
+    await envoyer(reste);
+  }
 }
 
 export const CLASSEMENTS = {
-  semaine: { nom: "Boss cette semaine", ordre: "boss_semaine.desc", semaine: true, valeur: (j) => `${j.boss_semaine.toLocaleString("fr-FR")} dégâts` },
+  semaine: { nom: "Boss cette semaine", ordre: "boss_semaine.desc", semaine: true, valeur: (j) => `${(j.boss_semaine ?? 0).toLocaleString("fr-FR")} dégâts` },
   tour: { nom: "Tour", ordre: "tour.desc", valeur: (j) => `étage ${j.tour}` },
-  raid: { nom: "Record au boss", ordre: "raid.desc", valeur: (j) => `${j.raid.toLocaleString("fr-FR")} dégâts` },
+  raid: { nom: "Record au boss", ordre: "raid.desc", valeur: (j) => `${(j.raid ?? 0).toLocaleString("fr-FR")} dégâts` },
   collection: { nom: "Collection", ordre: "collection.desc,etoiles.desc", valeur: (j) => `${j.collection} persos, ${j.etoiles} étoiles` },
+  donjon: { nom: "Donjon", ordre: "donjon.desc", valeur: (j) => `étage ${j.donjon ?? 0}` },
+  duels: { nom: "Duels", duels: true, valeur: (j) => `${j.points} points (${j.victoires} V / ${j.defaites} D)` },
 };
 
 export async function classement(cle, limite = 50) {
   const c = CLASSEMENTS[cle];
+  if (c.duels) {
+    const lignes = await appel(`/rest/v1/defenses?select=joueur,pseudo,points,victoires,defaites,saison&saison=eq.${saisonEnCours()}&order=points.desc&limit=${limite}`);
+    const profils = lignes?.length ? await appel(`/rest/v1/joueurs?select=id,pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine&id=in.(${lignes.map((l) => l.joueur).join(",")})`) : [];
+    return (lignes ?? []).map((l) => ({ ...(profils.find((p) => p.id === l.joueur) ?? {}), ...l }));
+  }
+  if (cle === "donjon") return appel(`/rest/v1/joueurs?select=pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine,donjon&order=donjon.desc&donjon=gt.0&limit=${limite}`);
   const filtre = c.semaine ? `&semaine=eq.${numeroSemaine()}&boss_semaine=gt.0` : "";
   return appel(`/rest/v1/joueurs?select=pseudo,tour,raid,collection,etoiles,boss_semaine,semaine,vitrine&order=${c.ordre}${filtre}&limit=${limite}`);
 }
@@ -322,3 +344,34 @@ export async function proposerEchange(donne, veut) {
 export const accepterEchange = (id) => appel("/rest/v1/rpc/accepter_echange", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
 export const annulerEchange = (id) => appel("/rest/v1/rpc/annuler_echange", { methode: "POST", authentifie: true, corps: { p_id: Number(id) } });
 export const recupererEchanges = () => appel("/rest/v1/rpc/recuperer_echanges", { methode: "POST", authentifie: true, corps: {} });
+
+// ---------- Duels (PvP en defense classee) ----------
+
+export const saisonEnCours = () => new Date().toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" }).slice(0, 7);
+const champsDefense = "joueur,pseudo,equipe,puissance,points,saison,victoires,defaites,maj";
+
+export async function maDefense() {
+  const l = await appel(`/rest/v1/defenses?select=${champsDefense}&joueur=eq.${session.id}`, { authentifie: true });
+  return l?.[0] ?? null;
+}
+export async function enregistrerDefense(equipe, puissance) {
+  await appel("/rest/v1/defenses", { methode: "POST", authentifie: true, entetes: upsert, corps: { joueur: session.id, equipe, puissance: Math.round(puissance) } });
+}
+// Des adversaires proches en points (cette saison, puis les autres)
+export async function adversairesDuel(points) {
+  const s = saisonEnCours();
+  const [haut, bas] = await Promise.all([
+    appel(`/rest/v1/defenses?select=${champsDefense}&saison=eq.${s}&points=gte.${points}&joueur=neq.${session.id}&order=points.asc&limit=6`, { authentifie: true }),
+    appel(`/rest/v1/defenses?select=${champsDefense}&saison=eq.${s}&points=lt.${points}&joueur=neq.${session.id}&order=points.desc&limit=6`, { authentifie: true }),
+  ]);
+  let liste = [...(haut ?? []), ...(bas ?? [])].filter((x, i, l) => l.findIndex((y) => y.joueur === x.joueur) === i);
+  if (liste.length < 6) {
+    const autres = await appel(`/rest/v1/defenses?select=${champsDefense}&joueur=neq.${session.id}&order=maj.desc&limit=12`, { authentifie: true });
+    for (const a of autres ?? []) if (!liste.some((x) => x.joueur === a.joueur)) liste.push({ ...a, points: a.saison === s ? a.points : 1000 });
+  }
+  return liste.slice(0, 8);
+}
+export const resultatDuel = (cible, victoire, graine) => appel("/rest/v1/rpc/resultat_duel", { methode: "POST", authentifie: true, corps: { p_cible: cible, p_victoire: Boolean(victoire), p_graine: Math.floor(graine) } });
+export async function duelsRecents() {
+  return appel(`/rest/v1/duels?select=id,attaquant,pseudo_attaquant,cible,pseudo_cible,victoire,gain,perte,cree&or=(attaquant.eq.${session.id},cible.eq.${session.id})&order=cree.desc&limit=15`, { authentifie: true });
+}

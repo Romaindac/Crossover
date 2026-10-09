@@ -59,7 +59,7 @@ function pages() {
       titre: "Jouer avec les autres",
       illustration: `<div class="tuto__social">${["Chat", "Hôtel des ventes", "Classements", "Vitrine"].map((t, i) => `<span class="tuto__bulle" style="--i: ${i}">${t}</span>`).join("")}</div>`,
       texte: "Tout est dans l'onglet Social, avec un compte (juste un pseudo et un mot de passe).",
-      plus: pastilles([["Chat : ", "canaux Général, Entraide, Échanges, et messages privés."], ["Hôtel des ventes : ", "vends ton équipement en trop, achète celui des autres."], ["Vitrine : ", "partage tes plus belles cartes par un lien, et défie tes potes au boss de la semaine."]]),
+      plus: pastilles([["Chat : ", "canaux Général, Entraide, Échanges, et messages privés."], ["Échanges et hôtel des ventes : ", "échange tes doublons de cartes, vends ton équipement en trop."], ["Duels (Aventure) : ", "attaque les défenses des autres joueurs et grimpe de Bronze à Diamant."], ["Vitrine : ", "partage tes plus belles cartes par un lien, et défie tes potes au boss de la semaine."]]),
       bouton: enLigneDisponible() && !connecte() ? "Créer mon compte maintenant" : null,
     },
     {
