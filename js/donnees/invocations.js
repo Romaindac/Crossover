@@ -134,4 +134,5 @@ export const MONDES = [
   { edition: "vague", nom: "Autel de la Nouvelle Lune", chapitre: 1 },
   { edition: "aventures", nom: "Autel des Quatre Vents", chapitre: 2 },
   { edition: "tenebres", nom: "Autel de l'Abîme", chapitre: 3 },
+  { edition: "generation", nom: "Autel de l'Aube", chapitre: 4 },
 ];

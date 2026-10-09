@@ -255,3 +255,6 @@ header.entete-page {
 
 .scene-eveil--ascension .scene-eveil__kanji { color: #ff3b4e; text-shadow: 0 0 24px rgb(255 40 70 / 0.8); }
 .scene-eveil--ascension { background: radial-gradient(ellipse at 50% 45%, rgb(120 10 30 / 0.92), rgb(10 2 6 / 0.96) 70%); }
+
+/* 5 mondes (autels et Arene) : une ligne qui s'adapte */
+.autel__mondes { grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }

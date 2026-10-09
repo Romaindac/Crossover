@@ -19,13 +19,16 @@ import { CALIBRAGE } from "../donnees/calibrage.js";
 import { simulerCombat } from "../moteur/simulation.js";
 import { creerHasard } from "../moteur/hasard.js";
 
+// node js/outils/calibrer.mjs liste id1,id2,... : seulement ces persos (une nouvelle extension par exemple)
 const SECRETS = process.argv[2] === "secrets";
-const args = SECRETS ? process.argv.slice(3) : process.argv.slice(2);
+const LISTE = process.argv[2] === "liste" ? process.argv[3].split(",") : null;
+const args = SECRETS ? process.argv.slice(3) : LISTE ? process.argv.slice(4) : process.argv.slice(2);
 const COMBATS_PAR_TOUR = Number(args[0] ?? 16000);
 const TOURS_MAX = Number(args[1] ?? 8);
-const ids = (SECRETS ? [...PERSOS, ...PERSOS_SECRETS] : PERSOS).map((p) => p.id);
-// Les persos dont on ajuste le coefficient (tous, ou seulement les Secrets)
-const aRegler = SECRETS ? PERSOS_SECRETS.map((p) => p.id) : ids;
+const avecSecrets = SECRETS || LISTE?.some((id) => PERSOS_SECRETS.some((p) => p.id === id));
+const ids = (avecSecrets ? [...PERSOS, ...PERSOS_SECRETS] : PERSOS).map((p) => p.id);
+// Les persos dont on ajuste le coefficient (tous, les Secrets, ou une liste)
+const aRegler = SECRETS ? PERSOS_SECRETS.map((p) => p.id) : LISTE ?? ids;
 const ordreDevant = ["tank", "attaquant", "controle", "soutien", "assassin"];
 
 function ranger(equipe) {

@@ -31,6 +31,12 @@ export const EDITIONS = [
     couleurs: ["#b91c1c", "#1c1917", "#fca5a5"], vedettes: ["eren", "guts", "denji"],
     series: ["Berserk", "L'Attaque des Titans", "Chainsaw Man", "Tokyo Ghoul", "JoJo"],
   },
+  {
+    id: "generation", nom: "Nouvelle Génération", numero: 5,
+    texte: "Les phénomènes d'aujourd'hui : ninjas damnés, ovnis et yokai, kaiju, espions et buteurs.",
+    couleurs: ["#e6007e", "#1a0b2e", "#ffb3e0"], vedettes: ["okarun", "kafka", "anya"],
+    series: ["Hell's Paradise", "Dandadan", "Kaiju n°8", "Spy x Family", "Blue Lock"],
+  },
 ];
 
 export const EDITIONS_PAR_ID = Object.fromEntries(EDITIONS.map((e) => [e.id, e]));

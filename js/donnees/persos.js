@@ -1,12 +1,13 @@
 // ==========================================================
-// LES 160 PERSOS (24 de la V0.1, 8 du Volume 2, 46 du Volume 3,
-// 82 du Volume 4 dans persos-v4.js)
+// LES 200 PERSOS (24 de la V0.1, 8 du Volume 2, 46 du Volume 3,
+// 82 du Volume 4 dans persos-v4.js, 40 du Volume 5 dans persos-v5.js)
 // Chaque perso : sa serie, son role, son affinite, sa rarete, de petits
 // ajustements de stats (mods), son passif et son ultime.
 // Ajouter un perso = ajouter une entree ici.
 // ==========================================================
 
 import { PERSOS_V4 } from "./persos-v4.js";
+import { PERSOS_V5 } from "./persos-v5.js";
 import { PERSOS_SECRETS } from "./persos-secrets.js";
 
 const PERSOS_BASE = [
@@ -706,7 +707,7 @@ const PERSOS_BASE = [
   },
 ];
 
-export const PERSOS = [...PERSOS_BASE, ...PERSOS_V4];
+export const PERSOS = [...PERSOS_BASE, ...PERSOS_V4, ...PERSOS_V5];
 
 // La Rature : le seul perso entierement original du jeu, boss final de l'histoire.
 // Elle n'est pas dans PERSOS : on ne peut ni la tirer ni l'avoir dans sa collection.
