@@ -1562,3 +1562,202 @@
 .exploration-mission small {
   color: var(--encre-douce);
 }
+
+/* ---------- Combat en direct 5 contre 5 (Donjon, Duels) ---------- */
+
+.combat-direct {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background:
+    repeating-conic-gradient(from 0deg at 50% 50%, color-mix(in srgb, var(--papier) 6%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(circle at 50% 50%, #3b2a5c, var(--encre) 72%);
+  color: var(--papier);
+}
+
+.combat-direct__cadre {
+  display: grid;
+  gap: 0.8rem;
+  width: min(48rem, 100%);
+}
+
+.combat-direct__haut {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.combat-direct__titre {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.3rem;
+}
+
+.combat-direct__titre small {
+  display: block;
+  font-family: var(--police-texte);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c9a6ff;
+}
+
+.combat-direct__chrono {
+  margin: 0;
+  font-weight: 800;
+}
+
+.combat-direct__camp {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.combat-direct__carte {
+  position: relative;
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+  padding: 0.3rem;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
+}
+
+.combat-direct__camp--ennemi .combat-direct__carte {
+  background: color-mix(in srgb, var(--sceau) 14%, var(--papier));
+}
+
+.combat-direct__carte--ko {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.combat-direct__portrait {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.combat-direct__portrait .portrait {
+  width: 100%;
+  height: 100%;
+}
+
+.combat-direct__barre {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  background: #d6d2c6;
+  border-radius: 99px;
+}
+
+.combat-direct__barre span {
+  display: block;
+  height: 100%;
+  transition: width 0.15s linear;
+}
+
+.combat-direct__barre--pv span { background: var(--vert); }
+.combat-direct__camp--ennemi .combat-direct__barre--pv span { background: var(--sceau); }
+.combat-direct__barre--energie span { background: #4c8dff; }
+
+.combat-direct__nom {
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-direct__chiffre {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  translate: -50% 0;
+  font-family: var(--police-titre);
+  font-size: 1.05rem;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--encre), 0 0 5px var(--encre);
+  pointer-events: none;
+  animation: arene-chiffre 0.85s ease-out both;
+}
+
+.combat-direct__chiffre--crit { font-size: 1.4rem; color: #ffd23f; }
+.combat-direct__chiffre--soin { color: #7dffa8; }
+
+.combat-direct__annonce {
+  min-height: 1.8rem;
+  margin: 0;
+  padding: 0.2rem 0.8rem;
+  justify-self: center;
+  font-family: var(--police-titre);
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+  opacity: 0;
+}
+
+.combat-direct__annonce--ennemi {
+  color: #fff;
+  background: var(--sceau);
+}
+
+.combat-direct__annonce--vue {
+  animation: arene-annonce 1.6s ease both;
+}
+
+.combat-direct__commandes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.combat-direct__commandes[hidden],
+.combat-direct__fin[hidden] {
+  display: none;
+}
+
+.combat-direct__fin {
+  margin: 0;
+  text-align: center;
+  font-family: var(--police-titre);
+  font-size: 2.4rem;
+  animation: autel-ono 1.1s ease-out both;
+}
+
+.combat-direct__fin--v { color: var(--obi); }
+.combat-direct__fin--d { color: #ff8a7a; }
+
+@media (max-width: 40rem) {
+  .combat-direct__camp {
+    gap: 0.25rem;
+  }
+
+  .combat-direct__carte {
+    padding: 0.18rem;
+  }
+
+  .combat-direct__nom {
+    font-size: 0.56rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combat-direct__chiffre,
+  .combat-direct__annonce--vue,
+  .combat-direct__fin {
+    animation: none;
+  }
+
+  .combat-direct__annonce--vue {
+    opacity: 1;
+  }
+}

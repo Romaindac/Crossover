@@ -14,10 +14,10 @@ export const ETAGES_PAR_BENEDICTION = 3;
 export const PART_GARDEE_SI_KO = 0.5;
 
 // L'adversaire de l'etage n (1, 2, 3...) : son niveau suit celui de ton deck
-// (moyenne - 4, +1 tous les 3 etages) et ses stats grimpent de 4,5 % par etage.
+// (moyenne - 4, +1 tous les 3 etages) et ses stats grimpent de 3,5 % par etage (puis ramenees a la rarete moyenne du deck).
 // Tous les 5 etages : une elite ; tous les 10 : un gardien.
 export const niveauEtage = (n, niveauDeck) => Math.max(1, Math.round(niveauDeck - 4 + Math.floor(n / 3)));
-export const multEtage = (n) => (0.95 + 0.045 * n) * (n % 10 === 0 ? 1.25 : n % 5 === 0 ? 1.1 : 1);
+export const multEtage = (n) => (0.68 + 0.035 * n) * (n % 10 === 0 ? 1.25 : n % 5 === 0 ? 1.1 : 1);
 export const typeEtage = (n) => (n % 10 === 0 ? "gardien" : n % 5 === 0 ? "elite" : "normal");
 
 // Le butin d'un etage gagne (dans le sac jusqu'a la sortie)

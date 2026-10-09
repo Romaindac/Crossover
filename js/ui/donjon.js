@@ -10,11 +10,12 @@ import {
   BENEDICTIONS_PAR_ID, MAITRISES, DESCENTES_PAR_JOUR, ETAGES_PAR_BENEDICTION, CHANCE_PAR_10_ETAGES_DONJON,
 } from "../donnees/donjon.js";
 import {
-  etatDonjon, entrerDonjon, combattreEtage, choisirBenediction, sortirDonjon, acheterMaitrise, equipeSauvee, verifierTampons,
+  etatDonjon, entrerDonjon, combattreEtage, configEtage, choisirBenediction, sortirDonjon, acheterMaitrise, equipeSauvee, verifierTampons,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "./cartes.js";
 import { annoncerTampons } from "./toast.js";
+import { jouerCombatDirect } from "./combat-direct.js";
 import { sonCarte, sonRarete, sonComplete } from "./sons.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -142,7 +143,12 @@ export function afficherDonjon(zone, { naviguer, majNavigation }) {
     enCombat = true;
     message = "";
     rendre();
-    if (!mouvementReduit) await pause(enchainer ? 350 : 650);
+    if (enchainer) { if (!mouvementReduit) await pause(350); }
+    else {
+      // Un combat a la fois : on le regarde en direct (le meme que celui qui sera compte)
+      const config = configEtage();
+      if (config) await jouerCombatDirect({ config, titre: `Étage ${config.n}`, sousTitre: `Niveau ${config.adv.niveau} · stats ×${config.adv.multiplicateur.toFixed(2).replace(".", ",")}` });
+    }
     if (!zone.isConnected) return;
     const r = combattreEtage();
     enCombat = false;

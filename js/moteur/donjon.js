@@ -4,20 +4,27 @@
 // les ennemis de chaque etage.
 // ==========================================================
 
-import { PERSOS } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { RARETES } from "../donnees/raretes.js";
 import { niveauEtage, multEtage, BENEDICTIONS_PAR_ID } from "../donnees/donjon.js";
 import { creerHasard } from "./hasard.js";
 import { composerEquipe } from "./composition.js";
 
-// 5 persos au hasard (graine + etage), ranges comme une vraie equipe
-export function adversaireEtage(graine, n, niveauDeck, ennemis = 1) {
+// Le poids moyen de la rarete d'une equipe (Commun 1, Legendaire 2)
+export const facteurRarete = (ids) => ids.reduce((t, id) => t + 1 + (RARETES[PERSOS_PAR_ID[id]?.rarete]?.bonus ?? 0), 0) / Math.max(1, ids.length);
+
+// 5 persos au hasard (graine + etage), ranges comme une vraie equipe.
+// raretesDeck : le poids moyen de rarete du deck ; les ennemis sont ramenes a ce poids,
+// pour que le donjon soit juste avec une equipe de Communs comme de Legendaires.
+export function adversaireEtage(graine, n, niveauDeck, ennemis = 1, raretesDeck = null) {
   const h = creerHasard(((graine >>> 0) * 31 + n * 7919) >>> 0);
   const pioche = [...PERSOS];
   const choisis = [];
   while (choisis.length < 5) choisis.push(pioche.splice(Math.floor(h.nombre() * pioche.length), 1)[0].id);
   const niveau = niveauEtage(n, niveauDeck);
   const equipe = composerEquipe(Object.fromEntries(choisis.map((id) => [id, { niveau, etoiles: 1 }])));
-  return { equipe, niveau, multiplicateur: multEtage(n) * ennemis };
+  const equilibre = raretesDeck ? raretesDeck / facteurRarete(equipe) : 1;
+  return { equipe, niveau, multiplicateur: multEtage(n) * ennemis * equilibre };
 }
 
 // Les bonus cumules des benedictions d'une descente (+ la maitrise de vigueur)

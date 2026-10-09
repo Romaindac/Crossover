@@ -72,7 +72,7 @@ import {
   DESCENTES_PAR_JOUR, VIES_DEPART, ETAGES_PAR_BENEDICTION, PART_GARDEE_SI_KO, butinEtage, typeEtage,
   BENEDICTIONS, BENEDICTIONS_PAR_ID, MAITRISES_PAR_ID, CHANCE_PAR_10_ETAGES_DONJON, CHANCE_DONJON_MAX,
 } from "../donnees/donjon.js";
-import { adversaireEtage, bonusDescente } from "../moteur/donjon.js";
+import { adversaireEtage, bonusDescente, facteurRarete } from "../moteur/donjon.js";
 import {
   EQUIPES_EXPLORATION, BONUS_SERIE_EXPLORATION, PERSOS_SERIE_BONUS, MISSIONS_EXPLORATION, MISSIONS_EXPLORATION_PAR_ID,
 } from "../donnees/explorations.js";
@@ -2516,7 +2516,7 @@ export function etatDonjon() {
   let prochain = null;
   if (run) {
     const b = bonusDescente(run.benedictions, niveauMaitrise("vigueur"));
-    prochain = { ...adversaireEtage(run.graine, run.etage, run.niveauDeck, b.ennemis), type: typeEtage(run.etage), bonus: b };
+    prochain = { ...adversaireEtage(run.graine, run.etage, run.niveauDeck, b.ennemis, facteurRarete(run.deck)), type: typeEtage(run.etage), bonus: b };
   }
   return {
     record: d.record, cristaux: d.cristaux, maitrises: { ...d.maitrises },
@@ -2552,20 +2552,31 @@ export function entrerDonjon() {
   return { ok: true };
 }
 
-export function combattreEtage() {
-  const d = partie && assurerDonjon();
-  const run = d?.run;
+// La configuration exacte du prochain combat du donjon (le moteur etant
+// deterministe, l'affichage en direct rejoue exactement le meme combat)
+export function configEtage() {
+  const run = partie?.donjon.run;
   if (!run || run.choix) return null;
   const n = run.etage;
   const b = bonusDescente(run.benedictions, niveauMaitrise("vigueur"));
-  const adv = adversaireEtage(run.graine, n, run.niveauDeck, b.ennemis);
   const deck = run.deck.filter(possede);
-  const r = simulerCombat({
+  const adv = adversaireEtage(run.graine, n, run.niveauDeck, b.ennemis, facteurRarete(deck));
+  return {
     equipeA: deck.map((id, i) => ({ ...entreeCombat(id, i, deck), bonusPct: (entreeCombat(id, i, deck).bonusPct ?? 0) + b.pct })),
     equipeB: adv.equipe, niveauB: adv.niveau, multiplicateurB: adv.multiplicateur,
     graine: (run.graine + n * 7919 + run.vies * 131) >>> 0, journal: false,
     bonusA: { crit: b.crit, esquive: b.esquive, volDeVie: b.volDeVie, energieDepart: b.energieDepart },
-  });
+    adv, b, deck, n,
+  };
+}
+
+export function combattreEtage() {
+  const d = partie && assurerDonjon();
+  const run = d?.run;
+  const config = configEtage();
+  if (!run || !config) return null;
+  const { adv, b, deck, n } = config;
+  const r = simulerCombat(config);
   const victoire = r.vainqueur === 0;
   const resultat = { etage: n, victoire, duree: r.duree, type: typeEtage(n), koAllies: r.unites.filter((u) => u.camp === 0 && u.pv <= 0).length };
   partie.stats.combats += 1;
@@ -2656,9 +2667,10 @@ export function equipeDuel(ids = equipeSauvee()) {
 }
 export const puissanceEquipe = (equipe) => equipe.reduce((t, e) => t + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).atq * 4 + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).pv / 3, 0);
 
+export const configDuel = (defense, graine) => ({ equipeA: equipeDuel(), equipeB: defense, graine, journal: false });
+
 export function jouerDuel(defense, graine = Math.floor(Math.random() * 2147483647)) {
-  const attaque = equipeDuel();
-  const r = simulerCombat({ equipeA: attaque, equipeB: defense, graine, journal: false });
+  const r = simulerCombat(configDuel(defense, graine));
   return {
     victoire: r.vainqueur === 0, duree: r.duree, graine,
     koA: r.unites.filter((u) => u.camp === 0 && u.pv <= 0).length,
