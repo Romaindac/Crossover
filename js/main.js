@@ -19,6 +19,7 @@ import { aUnePartie, partieBrute, resumeJoueur } from "./services/partie.js";
 import { ecrire } from "./services/sauvegarde.js";
 import { brancherInclinaison } from "./ui/inclinaison.js";
 import { reglage } from "./services/reglages.js";
+import { installerBulleChat, bulleChatSurEcran } from "./ui/bulle-chat.js";
 
 const ECRANS = {
   accueil: afficherAccueil,
@@ -43,6 +44,7 @@ function naviguer(nom, donnees = {}) {
   racine.replaceWith(neuf);
   racine = neuf;
   ECRANS[nom](racine, { naviguer, ...donnees });
+  bulleChatSurEcran(nom);
   window.scrollTo(0, 0);
 }
 
@@ -52,6 +54,8 @@ document.body.classList.toggle("portraits-encre", reglage("portraits") === "encr
 const vitrine = vitrineDuLien();
 if (vitrine) ECRANS.vitrine(racine, { naviguer, vitrine });
 else ECRANS.accueil(racine, { naviguer });
+bulleChatSurEcran(vitrine ? "vitrine" : "accueil");
+installerBulleChat({ naviguer });
 window.addEventListener("hashchange", () => {
   const v = vitrineDuLien();
   if (v) naviguer("vitrine", { vitrine: v });
