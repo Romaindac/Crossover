@@ -1255,3 +1255,190 @@ body:has(.revelation, .voile--tuto, .arene-combat, .combat-direct) .bulle-chat:n
   flex: 1 1 10rem;
   min-width: 0;
 }
+
+/* ---------- Onglet Index de la Collection ---------- */
+.index {
+  display: grid;
+  gap: 1.4rem;
+  min-width: 0;
+}
+
+.index__tete {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 12% 50%, color-mix(in srgb, var(--obi) 10%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(circle at 12% 50%, #2c3d6b, var(--encre) 72%);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.index__tete .case__aide { color: color-mix(in srgb, var(--papier) 82%, transparent); }
+
+.index__kanji {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--obi);
+  letter-spacing: 0.1em;
+}
+
+.index__titre {
+  margin: 0 0 0.3rem;
+  font-family: var(--police-titre);
+  font-size: 1.6rem;
+}
+
+.index__chiffres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0.6rem 0 0;
+}
+
+.index__chiffres span {
+  padding: 0.3rem 0.7rem;
+  background: color-mix(in srgb, var(--papier) 10%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--obi) 60%, transparent);
+  border-radius: 99px;
+}
+
+.index__chiffres b { color: var(--obi); font-size: 1.15em; }
+
+.index__sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 0.7rem;
+  margin: 0.6rem 0;
+}
+
+.index__source {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 0.75rem 0.85rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--encre);
+}
+
+.index__source--max {
+  background: color-mix(in srgb, var(--obi) 22%, var(--papier));
+}
+
+.index__source p { margin: 0; }
+
+.index__source-nom {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.index__source-nom b { color: var(--sceau); white-space: nowrap; }
+
+.index__source-compte { font-size: 0.9rem; }
+.index__source-compte small,
+.index__source-pas { font-size: 0.8rem; opacity: 0.75; }
+
+.index__jauge {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--encre) 12%, var(--papier));
+  border: 1.5px solid var(--encre);
+  border-radius: 99px;
+}
+
+.index__jauge > span {
+  display: block;
+  height: 100%;
+  width: calc(var(--v, 0) * 100%);
+  background: linear-gradient(90deg, var(--obi), var(--sceau));
+}
+
+.index__bordures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.index__bordure {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-left: 0.4rem;
+  border-left: 4px solid var(--b, var(--encre));
+}
+
+.index__bordure small { grid-column: 1 / -1; opacity: 0.7; }
+.index__bordure--holo { --b: #6fc3df; }
+.index__bordure--doree { --b: #d9a441; }
+.index__bordure--arcenciel { --b: #c45bd6; }
+.index__bordure--eveille { --b: #e4572e; }
+.index__bordure--neant { --b: #1b1530; }
+.index__bordure--boss { --b: var(--sceau); }
+
+.index__proches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: 0.7rem;
+  margin: 0.4rem 0 0.8rem;
+}
+
+.index__serie {
+  padding: 0.7rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-left: 8px solid var(--s1, var(--encre));
+  border-radius: 10px;
+}
+
+.index__serie p { margin: 0; }
+.index__serie-nom { margin-bottom: 0.4rem !important; }
+.index__manquant { filter: grayscale(0.85); opacity: 0.8; }
+
+.index__serie-noms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.4rem !important;
+}
+
+.index__nom {
+  padding: 0.05rem 0.45rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--encre);
+  border-radius: 99px;
+}
+
+.index__nom--rare { background: #cfe4ff; }
+.index__nom--epique { background: #e6d9ff; }
+.index__nom--legendaire { background: #ffe8a3; }
+
+.index__pistes {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 0.8rem;
+  padding-left: 1.2rem;
+}
+
+.autel__voir-index {
+  display: block;
+  margin: 0.2rem 0 0.4rem;
+}
+
+@media (max-width: 40rem) {
+  .index__tete { grid-template-columns: minmax(0, 1fr); }
+  .index__kanji { font-size: 2.2rem; }
+}

@@ -220,7 +220,7 @@ export function afficherTirages(conteneur, { naviguer }) {
       if (!$("#vue-boosters .autel")) {
         const zone = document.createElement("div");
         $("#vue-boosters").replaceChildren(zone);
-        afficherAutel(zone, { conteneur, majEncre, mouvementReduit });
+        afficherAutel(zone, { conteneur, majEncre, mouvementReduit, naviguer });
       }
       majEncre?.();
       return;

@@ -15,8 +15,13 @@ import {
   basculerVerrou, equiperPiece, retirerPiece, gainRecyclage, objetsDecouverts,
   retoucherLigne, retouchePendante, choisirRetouche, sublimerLigne, ressources, eveiller, choisirTalent, victoiresLien,
   verifierTampons, tamponsObtenus, tamponsNouveaux, marquerTamponsVus, titresObtenus, titreActuel, choisirTitre,
-  cadresObtenus, cadreActuel, choisirCadre,
+  cadresObtenus, cadreActuel, choisirCadre, detailIndex, chanceActuelle,
 } from "../services/partie.js";
+import {
+  CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE, CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE,
+  CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX, BORDURES_PAR_ID, ORDRE_BORDURES,
+} from "../donnees/invocations.js";
+import { CHANCE_PAR_10_ETAGES_DONJON, CHANCE_DONJON_MAX } from "../donnees/donjon.js";
 import { NOMS_STATS } from "../donnees/equipement.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from "../ui/cartes.js";
@@ -46,6 +51,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
         <h1 class="equipe__titre">Collection</h1>
         <div class="onglets-collection" role="tablist" aria-label="Collection">
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="persos">Persos</button>
+          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="index">Index</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="equipement">Équipement</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="hotel">Hôtel des ventes</button>
           <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="encyclopedie">Encyclopédie</button>
@@ -339,6 +345,108 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     chargerPortraits((id) => rafraichirPortrait(conteneur, id));
   }
 
+  // ---------- Onglet Index : d'ou vient la chance de l'autel, et ce qui reste a prendre ----------
+
+  function rendreIndex() {
+    const d = detailIndex();
+    const ix = d.index;
+    const chance = chanceActuelle();
+    const pct = (v) => `${(Math.round(v * 1000) / 10).toLocaleString("fr-FR")} %`;
+    const mult = (v) => `×${(Math.round(v * 100) / 100).toLocaleString("fr-FR")}`;
+    const nbMondes = d.mondes.length;
+    const difficiles = d.mondes.reduce((t, m) => t + m.difficultes.slice(1).filter((x) => x.n === m.total).length, 0);
+    const nbDifficiles = d.mondes.reduce((t, m) => t + m.difficultes.length - 1, 0);
+    const bossTotal = d.mondes.reduce((t, m) => t + m.total, 0);
+    const tour = Math.min(CHANCE_TOUR_MAX, Math.floor(d.tour / 10) * CHANCE_PAR_10_ETAGES);
+    const eveils = Math.min(CHANCE_EVEIL_MAX, d.eveils * CHANCE_PAR_EVEIL);
+    const donjon = Math.min(CHANCE_DONJON_MAX, Math.floor(d.donjon / 10) * CHANCE_PAR_10_ETAGES_DONJON);
+    const prochaineDizaine = (n) => (Math.floor(n / 10) + 1) * 10;
+
+    // Une source : ce qu'elle donne, son maximum, et le prochain pas
+    const sources = [
+      { nom: "Séries complètes", compte: `${ix.nbSeries} / ${d.series.length}`, gain: ix.series, max: d.series.length * CHANCE_SERIE_COMPLETE,
+        pas: `+${pct(CHANCE_SERIE_COMPLETE)} par série de 8 persos au complet` },
+      { nom: "Éditions complètes", compte: `${ix.nbEditions} / ${d.editions.length}`, gain: ix.editions, max: d.editions.length * CHANCE_EDITION_COMPLETE,
+        pas: `+${pct(CHANCE_EDITION_COMPLETE)} par édition de 40 persos au complet` },
+      { nom: "Boss de l'Arène", compte: `${ix.nbBoss} / ${bossTotal}`, gain: ix.nbBoss * CHANCE_BOSS_ARENE, max: bossTotal * CHANCE_BOSS_ARENE,
+        pas: `+${pct(CHANCE_BOSS_ARENE)} par boss vaincu une première fois` },
+      { nom: "Mondes finis", compte: `${ix.nbMondes} / ${nbMondes}`, gain: ix.nbMondes * CHANCE_MONDE_FINI, max: nbMondes * CHANCE_MONDE_FINI,
+        pas: `+${pct(CHANCE_MONDE_FINI)} quand les 8 boss d'un monde sont tombés` },
+      { nom: "Mondes en difficulté", compte: `${difficiles} / ${nbDifficiles}`, gain: difficiles * CHANCE_MONDE_DIFFICILE, max: nbDifficiles * CHANCE_MONDE_DIFFICILE,
+        pas: `+${pct(CHANCE_MONDE_DIFFICILE)} par monde fini en Difficile, Cauchemar ou Céleste` },
+      { nom: "Record de la Tour", compte: `étage ${d.tour}`, gain: tour, max: CHANCE_TOUR_MAX,
+        pas: tour >= CHANCE_TOUR_MAX ? "Au maximum" : `Prochain +${pct(CHANCE_PAR_10_ETAGES)} à l'étage ${prochaineDizaine(d.tour)}` },
+      { nom: "Record du Donjon", compte: `étage ${d.donjon}`, gain: donjon, max: CHANCE_DONJON_MAX,
+        pas: donjon >= CHANCE_DONJON_MAX ? "Au maximum" : `Prochain +${pct(CHANCE_PAR_10_ETAGES_DONJON)} à l'étage ${prochaineDizaine(d.donjon)}` },
+      { nom: "Éveils", compte: `${d.eveils} palier${d.eveils > 1 ? "s" : ""}`, gain: eveils, max: CHANCE_EVEIL_MAX,
+        pas: eveils >= CHANCE_EVEIL_MAX ? "Au maximum" : `+${pct(CHANCE_PAR_EVEIL)} par palier d'éveil, tous persos confondus` },
+    ];
+    const totalMax = sources.reduce((t, x) => t + x.max, 0);
+
+    // Les series les plus proches d'etre completes (celles qui ont deja au moins un perso)
+    const proches = d.series.filter((x) => x.n > 0 && x.n < x.total).sort((a, b) => a.manquants.length - b.manquants.length || b.n - a.n).slice(0, 4);
+    const mondesOuverts = d.mondes.map((m) => ({ ...m, normal: m.difficultes[0].n })).filter((m) => m.normal < m.total).slice(0, 1);   // les mondes se font dans l'ordre : seul le prochain compte
+
+    $("#contenu").innerHTML = `
+      <div class="index">
+        <section class="index__tete">
+          <p class="index__kanji" aria-hidden="true">図鑑</p>
+          <div class="index__resume">
+            <h2 class="index__titre">L'Index</h2>
+            <p class="case__aide">Tout ce que tu collectionnes et tout ce que tu bats rend l'autel plus généreux, pour toujours. La chance multiplie les Rares, Épiques et Légendaires.</p>
+            <p class="index__chiffres">
+              <span>Index <b>+${pct(ix.total)}</b></span>
+              <span>Chance à l'autel en ce moment <b>${mult(chance.total)}</b></span>
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="case__titre">D'où vient ta chance</h3>
+          <div class="index__sources">
+            ${sources.map((x) => `
+              <article class="index__source ${x.gain >= x.max - 1e-9 ? "index__source--max" : ""}">
+                <p class="index__source-nom">${x.nom}<b>+${pct(x.gain)}</b></p>
+                <p class="index__source-compte">${x.compte} <small>max +${pct(x.max)}</small></p>
+                <span class="index__jauge"><span style="--v: ${x.max ? x.gain / x.max : 0}"></span></span>
+                <p class="index__source-pas">${x.pas}</p>
+              </article>`).join("")}
+            <article class="index__source">
+              <p class="index__source-nom">Bordures<b>+${pct(ix.bordures)}</b></p>
+              <p class="index__source-compte">${ORDRE_BORDURES.reduce((t, b) => t + (d.bordures[b] ?? 0), 0)} carte${ORDRE_BORDURES.reduce((t, b) => t + (d.bordures[b] ?? 0), 0) > 1 ? "s" : ""} <small>sans plafond</small></p>
+              <ul class="index__bordures">${ORDRE_BORDURES.map((b) => `<li class="index__bordure index__bordure--${b}"><span>${BORDURES_PAR_ID[b].nom}</span><b>${d.bordures[b] ?? 0}</b><small>+${pct(CHANCE_PAR_BORDURE[b])} chacune</small></li>`).join("")}</ul>
+            </article>
+          </div>
+          <p class="case__aide">Hors bordures, l'Index peut monter jusqu'à +${pct(totalMax)}. Les points d'autel, les potions et les phases s'ajoutent par-dessus.</p>
+        </section>
+
+        <section>
+          <h3 class="case__titre">Ce qui te manque</h3>
+          ${proches.length ? `
+            <p class="arene__rubrique">Les séries les plus proches du complet (+${pct(CHANCE_SERIE_COMPLETE)} chacune)</p>
+            <div class="index__proches">${proches.map((x) => `
+              <div class="index__serie" style="${varsSerie(x.serie)}">
+                <p class="index__serie-nom"><b>${x.serie}</b> ${x.n} / ${x.total}</p>
+                <div class="mini-equipe">${x.manquants.map((id) => `<span class="mini-equipe__perso index__manquant" title="${PERSOS_PAR_ID[id].nom} · ${RARETES[PERSOS_PAR_ID[id].rarete].nom}">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}</div>
+                <p class="index__serie-noms">${x.manquants.map((id) => `<span class="index__nom index__nom--${PERSOS_PAR_ID[id].rarete}">${PERSOS_PAR_ID[id].nom}</span>`).join("")}</p>
+              </div>`).join("")}</div>` : ""}
+          <ul class="index__pistes">
+            ${d.editions.filter((e) => e.n < e.total).map((e) => `<li><b>${e.nom}</b> : encore ${e.total - e.n} perso${e.total - e.n > 1 ? "s" : ""} pour +${pct(CHANCE_EDITION_COMPLETE)}</li>`).join("")}
+            ${mondesOuverts.map((m) => `<li><b>${m.nom}</b> (Arène) : encore ${m.total - m.normal} boss pour finir le monde (+${pct(CHANCE_MONDE_FINI)}, plus +${pct(CHANCE_BOSS_ARENE)} par boss)</li>`).join("")}
+            ${tour < CHANCE_TOUR_MAX ? `<li><b>Tour</b> : atteins l'étage ${prochaineDizaine(d.tour)} pour +${pct(CHANCE_PAR_10_ETAGES)}</li>` : ""}
+            ${donjon < CHANCE_DONJON_MAX ? `<li><b>Donjon</b> : descends jusqu'à l'étage ${prochaineDizaine(d.donjon)} pour +${pct(CHANCE_PAR_10_ETAGES_DONJON)}</li>` : ""}
+            ${eveils < CHANCE_EVEIL_MAX ? `<li><b>Éveil</b> : chaque palier d'éveil d'un perso donne +${pct(CHANCE_PAR_EVEIL)}</li>` : ""}
+            <li><b>Bordures</b> : la fusion de l'Atelier (Invocations) transforme les doublons en bordures, et chaque boss de l'Arène donne sa carte Boss au premier KO</li>
+          </ul>
+          <div class="donjon__actions">
+            <button type="button" class="bouton bouton--obi-petit" data-action="aller" data-ecran="tirages">Aller à l'autel</button>
+            <button type="button" class="bouton bouton--clair bouton--petit-texte" data-action="aller" data-ecran="aventure">Aller à l'Arène</button>
+          </div>
+        </section>
+      </div>`;
+    chargerPortraits((id) => rafraichirPortrait($("#contenu"), id));
+  }
+
   // ---------- Onglet carnet : tampons et titres ----------
 
   function rendreCarnet() {
@@ -400,6 +508,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     else if (nom === "persos") rendrePersos();
     else if (nom === "equipement") rendreEquipement();
     else if (nom === "liens") rendreLiens();
+    else if (nom === "index") rendreIndex();
     else if (nom === "carnet") { annoncerTampons(verifierTampons()); rendreCarnet(); }
     else rendreEncyclopedie();
   }
@@ -412,6 +521,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     const action = cible.dataset.action;
 
     if (action === "onglet") return afficherOnglet(cible.dataset.onglet);
+    if (action === "aller") return naviguer(cible.dataset.ecran);
     if (action === "vendre-hotel") { fermerFenetre(); return afficherOnglet("hotel", { vendreUid: cible.dataset.uid }); }
     if (action === "fiche") return ouvrirFiche(cible.dataset.perso);
     if (action === "fermer-fiche" && (cible.tagName === "BUTTON" || e.target === cible)) {
