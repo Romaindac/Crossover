@@ -19,7 +19,17 @@ export const PART_XP_RESERVE = 0.25;   // les persos hors de l'equipe gagnent 25
 // ---------- Etoiles ----------
 export const ETOILES_MAX = 5;
 export const BONUS_ETOILE = 0.12;              // +12 % par etoile au-dela de la premiere (5 etoiles : +48 %)
-export const doublonsPourEtoile = (etoiles) => etoiles;   // 1 doublon pour la 2e, 2 pour la 3e...
+export const doublonsPourEtoile = (etoiles) => (etoiles * (etoiles + 1)) / 2;   // 1 doublon pour la 2e, 3 pour la 3e, 6 pour la 4e, 10 pour la 5e (20 en tout)
+
+// ---------- Ascension : au-dela de 5 etoiles, des etoiles rouges (1 a 5) ----------
+// Chaque palier coute des doublons en trop (ceux qui depassent 5 etoiles) et de la poussiere.
+export const ASCENSION_MAX = 5;
+export const BONUS_ASCENSION = 0.1;            // +10 % de PV et d'ATQ par etoile rouge (5 : +50 %)
+const POUSSIERE_ASCENSION = { commun: 100, peu_commun: 200, rare: 400, epique: 800, legendaire: 1500, secret: 3000 };
+export const coutAscension = (rarete, palier) => ({   // palier : 0 pour la 1re etoile rouge
+  doublons: 5 * (palier + 1),                  // 5, 10, 15, 20, 25 (75 en tout)
+  poussiere: (POUSSIERE_ASCENSION[rarete] ?? 400) * (palier + 1),
+});
 export const ENCRE_PAR_DOUBLON_EN_TROP = 30;
 
 // ---------- Encre gagnee en combat ----------

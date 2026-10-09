@@ -541,6 +541,7 @@ begin
     if (x->>'niveau')::integer not between 1 and 50 then return false; end if;
     if (x->>'etoiles')::integer not between 1 and 5 then return false; end if;
     if coalesce((x->>'eveil')::integer, 0) not between 0 and 5 then return false; end if;
+    if coalesce((x->>'ascension')::integer, 0) not between 0 and 5 then return false; end if;
   end loop;
   if (select count(distinct v->>'id') from jsonb_array_elements(e) v) <> 5 then return false; end if;
   return true;

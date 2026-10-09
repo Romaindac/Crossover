@@ -103,11 +103,13 @@ export function rafraichirPortrait(racine, persoId) {
 // Etoiles dessinees en SVG (pas de caracteres speciaux)
 const ETOILE = '<path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>';
 
-export function htmlEtoiles(etoiles) {
+// ascension : les etoiles rouges (au-dela de 5) remplacent les dorees, de gauche a droite
+export function htmlEtoiles(etoiles, ascension = 0) {
   const liste = Array.from({ length: ETOILES_MAX }, (_, i) =>
-    `<svg class="etoile ${i < etoiles ? "etoile--pleine" : ""}" viewBox="0 0 24 24" aria-hidden="true">${ETOILE}</svg>`
+    `<svg class="etoile ${i < ascension ? "etoile--rouge" : i < etoiles ? "etoile--pleine" : ""}" viewBox="0 0 24 24" aria-hidden="true">${ETOILE}</svg>`
   ).join("");
-  return `<span class="etoiles" title="${etoiles} étoile${etoiles > 1 ? "s" : ""} sur ${ETOILES_MAX}">${liste}</span>`;
+  const titre = ascension ? `5 étoiles et ${ascension} étoile${ascension > 1 ? "s" : ""} rouge${ascension > 1 ? "s" : ""} (Ascension)` : `${etoiles} étoile${etoiles > 1 ? "s" : ""} sur ${ETOILES_MAX}`;
+  return `<span class="etoiles ${ascension ? "etoiles--ascension" : ""}" title="${titre}">${liste}</span>`;
 }
 
 // Les noms courts, pour la petite pastille de rarete des cartes
@@ -131,14 +133,14 @@ export const nombreCourt = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".
 export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}) {
   const variante = meilleureVariante(progression);
   const meta = progression
-    ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles)}`
+    ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles, progression.ascension ?? 0)}`
     : `<span class="carte__meta">${ROLES[perso.role].nom}</span>`;
   // La puissance et les stats, comme sur une carte a collectionner
   const st = statsCarte(perso, progression ?? { niveau: 1, etoiles: 1 });
   const puissance = `<span class="carte__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5">${ECLAIR}<b>${nombreCourt(st.puissance)}</b></span>`;
   const stats = `<span class="carte__stats"><span><i>PV</i>${nombreCourt(st.pv)}</span><span><i>ATQ</i>${nombreCourt(st.atq)}</span></span>`;
   return `
-    <button type="button" class="carte carte--${perso.rarete} ${variante ? `carte--${variante}` : ""} ${dansEquipe ? "carte--prise" : ""}"
+    <button type="button" class="carte carte--${perso.rarete} ${variante ? `carte--${variante}` : ""} ${progression?.ascension ? `carte--ascension carte--ascension-${progression.ascension}` : ""} ${dansEquipe ? "carte--prise" : ""}"
       data-action="choisir-perso" data-perso="${perso.id}" draggable="true" data-motif="${motifSerie(perso.serie)}"
       aria-pressed="${dansEquipe}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}; ${varsSerie(perso.serie)}"
       aria-label="${perso.nom}, ${RARETES[perso.rarete].nom}, ${ROLES[perso.role].nom}${progression ? `, niveau ${progression.niveau}, ${progression.etoiles} étoiles` : ""}${dansEquipe ? ", dans ton équipe" : ""}">

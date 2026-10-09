@@ -152,7 +152,7 @@ export function afficherQg(conteneur, { naviguer }) {
           <div class="qg-hero__plaque">
             ${htmlObi(star)}
             <p class="qg-hero__nom">${star.nom}</p>
-            <p class="qg-hero__infos"><span>${star.serie}</span><span>Niv. ${progStar.niveau}</span>${htmlEtoiles(progStar.etoiles)}<span class="qg-hero__pui">${puissancePerso(star.id).toLocaleString("fr-FR")}</span></p>
+            <p class="qg-hero__infos"><span>${star.serie}</span><span>Niv. ${progStar.niveau}</span>${htmlEtoiles(progStar.etoiles, progStar.ascension ?? 0)}<span class="qg-hero__pui">${puissancePerso(star.id).toLocaleString("fr-FR")}</span></p>
             <button type="button" class="vedette__changer" data-action="collection">Changer de vedette</button>
           </div>
         </div>` : ""}

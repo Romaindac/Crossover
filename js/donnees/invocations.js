@@ -7,10 +7,11 @@
 // ==========================================================
 
 // ---------- Reserve d'invocations ----------
-export const INVOCATIONS_MAX = 120;            // la reserve se remplit en 6 h...
-export const MINUTES_PAR_INVOCATION = 3;       // ...a raison d'une toutes les 3 minutes (6 h)
+export const INVOCATIONS_MAX = 80;             // la reserve se remplit en 6 h...
+export const MINUTES_PAR_INVOCATION = 4.5;     // ...a raison d'une toutes les 4 min 30 (6 h)
 export const INVOCATIONS_DEPART = 60;
-export const INVOCATIONS_VICTOIRE = 1;         // chaque combat gagne (campagne, Tour, chasse)
+export const INVOCATIONS_VICTOIRE = 1;         // par combat gagne (campagne, Tour, chasse)...
+export const CHANCE_INVOCATION_VICTOIRE = 0.4; // ...sur 40 % des victoires (les boucles de chasse en enchainent des centaines)
 export const INVOCATIONS_PLAFOND = 600;        // les cadeaux peuvent depasser la reserve, pas ce plafond
 
 // ---------- Rythme ----------
@@ -19,19 +20,19 @@ export const DELAI_RAPIDE_MS = 1000;           // une fois le tirage rapide debl
 export const FACTEUR_POTION_VITESSE = 0.5;
 
 // ---------- Chances de base, par invocation ----------
-export const TABLE_INVOCATION = { commun: 0.567, peu_commun: 0.28, rare: 0.125, epique: 0.025, legendaire: 0.003, secret: 0.0002 };
+export const TABLE_INVOCATION = { commun: 0.594, peu_commun: 0.27, rare: 0.11, epique: 0.018, legendaire: 0.002, secret: 0.0002 };
 // La chance multiplie le poids des raretes Rare et au-dessus (le Commun recule d'autant)
 export const RARETES_CHANCEUSES = ["rare", "epique", "legendaire", "secret"];
-export const PITIE_INVOCATION = 300;           // un Legendaire garanti a la 300e invocation sans Legendaire (un Secret remet aussi le compteur a zero)
+export const PITIE_INVOCATION = 500;           // un Legendaire garanti a la 500e invocation sans Legendaire (un Secret remet aussi le compteur a zero)
 // Secret : 0,02 % (environ 1 invocation sur 5 000), multiplie par la chance comme les Rares et au-dessus ; jamais garanti
 
 // ---------- Bordures (meme force, autre cadre ; elles comptent dans l'Index) ----------
 // Du plus rare au plus courant : on tire dans cet ordre
 export const BORDURES = [
-  { id: "neant", nom: "Néant", chance: 0.0002 },
-  { id: "arcenciel", nom: "Arc-en-ciel", chance: 0.001 },
-  { id: "doree", nom: "Dorée", chance: 0.005 },
-  { id: "holo", nom: "Holo", chance: 0.03 },
+  { id: "neant", nom: "Néant", chance: 0.0001 },
+  { id: "arcenciel", nom: "Arc-en-ciel", chance: 0.0005 },
+  { id: "doree", nom: "Dorée", chance: 0.0025 },
+  { id: "holo", nom: "Holo", chance: 0.015 },
 ];
 // La bordure Boss ne s'invoque pas : seul le premier KO d'un boss de l'Arene la donne
 export const BORDURE_BOSS = { id: "boss", nom: "Boss", chance: 0 };
@@ -116,9 +117,9 @@ export const POTIONS_DEPART = { chance: 2, bordure: 1, vitesse: 2, lune: 1 };
 // ---------- Fusion : les doublons au-dela de 5 etoiles forgent une bordure ----------
 // (ils donnent toujours leur poussiere ; ils comptent en plus ici)
 export const FUSION = [
-  { bordure: "holo", doublons: 10 },
-  { bordure: "doree", doublons: 30 },
-  { bordure: "arcenciel", doublons: 100 },
+  { bordure: "holo", doublons: 20 },
+  { bordure: "doree", doublons: 60 },
+  { bordure: "arcenciel", doublons: 200 },
 ];
 export const CHANCE_POTION_VICTOIRE = 0.12;    // une potion au hasard sur 12 % des victoires
 

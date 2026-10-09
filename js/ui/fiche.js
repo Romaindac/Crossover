@@ -11,7 +11,7 @@ import { ressources, eclats } from "../services/partie.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./cartes.js";
 import { htmlEmplacements } from "./equipement-ui.js";
-import { piecesDe, etatQuete, reclamerQuete, formulePuissance } from "../services/partie.js";
+import { piecesDe, etatQuete, reclamerQuete, formulePuissance, prochaineAscension } from "../services/partie.js";
 import { ETAPES_QUETE } from "../donnees/quetes.js";
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 
@@ -29,7 +29,7 @@ export function texteAffinite(affinite) {
 // avecEquipement : affiche les 4 emplacements (pour un perso possede)
 export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = true } = {}) {
   const equipement = avecEquipement ? piecesDe(perso.id) : [];
-  const stats = calculerStatsFinales(perso, { niveau: prog.niveau, etoiles: prog.etoiles, equipement, eveil: prog.eveil ?? 0, talents: prog.talents ?? [] });
+  const stats = calculerStatsFinales(perso, { niveau: prog.niveau, etoiles: prog.etoiles, equipement, eveil: prog.eveil ?? 0, talents: prog.talents ?? [], ascension: prog.ascension ?? 0 });
   const auMax = prog.niveau >= niveauMaxDe(prog);
   const besoin = xpPourNiveau(prog.niveau);
   const etoilesMax = prog.etoiles >= ETOILES_MAX;
@@ -49,7 +49,7 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
     <div class="detail__progression">
       <div class="detail__niveau">
         <span><strong>Niveau ${prog.niveau}</strong>${auMax ? " (maximum)" : ""}${prog.eveil ? ` <span class="badge-eveil">覚醒 ${CHIFFRES_ROMAINS[prog.eveil]}</span>` : ""}</span>
-        ${htmlEtoiles(prog.etoiles)}
+        ${htmlEtoiles(prog.etoiles, prog.ascension ?? 0)}
       </div>
       <span class="barre-xp" role="img" aria-label="${auMax ? "Niveau maximum" : `${prog.xp} points d'expérience sur ${besoin}`}">
         <span class="barre-xp__rempli" style="--xp: ${auMax ? 1 : prog.xp / besoin}"></span>
@@ -65,6 +65,7 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
       <div><dt>VIT</dt><dd>${stats.vit}</dd></div>
     </dl>
     ${htmlQuete(perso)}
+    ${avecEquipement ? htmlAscension(perso, prog) : ""}
     ${avecEquipement ? htmlEveil(perso, prog) : ""}
     ${avecEquipement ? htmlEmplacements(perso.id) : ""}
     <div class="detail__competence">
@@ -81,6 +82,25 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
 }
 
 // ---------- L'eveil dans la fiche ----------
+// L'Ascension : visible des 5 etoiles
+export function htmlAscension(perso, prog) {
+  if ((prog.etoiles ?? 1) < 5) return "";
+  const a = prochaineAscension(perso.id);
+  if (!a) return "";
+  const n = (x) => x.toLocaleString("fr-FR");
+  return `
+    <div class="ascension-fiche">
+      <p class="detail__type">Ascension ${a.palier ? `: ${a.palier} / 5 étoiles rouges` : ""}</p>
+      ${a.max ? '<p class="case__aide">Ascension complète : +50 % de PV et d\'ATQ.</p>' : `
+        <p class="case__aide">Au-delà de 5 étoiles : chaque étoile rouge donne +10 % de PV et d'ATQ. Elle coûte des doublons en trop (les copies reçues après 5 étoiles) et de la poussière.</p>
+        <ul class="eveil-fiche__conditions">
+          <li class="${a.surplus >= a.cout.doublons ? "ok" : ""}">${a.surplus >= a.cout.doublons ? "✓" : "○"} ${a.cout.doublons} doublons en trop (tu en as ${a.surplus})</li>
+          <li class="${a.poussiere >= a.cout.poussiere ? "ok" : ""}">${a.poussiere >= a.cout.poussiere ? "✓" : "○"} ${n(a.cout.poussiere)} poussière (tu en as ${n(a.poussiere)})</li>
+        </ul>
+        <button type="button" class="bouton bouton--petit-texte ascension-fiche__bouton" data-action="ascension" data-perso="${perso.id}" ${a.pret ? "" : "disabled"}>Étoile rouge ${a.palier + 1} : +10 %</button>`}
+    </div>`;
+}
+
 export function htmlEveil(perso, prog) {
   const eveil = prog.eveil ?? 0;
   if (prog.niveau < 30 && !eveil) return "";

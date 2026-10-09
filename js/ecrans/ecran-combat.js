@@ -712,7 +712,8 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
         if (gains.length) morceaux.push(`${bonus.nom} : ${gains.join(", ")}`);
       }
       const autel = recolteAutelDerniereVictoire();
-      if (autel) morceaux.push(`+${autel.invocations} invocation${autel.potion ? ` et une ${POTIONS_PAR_ID[autel.potion].nom.toLowerCase()} !` : ""}`);
+      if (autel?.invocations) morceaux.push(`+${autel.invocations} invocation${autel.potion ? ` et une ${POTIONS_PAR_ID[autel.potion].nom.toLowerCase()} !` : ""}`);
+      else if (autel?.potion) morceaux.push(`Une ${POTIONS_PAR_ID[autel.potion].nom.toLowerCase()} !`);
       if (!enBoucle || bonus?.tickets || autel?.potion) afficherToast(`<span>${morceaux.join(" · ")}</span>`, { duree: 2600 });
     }
 

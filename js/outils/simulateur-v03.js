@@ -23,7 +23,7 @@ const TICKETS_GRATUITS_PAR_JOUR = 2 * STOCK_GRATUIT_MAX;
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { invoquer } from "../moteur/invocations.js";
-import { INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_MAX, MONDES, NIVEAUX_AUTEL, POINTS_PAR_NIVEAU, CHANCE_PAR_POINT, BRANCHES_AUTEL } from "../donnees/invocations.js";
+import { INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, CHANCE_INVOCATION_VICTOIRE, INVOCATIONS_MAX, MONDES, NIVEAUX_AUTEL, POINTS_PAR_NIVEAU, CHANCE_PAR_POINT, BRANCHES_AUTEL } from "../donnees/invocations.js";
 import { composerEquipe } from "../moteur/composition.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { creerPiece, tirerButin, objetAuHasard, scorePiece, coutAmelioration, bonusEquipement } from "../moteur/equipement.js";
@@ -151,7 +151,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     const r = combat(equipe, et);
     const victoire = r.vainqueur === 0;
     const premiere = victoire && !j.battues.has(et.global);
-    if (victoire) j.invocations += INVOCATIONS_VICTOIRE;
+    if (victoire && h.nombre() < CHANCE_INVOCATION_VICTOIRE) j.invocations += INVOCATIONS_VICTOIRE;
     j.encre += victoire ? encreEtape(et, premiere) : 1;
     donnerXp(equipe, xpEtape(et, victoire));
     if (premiere) {
@@ -190,7 +190,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     donnerXp(equipe, xpChasse(choix.sz.niveau, victoire));
     j.eclats += eclatsChasse(choix.sz.niveau, victoire, false);
     if (victoire) {
-      j.invocations += INVOCATIONS_VICTOIRE;
+      if (h.nombre() < CHANCE_INVOCATION_VICTOIRE) j.invocations += INVOCATIONS_VICTOIRE;
       const butinPct = equipe.reduce((s, id) => s + bonusEquipement(piecesDe(id)).butin, 0);
       ajouterObjets(tirerButin(h.nombre, tableButin(choix.zone, choix.index), { butinPct }));
     }

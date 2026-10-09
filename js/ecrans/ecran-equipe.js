@@ -17,13 +17,13 @@ import {
   possede, progressionDe, idsPossedes, equipeSauvee, palierSauve,
   definirEquipe, definirPalier, palierMaxDebloque, estBattu, entreeCombat, equiperMeilleur, equiperMeilleurEquipe, prochaineEtape,
   eveiller, choisirTalent, equipesEnregistrees, enregistrerEquipe, chargerEquipe,
-  puissancePerso, puissanceDeMonEquipe,
+  puissancePerso, puissanceDeMonEquipe, ascensionner,
 } from "../services/partie.js";
 import { chargerPortraits, nombrePortraits, portraitDe } from "../services/portraits.js";
 import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { htmlFiche } from "../ui/fiche.js";
 import { ouvrirChoixPiece } from "../ui/equipement-ui.js";
-import { jouerEveil } from "../ui/eveil.js";
+import { jouerEveil, jouerAscension } from "../ui/eveil.js";
 import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation, ouvrirLexique } from "../ui/navigation.js";
 import { htmlSynergies } from "../ui/synergies.js";
@@ -332,6 +332,12 @@ export function afficherEquipe(conteneur, { naviguer }) {
       enregistrerEquipe(Number(cible.dataset.index), ["Campagne", "Chasse", "Tour"][Number(cible.dataset.index)]);
       message = "Équipe enregistrée.";
       toutRendre();
+      return;
+    }
+    if (action === "ascension") {
+      const r = ascensionner(cible.dataset.perso);
+      if (r.ok) jouerAscension(conteneur, PERSOS_PAR_ID[cible.dataset.perso], r.palier).then(() => { rendreDetail(); rendreFormation(); rendreGrille(); estimerChances(); });
+      else { message = r.erreur; rendreFormation(); }
       return;
     }
     if (action === "eveiller") {

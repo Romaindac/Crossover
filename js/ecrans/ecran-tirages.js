@@ -386,7 +386,7 @@ export function afficherTirages(conteneur, { naviguer }) {
       <span class="bilan__lignes">${nouveaux.length || etoiles || variantes ? lignes.join(" · ") : `Que des doublons, cette fois · ${lignes.at(-1)}`}</span>
       <span class="bilan__collection">Collection <strong data-compteur="${etat.avant}">${etat.avant}</strong> / ${PERSOS.length}</span>
       ${series.length ? `<span class="bilan__series">${series.join("")}</span>` : ""}
-      ${etat.completions.map((x) => `<span class="bilan__complete">${x.type === "edition" ? "Édition complète" : "Série complète"} : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre</span>`).join("")}`;
+      ${etat.completions.map((x) => `<span class="bilan__complete">${x.type === "edition" ? "Édition complète" : "Série complète"} : ${x.nom} ! +${x.recompense.invocations} invocations, +${x.recompense.encre} d'encre</span>`).join("")}`;
     // Le compteur de collection defile jusqu'au nouveau total
     const compteur = $("#revelation-resume [data-compteur]");
     if (compteur && apres > etat.avant && !mouvementReduit) {
@@ -527,7 +527,7 @@ export function afficherTirages(conteneur, { naviguer }) {
       messageAtelier = r.ok ? `${perso.nom} fabriqué : ${texteResultat(r.carte)}` : r.erreur;
       if (r.ok) {
         sonRarete(r.carte.rarete);
-        for (const x of r.completions ?? []) messageAtelier += ` ${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre.`;
+        for (const x of r.completions ?? []) messageAtelier += ` ${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.invocations} invocations, +${x.recompense.encre} d'encre.`;
         if (r.completions?.length) sonComplete();
         annoncerTampons(verifierTampons());
       }

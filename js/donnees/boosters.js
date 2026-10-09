@@ -46,7 +46,7 @@ export const CARTES_PAR_BOOSTER = 3;
 export const CASES_BOOSTER = [
   { commun: 0.8, peu_commun: 0.2 },
   { commun: 0.5, peu_commun: 0.38, rare: 0.12 },
-  { peu_commun: 0.6, rare: 0.32, epique: 0.07, legendaire: 0.01 },
+  { peu_commun: 0.6, rare: 0.335, epique: 0.06, legendaire: 0.005 },
 ];
 
 // Booster dore : rarissime, 3 cartes Epiques ou Legendaires
@@ -54,11 +54,11 @@ export const CHANCE_BOOSTER_DORE = 0.003;
 export const CASE_DOREE = { epique: 0.75, legendaire: 0.25 };
 
 // Pitie : un Legendaire garanti dans la derniere case au 100e booster sans Legendaire
-export const PITIE_BOOSTER = 100;
+export const PITIE_BOOSTER = 150;
 
 // Variantes cosmetiques (meme force, autre cadre) : par carte
-export const CHANCE_HOLO = 0.04;
-export const CHANCE_DOREE = 0.005;
+export const CHANCE_HOLO = 0.02;
+export const CHANCE_DOREE = 0.0025;
 export const VARIANTES = {
   holo: { nom: "Holo" },
   doree: { nom: "Dorée" },
@@ -67,7 +67,7 @@ export const VARIANTES = {
 // Prix et booster gratuit
 export const PRIX_BOOSTER = 100;                   // encre
 export const MINUTES_BOOSTER_GRATUIT = 30;         // un ticket gratuit toutes les 30 minutes...
-export const STOCK_GRATUIT_MAX = 16;               // ...tant qu'on en a moins de 16 en reserve (8 h)
+export const STOCK_GRATUIT_MAX = 8;                // ...tant qu'on en a moins de 8 en reserve (4 h)
 export const TICKETS_DEPART = 3;                   // de quoi ouvrir 3 boosters apres le booster de depart
 export const TICKETS_CHAPITRE = 3;                 // offerts a chaque chapitre de campagne fini
 // (le bonus des 3 missions du jour reclamees donne aussi 1 ticket)
@@ -76,7 +76,7 @@ export const TICKETS_CHAPITRE = 3;                 // offerts a chaque chapitre 
 // se change en poussiere. Elle sert a fabriquer la carte de son choix a l'atelier.
 export const POUSSIERE_PAR_BOOSTER = 2;
 export const POUSSIERE_DOUBLON = { commun: 20, peu_commun: 40, rare: 80, epique: 160, legendaire: 320, secret: 640 };
-export const COUT_FABRICATION = { commun: 150, peu_commun: 300, rare: 600, epique: 1200, legendaire: 2400 };
+export const COUT_FABRICATION = { commun: 150, peu_commun: 300, rare: 700, epique: 2000, legendaire: 5000 };
 
 // Le booster de depart, offert une fois au debut (voir ouvrirBoosterDepart)
 export const BOOSTER_DEPART = {

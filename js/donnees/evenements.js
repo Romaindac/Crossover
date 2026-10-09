@@ -37,7 +37,7 @@ export const CALENDRIER = [
   { texte: "3 boosters", recompense: { tickets: 3 } },
   { texte: "80 d'énergie", recompense: { energie: 80 } },
   { texte: "60 poussière", recompense: { poussiere: 60 } },
-  { texte: "Un booster doré", recompense: { ticketsDores: 1 } },
+  { texte: "40 invocations et une potion de chance", recompense: { invocations: 40, potions: { chance: 1 } } },
 ];
 
 // ---------- Tournoi de la semaine (la serie a l'honneur) ----------
@@ -50,5 +50,5 @@ export const PALIERS_TOURNOI = [
   { points: 100, texte: "4 boosters", recompense: { tickets: 4 } },
   { points: 140, texte: "100 d'énergie", recompense: { energie: 100 } },
   { points: 190, texte: "5 boosters", recompense: { tickets: 5 } },
-  { points: 250, texte: "Un booster doré", recompense: { ticketsDores: 1 } },
+  { points: 250, texte: "50 invocations et une potion de chance", recompense: { invocations: 50, potions: { chance: 1 } } },
 ];

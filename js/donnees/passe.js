@@ -23,6 +23,6 @@ const CYCLE = [
   { potions: { vitesse: 2 } },
 ];
 export const PALIERS_PASSE = Array.from({ length: 40 }, (_, i) => {
-  if ((i + 1) % 10 === 0) return i === 39 ? { ticketsDores: 2, potions: { lune: 3, chance: 2 } } : { ticketsDores: 1, invocations: 30 };
+  if ((i + 1) % 10 === 0) return i === 39 ? { invocations: 120, potions: { lune: 3, chance: 2 } } : { invocations: 60, potions: { chance: 1 } };
   return CYCLE[i % 10];
 });

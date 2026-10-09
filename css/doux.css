@@ -215,3 +215,43 @@ header.entete-page {
 }
 
 .place__vise { font-size: 0.75rem; }
+
+/* ==========================================================
+   ASCENSION : les etoiles rouges et leur aura
+   ========================================================== */
+.etoile--rouge {
+  fill: #ff3b4e;
+  stroke: #5a0010;
+  filter: drop-shadow(0 0 3px rgb(255 50 70 / 0.9));
+}
+
+.carte[data-motif] .etoile--rouge { fill: #ff3b4e; stroke: #2a0008; }
+
+.carte--ascension[data-motif] {
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.45), 0 0 16px -3px rgb(255 50 70 / 0.65);
+}
+
+.carte--ascension-5[data-motif] {
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.45), 0 0 24px 2px rgb(255 50 70 / 0.8);
+}
+
+.ascension-fiche {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.7rem 0.8rem;
+  background: linear-gradient(160deg, rgb(255 59 78 / 0.12), transparent 70%);
+  border: 1.5px solid rgb(196 30 50 / 0.45);
+  border-left: 5px solid #e0213f;
+  border-radius: 8px;
+}
+
+.ascension-fiche__bouton {
+  justify-self: start;
+  color: #fff;
+  background: linear-gradient(180deg, #ff5a6a, #c4142d);
+  border: 2px solid var(--encre);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.scene-eveil--ascension .scene-eveil__kanji { color: #ff3b4e; text-shadow: 0 0 24px rgb(255 40 70 / 0.8); }
+.scene-eveil--ascension { background: radial-gradient(ellipse at 50% 45%, rgb(120 10 30 / 0.92), rgb(10 2 6 / 0.96) 70%); }
