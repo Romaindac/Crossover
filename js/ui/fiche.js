@@ -11,7 +11,9 @@ import { ressources, eclats } from "../services/partie.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./cartes.js";
 import { htmlEmplacements } from "./equipement-ui.js";
-import { piecesDe } from "../services/partie.js";
+import { piecesDe, etatQuete, reclamerQuete } from "../services/partie.js";
+import { ETAPES_QUETE } from "../donnees/quetes.js";
+import { PERSOS_PAR_ID } from "../donnees/persos.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
 
@@ -61,6 +63,7 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
       <div><dt>DEF</dt><dd>${stats.def}</dd></div>
       <div><dt>VIT</dt><dd>${stats.vit}</dd></div>
     </dl>
+    ${htmlQuete(perso)}
     ${avecEquipement ? htmlEveil(perso, prog) : ""}
     ${avecEquipement ? htmlEmplacements(perso.id) : ""}
     <div class="detail__competence">
@@ -115,4 +118,36 @@ export function htmlEveil(perso, prog) {
           <p class="case__aide">Choisir un talent est gratuit ; en changer coûte ${COUT_CHANGER_TALENT} éclats.</p>
         </div>` : ""}
     </div>`;
+}
+
+// ---------- La quete du perso dans la fiche ----------
+const NOMS_POTIONS = { chance: "de chance", bordure: "de bordure", vitesse: "de vitesse", lune: "de lune" };
+const texteRecompenseQuete = (r) => [r.invocations && `${r.invocations} invocations`, r.poussiere && `${r.poussiere} poussière`,
+  ...Object.entries(r.potions ?? {}).map(([id, n]) => `${n} potion ${NOMS_POTIONS[id]}`), r.bordure && "<b>la bordure Éveillé</b>"].filter(Boolean).join(", ");
+
+export function htmlQuete(perso, message = "") {
+  const q = etatQuete(perso.id);
+  if (!q) return "";
+  return `
+    <section class="quete ${q.finie ? "quete--finie" : ""}" data-quete-perso="${perso.id}">
+      <p class="detail__type">Quête de ${perso.nom} · ${q.faites} / ${q.total}</p>
+      <ol class="quete__etapes">${ETAPES_QUETE.map((e, i) => `<li class="${i < q.faites ? "quete__etape--faite" : i === q.faites ? "quete__etape--cours" : ""}">${e.texte}</li>`).join("")}</ol>
+      ${q.finie ? `<p class="quete__fin">Quête terminée : ${perso.nom} porte la bordure Éveillé.</p>` : `
+        <span class="barre-xp"><span class="barre-xp__rempli" style="--xp: ${Math.min(1, q.valeur / q.etape.cible)}"></span></span>
+        <p class="quete__suivi">${Math.min(q.valeur, q.etape.cible)} / ${q.etape.cible} · récompense : ${texteRecompenseQuete(q.etape.recompense)}</p>
+        <button type="button" class="bouton bouton--obi-petit" data-quete="${perso.id}" ${q.prete ? "" : "disabled"}>Réclamer</button>`}
+      ${message ? `<p class="case__message" role="status">${message}</p>` : ""}
+    </section>`;
+}
+
+// Un seul ecouteur pour toutes les fiches (Collection, Equipe) : la quete se met a jour sur place
+if (typeof document !== "undefined") {
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-quete]");
+    if (!b || b.disabled) return;
+    const id = b.dataset.quete;
+    const r = reclamerQuete(id);
+    const bloc = b.closest(".quete");
+    if (bloc && PERSOS_PAR_ID[id]) bloc.outerHTML = htmlQuete(PERSOS_PAR_ID[id], r ? `Reçu : ${texteRecompenseQuete(r)} !` : "");
+  });
 }
