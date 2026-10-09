@@ -71,6 +71,6 @@ export function invoquer(aleatoire, editionId, { chance = 1, multBordure = 1, pi
   const perso = tirerPersoEdition(aleatoire, edition, rarete, serieVedette, poidsVedette);
   return {
     id: perso.id, rarete: perso.rarete, variante: tirerBordure(aleatoire, multBordure),
-    pitie: perso.rarete === "legendaire" ? 0 : pitie + 1,
+    pitie: perso.rarete === "legendaire" || perso.rarete === "secret" ? 0 : pitie + 1,
   };
 }

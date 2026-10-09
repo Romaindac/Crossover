@@ -5,7 +5,7 @@
 // ==========================================================
 
 import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
-import { aUnePartie, equipeSauvee, idsPossedes, etatInvocations, etatArene } from "../services/partie.js";
+import { aUnePartie, equipeSauvee, nbPersosCollection, secretsPossedes, etatInvocations, etatArene } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 
@@ -22,7 +22,8 @@ export function afficherAccueil(conteneur, { naviguer }) {
   const accroche = partie
     ? `<p class="obi__accroche">Bon retour, invocateur.</p>
        <ul class="accueil__stats">
-         <li><b>${idsPossedes().length}</b> / ${PERSOS.length} persos</li>
+         <li><b>${nbPersosCollection()}</b> / ${PERSOS.length} persos</li>
+         ${secretsPossedes().length ? `<li><b>${secretsPossedes().length}</b> Secret${secretsPossedes().length > 1 ? "s" : ""}</li>` : ""}
          ${autel ? `<li>Autel niveau <b>${autel.niveau}</b></li>` : ""}
          <li><b>${boss}</b> boss de l'Arène vaincus</li>
        </ul>`

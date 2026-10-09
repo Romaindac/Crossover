@@ -4,7 +4,7 @@
 // (2 devant, 3 derriere), choisir un palier, puis combattre.
 // ==========================================================
 
-import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID, PERSOS_JOUABLES } from "../donnees/persos.js";
 import { ROLES } from "../donnees/roles.js";
 import { RARETES } from "../donnees/raretes.js";
 import { CHAPITRES } from "../donnees/campagne.js";
@@ -42,7 +42,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
   let chances = {};          // palier -> taux de victoire estime
   let calculEnCours = 0;     // pour abandonner un calcul devenu inutile
 
-  const persosObtenus = () => PERSOS.filter((p) => possede(p.id));
+  const persosObtenus = () => PERSOS_JOUABLES.filter((p) => possede(p.id));
   const sauver = () => {
     definirEquipe(equipe);
     definirPalier(palier);

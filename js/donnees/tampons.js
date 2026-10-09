@@ -44,6 +44,8 @@ export const TAMPONS = [
   t("legendaires-11", "collection", "Toutes les légendes", "Posséder les 11 Légendaires", (x) => x.legendaires >= 11, { encre: 500, fragments: 8 }),
   t("tirages-100", "collection", "Gros lecteur", "Ouvrir 25 boosters", (x) => x.boosters >= 25, { encre: 100 }),
   t("boosters-100", "collection", "Collectionneur", "Ouvrir 100 boosters", (x) => x.boosters >= 100, { encre: 300, fragments: 3 }),
+  t("secret-1", "collection", "Le secret", "Invoquer un perso Secret", (x) => x.secrets >= 1, { encre: 500, fragments: 10 }, true),
+  t("secret-5", "collection", "Gardien des secrets", "Posséder 5 persos Secrets", (x) => x.secrets >= 5, { encre: 1500, fragments: 20 }, true),
   t("variante-doree", "collection", "Or pur", "Obtenir une carte dorée", (x) => x.dorees >= 1, { encre: 150 }),
 
   // ---------- Equipement ----------

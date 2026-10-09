@@ -22,7 +22,9 @@ import { createHash } from "crypto";
 import { MONDES, PITIE_INVOCATION, BORDURES } from "../js/donnees/invocations.js";
 import { BOSS_ARENE, bossDe } from "../js/donnees/arene.js";
 import { adversaireEtage, bonusDescente } from "../js/moteur/donjon.js";
-import { PERSOS_PAR_ID } from "../js/donnees/persos.js";
+import { PERSOS_PAR_ID, PERSOS_SECRETS } from "../js/donnees/persos.js";
+import { CALIBRAGE } from "../js/donnees/calibrage.js";
+import { TABLE_INVOCATION } from "../js/donnees/invocations.js";
 import { CALIBRAGE_BOSS } from "../js/donnees/calibrage-arene.js";
 import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
 import { creerHasard } from "../js/moteur/hasard.js";
@@ -99,6 +101,22 @@ verifier(Object.values(CALIBRAGE_BOSS).length === BOSS_ARENE.length && Object.va
 verifier(OBJETS.every((o) => TYPES_ICONES.includes(ICONE_DE_OBJET[o.id])), "chaque objet a son icone");
 verifier(readFileSync(new URL("../supabase/catalogue.sql", import.meta.url), "utf8") === catalogueSql(), "supabase/catalogue.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf8") === toutSql(), "supabase/a-coller.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
+
+// ---------- Les Secrets ----------
+{
+  const series = [...new Set(PERSOS.map((p) => p.serie))];
+  verifier(PERSOS_SECRETS.length === series.length && series.every((s) => PERSOS_SECRETS.filter((p) => p.serie === s).length === 1), `un Secret par serie (${PERSOS_SECRETS.length})`);
+  verifier(PERSOS_SECRETS.every((p) => p.rarete === "secret" && PERSOS_PAR_ID[p.base]?.serie === p.serie && !PERSOS.includes(p)), "chaque Secret a son heros de base et reste hors de PERSOS (jamais ennemi, hors series)");
+  verifier(PERSOS_SECRETS.every((p) => CALIBRAGE[p.id] === undefined || (CALIBRAGE[p.id] >= 0.8 && CALIBRAGE[p.id] <= 1.2)), "coefficients des Secrets entre 0,8 et 1,2 (sinon : retoucher le kit)");
+  verifier(TABLE_INVOCATION.secret > 0 && TABLE_INVOCATION.secret < TABLE_INVOCATION.legendaire, "le Secret a un taux a l'autel, plus rare que Legendaire");
+  let h = creerHasard(7), secrets = 0, bonsMondes = true;
+  for (let i = 0; i < 200000; i++) {
+    const m = MONDES[i % 4];
+    const r = invoquer(() => h.nombre(), m.edition, { chance: 1 });
+    if (r.rarete === "secret") { secrets++; if (!EDITIONS.find((e) => e.id === m.edition).series.includes(PERSOS_PAR_ID[r.id].serie)) bonsMondes = false; }
+  }
+  verifier(secrets > 15 && secrets < 70 && bonsMondes, `Secrets a l'autel : ${secrets} sur 200 000 invocations (environ 40 attendus), chacun dans son monde`);
+}
 
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);

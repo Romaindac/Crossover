@@ -417,6 +417,7 @@ begin
   select rarete into r2 from public.persos_catalogue where id = new.veut;
   if r1 is null or r2 is null then raise exception 'perso inconnu'; end if;
   if r1 <> r2 then raise exception 'raretes differentes'; end if;
+  if r1 = 'secret' then raise exception 'secret non echangeable'; end if;
   if (select count(*) from public.echanges where auteur = auth.uid() and cree > now() - interval '1 day') >= 10 then
     raise exception 'limite echanges jour';
   end if;
@@ -911,5 +912,25 @@ insert into public.persos_catalogue (id, rarete) values
   ('kakyoin', 'peu_commun'),
   ('polnareff', 'peu_commun'),
   ('josuke', 'commun'),
-  ('jonathan', 'commun')
+  ('jonathan', 'commun'),
+  ('goku_ui', 'secret'),
+  ('naruto_baryon', 'secret'),
+  ('luffy_gear5', 'secret'),
+  ('pikachu_sacha', 'secret'),
+  ('guts_berserker', 'secret'),
+  ('gojo_vide', 'secret'),
+  ('tanjiro_hinokami', 'secret'),
+  ('gon_adulte', 'secret'),
+  ('ichigo_mugetsu', 'secret'),
+  ('deku_100', 'secret'),
+  ('eren_originel', 'secret'),
+  ('chainsaw_man', 'secret'),
+  ('frieren_tueuse', 'secret'),
+  ('natsu_dragon', 'secret'),
+  ('seiya_divin', 'secret'),
+  ('asta_diable', 'secret'),
+  ('jinwoo_monarque', 'secret'),
+  ('edward_acier', 'secret'),
+  ('kaneki_roi', 'secret'),
+  ('jotaro_monde', 'secret')
 on conflict (id) do update set rarete = excluded.rarete;

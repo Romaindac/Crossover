@@ -8,17 +8,24 @@
 // de la zone 46-54 %. Recommence jusqu'a ce que tout le monde soit
 // entre 45 et 55 %, puis ecrit js/donnees/calibrage.js.
 // Les kits (passifs, ultimes) ne sont jamais modifies.
+//
+// node js/outils/calibrer.mjs secrets : calibre seulement les persos Secrets
+// (ils jouent contre tout le monde, les autres coefficients ne bougent pas).
 // ==========================================================
 
 import { writeFileSync } from "node:fs";
-import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID, PERSOS_SECRETS } from "../donnees/persos.js";
 import { CALIBRAGE } from "../donnees/calibrage.js";
 import { simulerCombat } from "../moteur/simulation.js";
 import { creerHasard } from "../moteur/hasard.js";
 
-const COMBATS_PAR_TOUR = Number(process.argv[2] ?? 16000);
-const TOURS_MAX = Number(process.argv[3] ?? 8);
-const ids = PERSOS.map((p) => p.id);
+const SECRETS = process.argv[2] === "secrets";
+const args = SECRETS ? process.argv.slice(3) : process.argv.slice(2);
+const COMBATS_PAR_TOUR = Number(args[0] ?? 16000);
+const TOURS_MAX = Number(args[1] ?? 8);
+const ids = (SECRETS ? [...PERSOS, ...PERSOS_SECRETS] : PERSOS).map((p) => p.id);
+// Les persos dont on ajuste le coefficient (tous, ou seulement les Secrets)
+const aRegler = SECRETS ? PERSOS_SECRETS.map((p) => p.id) : ids;
 const ordreDevant = ["tank", "attaquant", "controle", "soutien", "assassin"];
 
 function ranger(equipe) {
@@ -58,9 +65,9 @@ function tournoi(graine) {
 }
 
 const rapport = (taux) => {
-  const valeurs = Object.values(taux);
+  const valeurs = aRegler.map((id) => taux[id]);
   const ecart = Math.sqrt(valeurs.reduce((s, t) => s + (t - 0.5) ** 2, 0) / valeurs.length);
-  const hors = ids.filter((id) => taux[id] < 0.45 || taux[id] > 0.55);
+  const hors = aRegler.filter((id) => taux[id] < 0.45 || taux[id] > 0.55);
   return { ecart, hors };
 };
 
@@ -69,7 +76,7 @@ for (let tour = 1; tour <= TOURS_MAX; tour++) {
   const { ecart, hors } = rapport(taux);
   console.log(`Tour ${tour} : ecart-type ${(100 * ecart).toFixed(1)} points, hors [45 ; 55] : ${hors.map((id) => `${id} ${(100 * taux[id]).toFixed(0)}`).join(", ") || "personne"}`);
   if (!hors.length) break;
-  for (const id of ids) {
+  for (const id of aRegler) {
     if (taux[id] >= 0.46 && taux[id] <= 0.54) continue;
     const coef = (CALIBRAGE[id] ?? 1) * (1 + 0.8 * (0.5 - taux[id]));
     CALIBRAGE[id] = Math.round(Math.min(1.5, Math.max(0.6, coef)) * 1000) / 1000;

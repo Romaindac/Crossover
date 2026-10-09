@@ -11,7 +11,7 @@ import { EDITIONS_PAR_ID } from "../donnees/boosters.js";
 import { MONDES, POTIONS_PAR_ID } from "../donnees/invocations.js";
 import { CHAPITRES } from "../donnees/campagne.js";
 import {
-  bossDe, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE, BOSS_ARENE,
+  bossDe, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE, BOSS_ARENE, INVOCATIONS_SANS_PERSO_BOSS,
   DIFFICULTES, DIFFICULTES_PAR_ID,
 } from "../donnees/arene.js";
 import { creerCombat, avancer } from "../moteur/simulation.js";
@@ -19,7 +19,7 @@ import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import {
   equipeSauvee, entreeCombat, mondeOuvert, bossAreneBattu, bossAreneOuvert, appliquerResultatArene, difficulteOuverte,
-  combatGratuit, coutEnergie, assezDEnergie, payerEnergie, progressionDe, verifierTampons,
+  combatGratuit, coutEnergie, assezDEnergie, payerEnergie, progressionDe, verifierTampons, possede,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "./cartes.js";
@@ -44,7 +44,7 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
 
   zone.innerHTML = `
     <section class="arene arene--boss">
-      <p class="arene__intro">Ton deck, c'est ton équipe de 5. Bats les 8 boss de chaque monde dans l'ordre : le premier KO te donne la <b>carte Boss</b> du perso (bordure Boss, introuvable ailleurs), des invocations et une potion. Un monde fini ouvre la difficulté suivante : Difficile, Cauchemar, puis Céleste.</p>
+      <p class="arene__intro">Ton deck, c'est ton équipe de 5. Bats les 8 boss de chaque monde dans l'ordre : le premier KO te donne la <b>bordure Boss</b> du perso (un cadre introuvable ailleurs), des invocations et une potion. Le boss ne donne jamais le perso lui-même : si tu ne l'as pas encore, sa bordure t'attend jusqu'à ce que tu l'invoques. Un monde fini ouvre la difficulté suivante : Difficile, Cauchemar, puis Céleste.</p>
       <div class="autel__mondes arene__mondes" role="radiogroup" aria-label="Choisir le monde"></div>
       <div class="arene__difficultes" role="radiogroup" aria-label="Difficulté"></div>
       <div class="arene__echelle" role="list"></div>
@@ -121,7 +121,9 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
               <li><b>+${nombre(rec.encre)}</b> encre</li>
               <li><b>+${rec.invocations}</b> invocations</li>
               <li>${battu ? `${pourcent(CHANCE_POTION_REJOUE)} : une potion` : "Une potion au hasard"}</li>
-              <li>${battu ? `${pourcent(CHANCE_CARTE_BOSS_REJOUE)} : la carte Boss en double (une étoile)` : "<b>La carte Boss</b>"}</li>
+              <li>${battu
+                ? (possede(b.perso) ? `${pourcent(CHANCE_CARTE_BOSS_REJOUE)} : une étoile pour ${p.nom}` : "Rien de plus tant que tu n'as pas ce perso")
+                : possede(b.perso) ? `<b>La bordure Boss</b> pour ton ${p.nom}` : `<b>La bordure Boss</b> (posée quand tu invoqueras ${p.nom}) et +${INVOCATIONS_SANS_PERSO_BOSS} invocations`}</li>
             </ul>
           </div>
           <div class="arene__actions">
@@ -130,8 +132,8 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
             <button type="button" class="bouton bouton--clair bouton--petit-texte" data-arene="equipe">Changer le deck</button>
           </div>
         </div>
-        <div class="arene__carte-boss" aria-label="La carte Boss">
-          <span class="arene__rubrique">Carte Boss</span>
+        <div class="arene__carte-boss" aria-label="La bordure Boss">
+          <span class="arene__rubrique">Bordure Boss</span>
           <span class="tome--boss">${carte}</span>
         </div>
       </article>`;
@@ -291,8 +293,9 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     const carte = r.carte ? `
       <div class="arene-fin__carte tome--boss">
         ${htmlCarteStatique(p, { progression: { ...progressionDe(c.b.perso), variantes: ["boss"] } })}
-        <span class="badge-variante badge-variante--boss">Carte Boss${r.carte.nouveau ? " · nouveau perso !" : r.carte.nouvelleVariante ? " · nouvelle !" : " · une étoile"}</span>
-      </div>` : "";
+        <span class="badge-variante badge-variante--boss">Bordure Boss${r.carte.nouvelleVariante ? " · nouvelle !" : " · une étoile"}</span>
+      </div>` : r.bordureEnAttente ? `
+      <p class="arene-fin__conseil">Bordure Boss gagnée : elle sera posée sur ${p.nom} le jour où tu l'invoqueras à l'autel. En attendant : +${INVOCATIONS_SANS_PERSO_BOSS} invocations.</p>` : "";
     $(".arene-combat__fin").innerHTML = `
       <div class="arene-fin ${victoire ? "arene-fin--victoire" : "arene-fin--defaite"}">
         <p class="arene-fin__titre">${victoire ? "Boss vaincu !" : etat.raison === "temps" ? "Temps écoulé" : "Défaite"}</p>

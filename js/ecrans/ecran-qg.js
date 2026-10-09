@@ -20,7 +20,7 @@ import {
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
   etatPasse, reclamerPasse, etatExplorations, lancerExploration, recupererExploration,
-  etatInvocations, prochainBossArene, etatDonjon,
+  etatInvocations, prochainBossArene, etatDonjon, nbPersosCollection, secretsPossedes,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
@@ -210,8 +210,9 @@ export function afficherQg(conteneur, { naviguer }) {
 
         <section class="case case--collection" aria-labelledby="titre-collection">
           <h2 class="case__titre" id="titre-collection">Collection</h2>
-          <p class="case__chiffre">${idsPossedes().length}<span> sur ${PERSOS.length}</span></p>
-          <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" style="--xp: ${idsPossedes().length / PERSOS.length}"></span></span>
+          <p class="case__chiffre">${nbPersosCollection()}<span> sur ${PERSOS.length}</span></p>
+          <span class="barre-xp"><span class="barre-xp__rempli barre-pitie" style="--xp: ${nbPersosCollection() / PERSOS.length}"></span></span>
+          ${secretsPossedes().length ? `<p class="case__aide qg-secrets">+ ${secretsPossedes().length} Secret${secretsPossedes().length > 1 ? "s" : ""}</p>` : ""}
           <div class="qg-derniers" aria-label="Derniers persos obtenus">
             ${idsPossedes().slice(-3).reverse().map((id) => `<span class="qg-derniers__perso">${htmlPortrait(PERSOS_PAR_ID[id])}</span>`).join("")}
           </div>

@@ -11,7 +11,7 @@
 
 import { writeFileSync, readFileSync } from "node:fs";
 import { OBJETS } from "../donnees/objets.js";
-import { PERSOS } from "../donnees/persos.js";
+import { PERSOS_JOUABLES } from "../donnees/persos.js";
 
 export function catalogueSql() {
   const lignes = OBJETS.map((o) => {
@@ -26,7 +26,7 @@ on conflict (id) do update set rarete = excluded.rarete, emplacement = excluded.
 
 -- Les persos et leur rarete (pour les echanges de cartes)
 insert into public.persos_catalogue (id, rarete) values
-${PERSOS.map((p) => `  ('${p.id}', '${p.rarete}')`).join(",\n")}
+${PERSOS_JOUABLES.map((p) => `  ('${p.id}', '${p.rarete}')`).join(",\n")}
 on conflict (id) do update set rarete = excluded.rarete;
 `;
 }

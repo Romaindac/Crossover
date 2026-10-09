@@ -7,6 +7,7 @@
 // ==========================================================
 
 import { PERSOS_V4 } from "./persos-v4.js";
+import { PERSOS_SECRETS } from "./persos-secrets.js";
 
 const PERSOS_BASE = [
   // ---------- Dragon Ball ----------
@@ -751,4 +752,7 @@ export const BOSS_RAID = [
 ];
 
 // Pour retrouver un perso a partir de son id : PERSOS_PAR_ID.goku
-export const PERSOS_PAR_ID = Object.fromEntries([...PERSOS, RATURE, ...BOSS_RAID].map((p) => [p.id, p]));
+export const PERSOS_PAR_ID = Object.fromEntries([...PERSOS, ...PERSOS_SECRETS, RATURE, ...BOSS_RAID].map((p) => [p.id, p]));
+// Tous les persos qu'un joueur peut posseder (les Secrets a part : ils ne sont pas dans PERSOS)
+export const PERSOS_JOUABLES = [...PERSOS, ...PERSOS_SECRETS];
+export { PERSOS_SECRETS };

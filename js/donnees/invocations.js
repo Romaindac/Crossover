@@ -19,10 +19,11 @@ export const DELAI_RAPIDE_MS = 1000;           // une fois le tirage rapide debl
 export const FACTEUR_POTION_VITESSE = 0.5;
 
 // ---------- Chances de base, par invocation ----------
-export const TABLE_INVOCATION = { commun: 0.567, peu_commun: 0.28, rare: 0.125, epique: 0.025, legendaire: 0.003 };
+export const TABLE_INVOCATION = { commun: 0.567, peu_commun: 0.28, rare: 0.125, epique: 0.025, legendaire: 0.003, secret: 0.0002 };
 // La chance multiplie le poids des raretes Rare et au-dessus (le Commun recule d'autant)
-export const RARETES_CHANCEUSES = ["rare", "epique", "legendaire"];
-export const PITIE_INVOCATION = 300;           // un Legendaire garanti a la 300e invocation sans Legendaire
+export const RARETES_CHANCEUSES = ["rare", "epique", "legendaire", "secret"];
+export const PITIE_INVOCATION = 300;           // un Legendaire garanti a la 300e invocation sans Legendaire (un Secret remet aussi le compteur a zero)
+// Secret : 0,02 % (environ 1 invocation sur 5 000), multiplie par la chance comme les Rares et au-dessus ; jamais garanti
 
 // ---------- Bordures (meme force, autre cadre ; elles comptent dans l'Index) ----------
 // Du plus rare au plus courant : on tire dans cet ordre
@@ -88,6 +89,7 @@ export const PHASES_PAR_ID = Object.fromEntries(PHASES.map((p) => [p.id, p]));
 // ---------- Index : la collection donne de la chance pour toujours ----------
 export const CHANCE_SERIE_COMPLETE = 0.04;     // 20 series : +80 %
 export const CHANCE_EDITION_COMPLETE = 0.1;    // 4 editions : +40 %
+export const CHANCE_PAR_SECRET = 0.05;         // chaque Secret obtenu (20 : +100 %)
 export const CHANCE_PAR_BORDURE = { holo: 0.002, doree: 0.005, arcenciel: 0.02, neant: 0.05, boss: 0.01, eveille: 0.02 };   // par perso et par bordure
 // Les combats aussi rendent chanceux : boss de l'arene, mondes finis, Tour, eveils
 export const CHANCE_BOSS_ARENE = 0.005;        // par boss vaincu (32 : +16 %)
@@ -122,7 +124,7 @@ export const CHANCE_POTION_VICTOIRE = 0.12;    // une potion au hasard sur 12 % 
 
 // ---------- Poussiere des invocations ----------
 // Un doublon d'un perso deja a 5 etoiles : moins que dans un booster (on invoque beaucoup plus)
-export const POUSSIERE_DOUBLON_INVOCATION = { commun: 2, peu_commun: 4, rare: 10, epique: 30, legendaire: 80 };
+export const POUSSIERE_DOUBLON_INVOCATION = { commun: 2, peu_commun: 4, rare: 10, epique: 30, legendaire: 80, secret: 300 };
 
 // ---------- Mondes : un autel par edition, ouverts par la campagne ----------
 // chapitre : le chapitre de campagne a terminer pour ouvrir l'autel (0 = ouvert d'emblee)

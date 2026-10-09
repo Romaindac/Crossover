@@ -6,7 +6,7 @@
 // d'autel. Potions, mondes (un autel par edition) et historique.
 // ==========================================================
 
-import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID, PERSOS_SECRETS } from "../donnees/persos.js";
 import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { EDITIONS_PAR_ID } from "../donnees/boosters.js";
 import {
@@ -30,7 +30,7 @@ import { sonCarte, sonRarete, sonNouveau, sonComplete, sonSuspense } from "./son
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
-const pourcent = (x) => `${(x * 100).toFixed(x < 0.01 ? 2 : x < 0.1 ? 1 : 0).replace(".", ",")} %`;
+const pourcent = (x, d) => `${(x * 100).toFixed(d ?? (x < 0.01 ? 2 : x < 0.1 ? 1 : 0)).replace(".", ",")} %`;
 const multiplicateur = (x) => `×${x.toFixed(2).replace(".", ",").replace(/,?0+$/, "")}`;
 const ONOMATOPEES = ["ゴゴゴ", "ドドド", "ズドン"];
 const HISTORIQUE_MAX = 40;
@@ -146,6 +146,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       [`Index · ${c.index.nbSeries} série${c.index.nbSeries > 1 ? "s" : ""} complète${c.index.nbSeries > 1 ? "s" : ""}`, `+${pourcent(c.index.series)}`],
       [`Index · ${c.index.nbEditions} édition${c.index.nbEditions > 1 ? "s" : ""} complète${c.index.nbEditions > 1 ? "s" : ""}`, `+${pourcent(c.index.editions)}`],
       ["Index · bordures", `+${pourcent(c.index.bordures)}`],
+      ...(c.index.nbSecrets ? [[`Index · ${c.index.nbSecrets} Secret${c.index.nbSecrets > 1 ? "s" : ""}`, `+${pourcent(c.index.secrets)}`]] : []),
       [`Index · combats (${c.index.nbBoss} boss, Tour, éveils)`, `+${pourcent(c.index.combats)}`],
       ...(c.potion > 1 ? [["Potion de chance", multiplicateur(c.potion)]] : []),
       ...(c.phase > 1 ? [[`Phase : ${e.phase.nom}`, multiplicateur(c.phase)]] : []),
@@ -154,7 +155,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       <p class="autel__panneau-titre">Chance <strong class="autel__chance">${multiplicateur(c.total)}</strong></p>
       <dl class="autel__lignes">${lignes.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join("")}</dl>
       ${naviguer ? '<button type="button" class="bouton-texte autel__voir-index" data-autel="index">Voir l\'Index : ce qui te manque</button>' : ""}
-      <p class="autel__taux-courts">${ORDRE_RARETES.slice(0, 3).map((r) => `<span class="autel__taux autel__taux--${r}">${RARETES[r].nom} ${pourcent(table[r])}</span>`).join("")}${c.bordure > 1 ? `<span class="autel__taux autel__taux--bordure">Bordures ${multiplicateur(c.bordure)}</span>` : ""}</p>`;
+      <p class="autel__taux-courts">${ORDRE_RARETES.slice(0, 3).map((r) => `<span class="autel__taux autel__taux--${r}">${RARETES[r].nom} ${pourcent(table[r])}</span>`).join("")}<span class="autel__taux autel__taux--secret" title="Un par manga. Personne ne sait qui c'est avant de l'avoir invoqué.">Secret ${pourcent(table.secret, 3)}</span>${c.bordure > 1 ? `<span class="autel__taux autel__taux--bordure">Bordures ${multiplicateur(c.bordure)}</span>` : ""}</p>`;
     $("#autel-scene").style.setProperty("--chance", String(Math.min(1, (c.total - 1) / 2)));
   }
 
@@ -210,6 +211,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
       <details class="taux">
         <summary>Voir les taux, les bordures et l'Index</summary>
         <p>Taux de base par invocation : ${ORDRE_RARETES.map((r) => `${RARETES[r].nom} ${pourcent(base[r])}`).join(", ")}. La chance multiplie les Rares, Épiques et Légendaires ; le Commun recule d'autant. Un Légendaire est garanti à la ${PITIE_INVOCATION}e invocation sans Légendaire.</p>
+        <p><b>Secret ${pourcent(base.secret, 3)}</b> : la rareté au-dessus de Légendaire, ${PERSOS_SECRETS.length} persos (un par manga), chacun deux fois et demie plus fort qu'une Commune à niveau égal. Personne ne sait qui ils sont avant de les avoir invoqués. La chance les multiplie aussi ; ils ne sont jamais garantis.</p>
         <p>Bordures (même force, autre cadre) : ${BORDURES.slice().reverse().map((b) => `${b.nom} ${pourcent(b.chance)}`).join(", ")}. La potion de bordure triple ces chances.</p>
         <p>L'Index rend chanceux pour toujours : +${pourcent(CHANCE_SERIE_COMPLETE)} par série complète, +${pourcent(CHANCE_EDITION_COMPLETE)} par édition complète, un peu pour chaque bordure, +${pourcent(CHANCE_BOSS_ARENE)} par boss de l'Arène vaincu, +${pourcent(CHANCE_MONDE_FINI)} par monde dont les 8 boss sont tombés, et des bonus pour le record de la Tour et les éveils.</p>
         <p>Phases de l'autel : toutes les ${MINUTES_PAR_PHASE} minutes, la même pour tous les joueurs. ${PHASES.map((x) => `<b>${x.nom}</b> (${x.texte.replace(/\.$/, "")})`).join(", ")}. La potion de lune relance la phase jusqu'au prochain changement.</p>
@@ -238,7 +240,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
 
   // ---------- Effets ----------
 
-  const COULEURS_ECLATS = { rare: ["#5fa8ff", "#cfe4ff"], epique: ["#b38cff", "#efe4ff", "#ff9bd8"], legendaire: ["#ffd23f", "#fff3b0", "#ff9f1c", "#ffffff"] };
+  const COULEURS_ECLATS = { rare: ["#5fa8ff", "#cfe4ff"], epique: ["#b38cff", "#efe4ff", "#ff9bd8"], legendaire: ["#ffd23f", "#fff3b0", "#ff9f1c", "#ffffff"], secret: ["#ff2d4a", "#1a0008", "#ffffff", "#ff8a9a"] };
 
   function eclater(rarete, bordure) {
     if (mouvementReduit) return;
@@ -246,10 +248,10 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     if (!couleurs) return;
     const boite = document.createElement("span");
     boite.className = "eclats-particules autel__eclats";
-    const n = rarete === "legendaire" || bordure ? 40 : rarete === "epique" ? 24 : 12;
+    const n = rarete === "secret" ? 64 : rarete === "legendaire" || bordure ? 40 : rarete === "epique" ? 24 : 12;
     boite.innerHTML = Array.from({ length: n }, (_, k) => {
       const angle = (k / n) * 360 + Math.random() * 20;
-      const distance = (rarete === "legendaire" ? 150 : 90) + Math.random() * 80;
+      const distance = (rarete === "secret" ? 200 : rarete === "legendaire" ? 150 : 90) + Math.random() * 80;
       return `<span style="--a: ${angle}deg; --d: ${distance}px; --t: ${4 + Math.random() * 7}px; --c: ${couleurs[k % couleurs.length]}; --delai: ${Math.random() * 100}ms"></span>`;
     }).join("");
     $("#autel-scene").appendChild(boite);
@@ -265,7 +267,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
 
   function texteCarte(c) {
     const b = c.variante && c.nouvelleVariante ? ` + bordure ${nomBordure(c.variante)} !` : c.variante ? ` · ${nomBordure(c.variante)}` : "";
-    if (c.nouveau) return `Nouveau perso !${b}`;
+    if (c.nouveau) return `Nouveau perso !${b}${c.bordureBoss ? " Sa bordure Boss, gagnée à l'Arène, est posée !" : ""}`;
     if (c.poussiere) return `Déjà au maximum : +${c.poussiere} poussière${b}`;
     if (c.etoilesApres > c.etoilesAvant) return `${c.etoilesApres}e étoile !${b}`;
     return `Doublon ${c.doublons}/${c.besoin} vers l'étoile suivante${b}`;
@@ -275,16 +277,20 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
   async function montrer(cartes) {
     const scene = $("#autel-scene");
     const meilleure = cartes.reduce((a, b) => (RARETES[b.rarete].ordre > RARETES[a.rarete].ordre ? b : a));
-    const grosse = meilleure.rarete === "legendaire" || meilleure.rarete === "epique";
+    const secret = meilleure.rarete === "secret";
+    const grosse = secret || meilleure.rarete === "legendaire" || meilleure.rarete === "epique";
     const bordureRare = cartes.find((c) => BORDURES_RARES.includes(c.variante));
     scene.dataset.rarete = meilleure.rarete;
     scene.classList.remove("autel__scene--jaillit");
     // Le sceau s'emballe avant une grosse carte
     if (grosse && !mouvementReduit) {
       scene.classList.add("autel__scene--suspense");
+      if (secret) scene.classList.add("autel__scene--secret");
       sonSuspense();
-      await pause(meilleure.rarete === "legendaire" ? 900 : 450);
-      scene.classList.remove("autel__scene--suspense");
+      if (secret) setTimeout(sonSuspense, 700);
+      await pause(secret ? 1900 : meilleure.rarete === "legendaire" ? 900 : 450);
+      scene.classList.remove("autel__scene--suspense", "autel__scene--secret");
+      if (secret) scene.classList.add("autel__scene--rouge");
     }
     $("#autel-carte").innerHTML = cartes.map((c) => `
       <span class="autel__sortie autel__sortie--${c.rarete} ${c.variante ? `tome--${c.variante}` : ""}">
@@ -303,7 +309,23 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     $("#autel-resultat").innerHTML = cartes.length === 1
       ? `<b class="autel__nom-${meilleure.rarete}">${PERSOS_PAR_ID[meilleure.id].nom}</b> · ${RARETES[meilleure.rarete].nom} · ${texteCarte(meilleure)}`
       : cartes.map((c) => `<span><b class="autel__nom-${c.rarete}">${PERSOS_PAR_ID[c.id].nom}</b> ${c.nouveau ? "(nouveau)" : ""}</span>`).join(" · ");
-    if (meilleure.rarete === "legendaire" || bordureRare) {
+    if (secret) {
+      secouer(2);
+      if (!mouvementReduit) {
+        const flash = document.createElement("span");
+        flash.className = "flash-legendaire flash-secret";
+        scene.appendChild(flash);
+        flash.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1400 }).onfinish = () => flash.remove();
+        const ono = document.createElement("span");
+        ono.className = "onomatopee autel__onomatopee autel__onomatopee--secret";
+        ono.textContent = "秘密";
+        scene.appendChild(ono);
+        setTimeout(() => ono.remove(), 2600);
+      }
+      $("#autel-resultat").innerHTML = `<b class="autel__nom-secret">SECRET</b> · ${PERSOS_PAR_ID[meilleure.id].nom} · ${texteCarte(meilleure)}`;
+      await pause(mouvementReduit ? 400 : 2800);
+      scene.classList.remove("autel__scene--rouge");
+    } else if (meilleure.rarete === "legendaire" || bordureRare) {
       secouer(1.3);
       if (!mouvementReduit) {
         const flash = document.createElement("span");
@@ -327,10 +349,11 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
   let derniereAnnonce = 0;
   function annoncerDansLeChat(cartes) {
     if (!connecte() || !reglage("annonces") || Date.now() - derniereAnnonce < 30000) return;
-    const c = cartes.find((x) => ["arcenciel", "neant"].includes(x.variante) || (x.rarete === "legendaire" && x.variante));
+    const c = cartes.find((x) => x.rarete === "secret") ?? cartes.find((x) => ["arcenciel", "neant"].includes(x.variante) || (x.rarete === "legendaire" && x.variante));
     if (!c) return;
     derniereAnnonce = Date.now();
     const p = PERSOS_PAR_ID[c.id];
+    if (c.rarete === "secret") return envoyerMessage("general", `[Autel] SECRET ! vient de percer un secret de l'autel : ${p.nom} !`).catch(() => {});
     envoyerMessage("general", `[Autel] vient d'invoquer ${p.nom} ${RARETES[c.rarete].nom}${c.variante ? `, bordure ${nomBordure(c.variante)}` : ""} !`).catch(() => {});
   }
 
