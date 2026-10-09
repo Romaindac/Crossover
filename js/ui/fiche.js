@@ -9,7 +9,9 @@ import { ETOILES_MAX, xpPourNiveau, doublonsPourEtoile } from "../donnees/progre
 import { EVEILS, TALENTS, CHIFFRES_ROMAINS, niveauMaxDe, COUT_CHANGER_TALENT } from "../donnees/eveil.js";
 import { ressources, eclats } from "../services/partie.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
-import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./cartes.js";
+import { htmlCarteStatique, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./cartes.js";
+import { RARETES } from "../donnees/raretes.js";
+import { varsSerie } from "../donnees/series.js";
 import { htmlEmplacements } from "./equipement-ui.js";
 import { piecesDe, etatQuete, reclamerQuete, formulePuissance, prochaineAscension } from "../services/partie.js";
 import { ETAPES_QUETE } from "../donnees/quetes.js";
@@ -27,56 +29,71 @@ export function texteAffinite(affinite) {
 
 // avecDoublons : affiche aussi la progression vers l'etoile suivante
 // avecEquipement : affiche les 4 emplacements (pour un perso possede)
+// La fiche s'adapte a sa largeur (requete de conteneur) : une colonne dans
+// le panneau de l'Equipe, deux colonnes dans la grande fiche de la Collection.
 export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = true } = {}) {
   const equipement = avecEquipement ? piecesDe(perso.id) : [];
   const stats = calculerStatsFinales(perso, { niveau: prog.niveau, etoiles: prog.etoiles, equipement, eveil: prog.eveil ?? 0, talents: prog.talents ?? [], ascension: prog.ascension ?? 0 });
   const auMax = prog.niveau >= niveauMaxDe(prog);
   const besoin = xpPourNiveau(prog.niveau);
   const etoilesMax = prog.etoiles >= ETOILES_MAX;
+  const tuile = (code, nom, valeur) => `<div class="pfiche__stat pfiche__stat--${code}"><dt>${nom}</dt><dd>${valeur}</dd></div>`;
+
+  const progression = [
+    htmlQuete(perso),
+    avecEquipement ? htmlAscension(perso, prog) : "",
+    avecEquipement ? htmlEveil(perso, prog) : "",
+    avecEquipement ? htmlEmplacements(perso.id) : "",
+  ].join("");
 
   return `
-    <div class="detail__haut" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}">
-      <div class="detail__visuel">${htmlPortrait(perso)}${htmlObi(perso)}</div>
-      <div>
-        <p class="detail__serie">${perso.serie}</p>
-        <h2 class="detail__nom">${perso.nom}</h2>
-        <p class="detail__role">${iconeRole(perso.role)} ${ROLES[perso.role].nom}</p>
-        <p class="detail__aide">${REGLES_ROLES[perso.role]}</p>
-        <p class="detail__affinite"><span class="pastille"></span>${AFFINITES[perso.affinite]}</p>
-        <p class="detail__aide">${texteAffinite(perso.affinite)}</p>
+    <div class="pfiche" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}; ${varsSerie(perso.serie)}">
+      <header class="pfiche__hero">
+        <div class="pfiche__carte">${htmlCarteStatique(perso, { progression: prog })}</div>
+        <div class="pfiche__identite">
+          <p class="pfiche__serie">${perso.serie}</p>
+          <h2 class="pfiche__nom">${perso.nom}</h2>
+          <p class="pfiche__puces">
+            <span class="puce-fiche puce-fiche--${perso.rarete}">${RARETES[perso.rarete].nom}</span>
+            <span class="puce-fiche">${iconeRole(perso.role)}${ROLES[perso.role].nom}</span>
+            <span class="puce-fiche puce-fiche--affinite"><span class="pastille"></span>${AFFINITES[perso.affinite]}</span>
+            ${prog.eveil ? `<span class="puce-fiche puce-fiche--eveil">覚醒 ${CHIFFRES_ROMAINS[prog.eveil]}</span>` : ""}
+          </p>
+          <p class="pfiche__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5"><span>Puissance</span><b>${nombre(formulePuissance(stats))}</b></p>
+          <dl class="pfiche__stats">
+            ${tuile("pv", "PV", nombre(stats.pv))}${tuile("atq", "ATQ", nombre(stats.atq))}${tuile("def", "DEF", nombre(stats.def))}${tuile("vit", "VIT", nombre(stats.vit))}
+          </dl>
+          <div class="pfiche__niveau">
+            <p class="pfiche__niveau-ligne"><strong>Niveau ${prog.niveau}</strong>${auMax ? "<span>maximum</span>" : ""}${htmlEtoiles(prog.etoiles, prog.ascension ?? 0)}</p>
+            <span class="barre-xp" role="img" aria-label="${auMax ? "Niveau maximum" : `${prog.xp} points d'expérience sur ${besoin}`}">
+              <span class="barre-xp__rempli" style="--xp: ${auMax ? 1 : prog.xp / besoin}"></span>
+            </span>
+            <p class="pfiche__petit">${auMax ? "Niveau maximum atteint" : `${nombre(prog.xp)} / ${nombre(besoin)} XP`}</p>
+            ${avecDoublons ? `<p class="pfiche__petit">${etoilesMax ? "Étoiles au maximum : les doublons donnent de l'encre." : `Doublons : ${prog.doublons} sur ${doublonsPourEtoile(prog.etoiles)} pour la ${prog.etoiles + 1}e étoile.`}</p>` : ""}
+          </div>
+        </div>
+      </header>
+
+      <div class="pfiche__corps">
+        <section class="pfiche__kit" aria-label="Compétences">
+          <h3 class="pfiche__titre">Compétences</h3>
+          <div class="competence-fiche competence-fiche--ultime">
+            <p class="competence-fiche__type">Ultime</p>
+            <p class="competence-fiche__nom">${perso.ultime.nom}</p>
+            <p>${perso.ultime.description}.</p>
+          </div>
+          <div class="competence-fiche">
+            <p class="competence-fiche__type">Passif</p>
+            <p class="competence-fiche__nom">${perso.passif.nom}</p>
+            <p>${perso.passif.description}.</p>
+          </div>
+          <div class="pfiche__regles">
+            <p><b>${iconeRole(perso.role)}${ROLES[perso.role].nom}.</b> ${REGLES_ROLES[perso.role]}</p>
+            <p><b><span class="pastille"></span>${AFFINITES[perso.affinite]}.</b> ${texteAffinite(perso.affinite)}</p>
+          </div>
+        </section>
+        ${progression ? `<section class="pfiche__progression" aria-label="Progression"><h3 class="pfiche__titre">Progression</h3>${progression}</section>` : ""}
       </div>
-    </div>
-    <div class="detail__progression">
-      <div class="detail__niveau">
-        <span><strong>Niveau ${prog.niveau}</strong>${auMax ? " (maximum)" : ""}${prog.eveil ? ` <span class="badge-eveil">覚醒 ${CHIFFRES_ROMAINS[prog.eveil]}</span>` : ""}</span>
-        ${htmlEtoiles(prog.etoiles, prog.ascension ?? 0)}
-      </div>
-      <span class="barre-xp" role="img" aria-label="${auMax ? "Niveau maximum" : `${prog.xp} points d'expérience sur ${besoin}`}">
-        <span class="barre-xp__rempli" style="--xp: ${auMax ? 1 : prog.xp / besoin}"></span>
-      </span>
-      <span class="detail__xp">${auMax ? "Niveau maximum atteint" : `${nombre(prog.xp)} / ${nombre(besoin)} XP`}</span>
-      ${avecDoublons ? `<span class="detail__xp">${etoilesMax ? "Étoiles au maximum : les doublons donnent de l'encre." : `Doublons : ${prog.doublons} sur ${doublonsPourEtoile(prog.etoiles)} pour la ${prog.etoiles + 1}e étoile.`}</span>` : ""}
-    </div>
-    <p class="detail__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5">Puissance <b>${nombre(formulePuissance(stats))}</b></p>
-    <dl class="detail__stats">
-      <div><dt>PV</dt><dd>${nombre(stats.pv)}</dd></div>
-      <div><dt>ATQ</dt><dd>${stats.atq}</dd></div>
-      <div><dt>DEF</dt><dd>${stats.def}</dd></div>
-      <div><dt>VIT</dt><dd>${stats.vit}</dd></div>
-    </dl>
-    ${htmlQuete(perso)}
-    ${avecEquipement ? htmlAscension(perso, prog) : ""}
-    ${avecEquipement ? htmlEveil(perso, prog) : ""}
-    ${avecEquipement ? htmlEmplacements(perso.id) : ""}
-    <div class="detail__competence">
-      <p class="detail__type">Passif</p>
-      <p class="detail__titre-comp">${perso.passif.nom}</p>
-      <p>${perso.passif.description}.</p>
-    </div>
-    <div class="detail__competence detail__competence--ultime">
-      <p class="detail__type">Ultime</p>
-      <p class="detail__titre-comp">${perso.ultime.nom}</p>
-      <p>${perso.ultime.description}.</p>
     </div>
   `;
 }
