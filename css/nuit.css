@@ -553,3 +553,98 @@ button:where(
   background: var(--obi);
   border-color: var(--encre);
 }
+
+/* ==========================================================
+   DECORS : la version « crepuscule d'encre » des decors pastel
+   (bannieres de chapitre et de zone, fond du combat)
+   ========================================================== */
+.decor svg {
+  filter: saturate(1.15) brightness(0.62) contrast(1.08);
+}
+
+.decor::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(30 26 80 / 0.35), rgb(12 10 30 / 0.15) 45%, rgb(40 12 30 / 0.35));
+  mix-blend-mode: multiply;
+}
+
+.decor--crepuscule svg {
+  filter: saturate(1.25) hue-rotate(-18deg) brightness(0.55) contrast(1.1);
+}
+
+/* ==========================================================
+   PANNEAUX : du relief sur le fond sombre (l'ombre d'encre decalee
+   disparaissait), un filet clair discret
+   ========================================================== */
+.case,
+.carte-reglage,
+.guide,
+.passe,
+.index__source,
+.index__serie,
+.etape,
+.groupe,
+.boucle,
+.zone-carte,
+.coffre,
+.hotel--ferme,
+.formation,
+.detail,
+.selection,
+.duels__moi,
+.duel,
+.arene__fiche,
+.donjon__maitrise,
+.autel__panneau {
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.42), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+/* ==========================================================
+   MOUVEMENT : les ecrans et les onglets entrent en douceur
+   ========================================================== */
+@keyframes nuit-entree {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nuit-fondu {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.qg > *,
+.aventure > *,
+.collection > *,
+.equipe > *,
+.tirages > *,
+.reglages-page > * {
+  animation: nuit-entree 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.qg > :nth-child(2), .aventure > :nth-child(2), .collection > :nth-child(2), .equipe > :nth-child(2), .tirages > :nth-child(2), .reglages-page > :nth-child(2) { animation-delay: 60ms; }
+.qg > :nth-child(3), .aventure > :nth-child(3), .collection > :nth-child(3), .equipe > :nth-child(3), .tirages > :nth-child(3), .reglages-page > :nth-child(3) { animation-delay: 120ms; }
+.qg > :nth-child(n + 4), .aventure > :nth-child(n + 4), .collection > :nth-child(n + 4), .equipe > :nth-child(n + 4), .tirages > :nth-child(n + 4), .reglages-page > :nth-child(n + 4) { animation-delay: 170ms; }
+
+/* Le contenu d'un onglet : un simple fondu (il peut se redessiner souvent) */
+.collection__contenu > *,
+.aventure__vue > * {
+  animation: nuit-fondu 0.25s ease-out both;
+}
+
+/* Les tuiles du hub arrivent l'une apres l'autre */
+.hub__tuiles > * { animation: nuit-entree 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hub__tuiles > :nth-child(2) { animation-delay: 70ms; }
+.hub__tuiles > :nth-child(3) { animation-delay: 140ms; }
+.hub__tuiles > :nth-child(4) { animation-delay: 210ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .qg > *, .aventure > *, .collection > *, .equipe > *, .tirages > *, .reglages-page > *,
+  .collection__contenu > *, .aventure__vue > *, .hub__tuiles > * {
+    animation: none;
+  }
+}
