@@ -1,0 +1,555 @@
+/* ==========================================================
+   NUIT D'ENCRE : le fond de tout le jeu passe en sombre.
+   Les panneaux papier deviennent des pages posees sur un bureau
+   d'encre ; les textes poses directement sur le fond passent en clair.
+   Charge en dernier.
+   ========================================================== */
+
+:root {
+  --nuit: #0f1124;
+  --nuit-2: #181b36;
+  --sur-nuit: #e9e6f2;          /* texte pose directement sur le fond */
+  --sur-nuit-doux: #a9a8c4;
+}
+
+body {
+  background-color: var(--nuit);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(90 80 170 / 0.28), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgb(196 55 43 / 0.12), transparent 70%),
+    radial-gradient(circle, rgb(255 255 255 / 0.035) 0 1px, transparent 1.4px);
+  background-size: auto, auto, 18px 18px;
+  background-attachment: fixed;
+}
+
+/* Les ecrans : le texte pose directement sur le fond passe en clair */
+.qg,
+.aventure,
+.collection,
+.equipe,
+.tirages,
+.reglages-page,
+.social,
+.debut {
+  color: var(--sur-nuit);
+}
+
+/* Les textes d'aide prennent la couleur de leur contexte (clair sur le fond, encre dans un panneau) */
+.case__aide,
+.reglage__aide,
+.arene__intro,
+.selection__aide,
+.reserve__aide,
+.case__surtitre,
+.passe__aide {
+  color: inherit;
+  opacity: 0.78;
+}
+
+/* ...mais tout ce qui a un fond papier garde son encre (liste tiree des feuilles de style,
+   sans priorite : une couleur deja choisie par un composant l'emporte toujours) */
+:where(
+  .accueil__stats li,
+  .adversaire,
+  .aide__bloc,
+  .aide__place,
+  .aide__section--reflexe,
+  .aide__tuile,
+  .arc-semaine,
+  .arene-combat,
+  .arene-combat__carte,
+  .arene-combat__pv-retard,
+  .arene-fin,
+  .arene-fin__gains li,
+  .arene__affiche,
+  .arene__boss-ko,
+  .arene__difficulte,
+  .arene__fiche,
+  .arene__pause,
+  .arene__recompenses li,
+  .atelier__carte,
+  .autel__branche,
+  .autel__jauge,
+  .autel__panneau,
+  .autel__pouvoirs .autel__pouvoir--ok,
+  .autel__reserve,
+  .autel__scene,
+  .autel__taux--legendaire,
+  .autel__trace,
+  .autel__trace--legendaire,
+  .bandeau-boucle,
+  .bientot li,
+  .boucle,
+  .bouton--clair,
+  .bouton--petit,
+  .bulle-chat__apercu,
+  .bulle-chat__panneau,
+  .calendrier__case,
+  .carte,
+  .carte-piece,
+  .carte-piece__parfait,
+  .carte-piece__rarete,
+  .carte-reglage,
+  .carte[data-motif] .carte__infos,
+  .carte__role,
+  .case,
+  .case--bientot,
+  .case--combat__contenu,
+  .case--expedition,
+  .case--tirages,
+  .case-scene--recit,
+  .case-scene__bulle,
+  .case-ultime__case,
+  .champ-compact select,
+  .champ-social input,
+  .chances--difficile,
+  .chat__avatar,
+  .chat__champ,
+  .chat__entete,
+  .chat__erreur,
+  .chat__fil,
+  .chat__retour,
+  .chat__saisie,
+  .choix-piece__actuelle,
+  .choix-segmente__option,
+  .classement__ligne,
+  .coffre,
+  .coffre--pret,
+  .collectif,
+  .combat .commande,
+  .combat-direct,
+  .combat-direct__camp--ennemi .combat-direct__carte,
+  .combat-direct__carte,
+  .combattant__cadre,
+  .combattant__niveau,
+  .combattant__plaque,
+  .commande,
+  .compte__avantages,
+  .compte__message,
+  .compte__message--erreur,
+  .compteur-encre,
+  .comptoir__icone--encre,
+  .defi-ami,
+  .detail,
+  .detail__competence,
+  .detail__competence--ultime,
+  .donjon__benedictions li,
+  .donjon__bilan,
+  .donjon__bilan--sorti,
+  .donjon__entree,
+  .donjon__face,
+  .donjon__maitrise,
+  .duel,
+  .duels__ligne,
+  .duels__moi,
+  .echange,
+  .echange__carte,
+  .echanges__formulaire select,
+  .emplacement,
+  .encyclo-objet,
+  .encyclo-objet__icone,
+  .entete-page .onglet-page,
+  .equipe .place[data-motif],
+  .etagere .etagere__couverture[data-motif],
+  .etagere__couverture,
+  .etagere__tome--manquant .etagere__couverture,
+  .etal,
+  .etape,
+  .etape--boss,
+  .etape--elite,
+  .eveil-fiche,
+  .evenement,
+  .expedition-ciblee select,
+  .exploration,
+  .exploration--finie,
+  .exploration-mission,
+  .filtre,
+  .flash-legendaire,
+  .flottant--texte,
+  .formation,
+  .formation__outils .bouton-texte,
+  .groupe,
+  .groupe--dore,
+  .guide,
+  .guide--pret,
+  .heros__carte,
+  .hotel--ferme,
+  .hotel__encre,
+  .hotel__fenetre-prix,
+  .hotel__gains,
+  .hotel__vente,
+  .index__chiffres span,
+  .index__jauge,
+  .index__nom--legendaire,
+  .index__serie,
+  .index__source,
+  .index__source--max,
+  .lien,
+  .lien--cache,
+  .manque-energie__case,
+  .msg--moi .msg__bulle,
+  .msg__bulle,
+  .navigation,
+  .navigation__aide,
+  .navigation__compte-icone,
+  .navigation__onglet,
+  .navigation__onglets,
+  .onglet-collection,
+  .palier,
+  .panneau,
+  .panneau-synergies,
+  .passe,
+  .passe__palier,
+  .passe__palier--gros,
+  .pastille-syn,
+  .pastille-syn--danger,
+  .piece-carte,
+  .piece-details__effet,
+  .piece-mini,
+  .piece-mini__niveau,
+  .pile__tome,
+  .place,
+  .portrait,
+  .portrait--pokemon,
+  .potion,
+  .potion--active,
+  .qg-equipe__niveau,
+  .quete,
+  .raid__equipes,
+  .reglages-rapides,
+  .reserve__case,
+  .resultat,
+  .retouche__case,
+  .retouche__case--mieux,
+  .revelation,
+  .sachet__nom,
+  .sachet__vedette,
+  .scene,
+  .scene-histoire__page,
+  .social__compte,
+  .synergie,
+  .table-butin__ligne,
+  .tableau-pv,
+  .talent,
+  .tampon,
+  .toast,
+  .tome .tome__face--avant[data-motif],
+  .tome__face,
+  .tome__face--dos,
+  .tour__chiffres div,
+  .tournoi__palier--pris,
+  .tournoi__palier:disabled,
+  .tuile__jauge,
+  .tuto,
+  .tuto__bulle,
+  .tuto__case,
+  .tuto__pastilles li,
+  .tuto__scene .aide__formation,
+  .tuto__scene .aide__schema,
+  .vitrine-choix__carte,
+  .vitrine-resume li,
+  .vitrine__carte,
+  .volume,
+  .zone-carte,
+  .zone-sauvegarde,
+  .zone__butin,
+  .zone__titre,
+  input[type="number"],
+  select
+) {
+  color: var(--encre);
+}
+
+/* Les boutons heritent leur couleur (base.css) : on leur redonne l'encre sur fond papier */
+button:where(
+  .accueil__stats li,
+  .adversaire,
+  .aide__bloc,
+  .aide__place,
+  .aide__section--reflexe,
+  .aide__tuile,
+  .arc-semaine,
+  .arene-combat,
+  .arene-combat__carte,
+  .arene-combat__pv-retard,
+  .arene-fin,
+  .arene-fin__gains li,
+  .arene__affiche,
+  .arene__boss-ko,
+  .arene__difficulte,
+  .arene__fiche,
+  .arene__pause,
+  .arene__recompenses li,
+  .atelier__carte,
+  .autel__branche,
+  .autel__jauge,
+  .autel__panneau,
+  .autel__pouvoirs .autel__pouvoir--ok,
+  .autel__reserve,
+  .autel__scene,
+  .autel__taux--legendaire,
+  .autel__trace,
+  .autel__trace--legendaire,
+  .bandeau-boucle,
+  .bientot li,
+  .boucle,
+  .bouton--clair,
+  .bouton--petit,
+  .bulle-chat__apercu,
+  .bulle-chat__panneau,
+  .calendrier__case,
+  .carte,
+  .carte-piece,
+  .carte-piece__parfait,
+  .carte-piece__rarete,
+  .carte-reglage,
+  .carte[data-motif] .carte__infos,
+  .carte__role,
+  .case,
+  .case--bientot,
+  .case--combat__contenu,
+  .case--expedition,
+  .case--tirages,
+  .case-scene--recit,
+  .case-scene__bulle,
+  .case-ultime__case,
+  .champ-compact select,
+  .champ-social input,
+  .chances--difficile,
+  .chat__avatar,
+  .chat__champ,
+  .chat__entete,
+  .chat__erreur,
+  .chat__fil,
+  .chat__retour,
+  .chat__saisie,
+  .choix-piece__actuelle,
+  .choix-segmente__option,
+  .classement__ligne,
+  .coffre,
+  .coffre--pret,
+  .collectif,
+  .combat .commande,
+  .combat-direct,
+  .combat-direct__camp--ennemi .combat-direct__carte,
+  .combat-direct__carte,
+  .combattant__cadre,
+  .combattant__niveau,
+  .combattant__plaque,
+  .commande,
+  .compte__avantages,
+  .compte__message,
+  .compte__message--erreur,
+  .compteur-encre,
+  .comptoir__icone--encre,
+  .defi-ami,
+  .detail,
+  .detail__competence,
+  .detail__competence--ultime,
+  .donjon__benedictions li,
+  .donjon__bilan,
+  .donjon__bilan--sorti,
+  .donjon__entree,
+  .donjon__face,
+  .donjon__maitrise,
+  .duel,
+  .duels__ligne,
+  .duels__moi,
+  .echange,
+  .echange__carte,
+  .echanges__formulaire select,
+  .emplacement,
+  .encyclo-objet,
+  .encyclo-objet__icone,
+  .entete-page .onglet-page,
+  .equipe .place[data-motif],
+  .etagere .etagere__couverture[data-motif],
+  .etagere__couverture,
+  .etagere__tome--manquant .etagere__couverture,
+  .etal,
+  .etape,
+  .etape--boss,
+  .etape--elite,
+  .eveil-fiche,
+  .evenement,
+  .expedition-ciblee select,
+  .exploration,
+  .exploration--finie,
+  .exploration-mission,
+  .filtre,
+  .flash-legendaire,
+  .flottant--texte,
+  .formation,
+  .formation__outils .bouton-texte,
+  .groupe,
+  .groupe--dore,
+  .guide,
+  .guide--pret,
+  .heros__carte,
+  .hotel--ferme,
+  .hotel__encre,
+  .hotel__fenetre-prix,
+  .hotel__gains,
+  .hotel__vente,
+  .index__chiffres span,
+  .index__jauge,
+  .index__nom--legendaire,
+  .index__serie,
+  .index__source,
+  .index__source--max,
+  .lien,
+  .lien--cache,
+  .manque-energie__case,
+  .msg--moi .msg__bulle,
+  .msg__bulle,
+  .navigation,
+  .navigation__aide,
+  .navigation__compte-icone,
+  .navigation__onglet,
+  .navigation__onglets,
+  .onglet-collection,
+  .palier,
+  .panneau,
+  .panneau-synergies,
+  .passe,
+  .passe__palier,
+  .passe__palier--gros,
+  .pastille-syn,
+  .pastille-syn--danger,
+  .piece-carte,
+  .piece-details__effet,
+  .piece-mini,
+  .piece-mini__niveau,
+  .pile__tome,
+  .place,
+  .portrait,
+  .portrait--pokemon,
+  .potion,
+  .potion--active,
+  .qg-equipe__niveau,
+  .quete,
+  .raid__equipes,
+  .reglages-rapides,
+  .reserve__case,
+  .resultat,
+  .retouche__case,
+  .retouche__case--mieux,
+  .revelation,
+  .sachet__nom,
+  .sachet__vedette,
+  .scene,
+  .scene-histoire__page,
+  .social__compte,
+  .synergie,
+  .table-butin__ligne,
+  .tableau-pv,
+  .talent,
+  .tampon,
+  .toast,
+  .tome .tome__face--avant[data-motif],
+  .tome__face,
+  .tome__face--dos,
+  .tour__chiffres div,
+  .tournoi__palier--pris,
+  .tournoi__palier:disabled,
+  .tuile__jauge,
+  .tuto,
+  .tuto__bulle,
+  .tuto__case,
+  .tuto__pastilles li,
+  .tuto__scene .aide__formation,
+  .tuto__scene .aide__schema,
+  .vitrine-choix__carte,
+  .vitrine-resume li,
+  .vitrine__carte,
+  .volume,
+  .zone-carte,
+  .zone-sauvegarde,
+  .zone__butin,
+  .zone__titre,
+  input[type="number"],
+  select
+) {
+  color: var(--encre);
+}
+
+/* Le carnet : des pages papier */
+.carnet__page {
+  color: var(--encre);
+}
+
+/* Le bandeau « a l'honneur » des boosters : lisible sur le fond sombre */
+.etal__honneur {
+  color: var(--sur-nuit);
+  background: color-mix(in srgb, var(--obi) 16%, var(--nuit-2));
+  border-color: var(--obi);
+}
+
+.etal__honneur strong { color: var(--obi); }
+
+/* ==========================================================
+   LES CARTES : un pied d'encre aux couleurs de la serie,
+   le nom en clair, les etoiles en or, une lueur selon la rarete
+   ========================================================== */
+.carte[data-motif] .carte__infos {
+  color: #f4f1fa;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--s1) 38%, #191b33) 0%, #10122a 100%);
+  box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.18), 0 0 0 3px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
+.carte[data-motif] .carte__nom {
+  color: #fff;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.6);
+}
+
+.carte[data-motif] .carte__meta {
+  color: rgb(235 232 245 / 0.72);
+}
+
+.carte[data-motif] .etoile {
+  fill: rgb(255 255 255 / 0.18);
+  stroke: rgb(0 0 0 / 0.6);
+}
+
+.carte[data-motif] .etoile--pleine {
+  fill: var(--obi);
+  filter: drop-shadow(0 0 2px rgb(239 189 43 / 0.7));
+}
+
+/* Une ombre portee sur le bureau sombre, et une lueur pour les grandes raretes */
+.carte[data-motif] {
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.45);
+}
+
+.carte--rare[data-motif] { box-shadow: 0 6px 14px rgb(0 0 0 / 0.45), 0 0 14px -4px rgb(110 170 255 / 0.55); }
+.carte--epique[data-motif] { --halo: #a77bff; }
+.carte--legendaire[data-motif] { --halo: #ffcf3f; }
+
+.carte[data-motif]:hover {
+  box-shadow: 0 16px 26px rgb(0 0 0 / 0.55), 0 0 22px -6px color-mix(in srgb, var(--s1) 80%, #fff);
+}
+
+/* Les cartes manquantes et les places de l'equipe suivent la meme nuit */
+.carte-manquante {
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.4);
+}
+
+/* Les places de l'equipe : le meme pied d'encre que les cartes */
+.place:not(.place--vide) .place__infos {
+  color: #f4f1fa;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--s1, #2a2f57) 38%, #191b33), #10122a);
+}
+
+.place:not(.place--vide) .place__perso { color: #fff; }
+.place:not(.place--vide) .place__nom { color: rgb(235 232 245 / 0.72); }
+.place:not(.place--vide) .place__vise:not(.place__vise--danger) { color: #fff; background: color-mix(in srgb, var(--obi) 45%, transparent); }
+
+/* Le filtre choisi : en or, comme les onglets (l'encre disparaissait sur le fond) */
+.filtre[aria-pressed="true"],
+.choix-segmente__option[aria-checked="true"] {
+  color: var(--encre);
+  background: var(--obi);
+  border-color: var(--encre);
+}

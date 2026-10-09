@@ -2365,7 +2365,7 @@ export async function utiliserCode(texte) {
 // ==========================================================
 // ARENE DES BOSS
 // Ton equipe (le deck) contre un boss geant. 8 boss par monde, a
-// battre dans l'ordre. Le premier KO donne la carte Boss du perso
+// battre dans l'ordre. Le premier KO donne la bordure Boss du perso (jamais le perso lui-meme)
 // (la bordure Boss, introuvable ailleurs), de l'encre, des
 // invocations et une potion ; les KO suivants coutent de l'energie.
 // ==========================================================

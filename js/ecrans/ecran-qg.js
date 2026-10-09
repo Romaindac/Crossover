@@ -109,7 +109,7 @@ export function afficherQg(conteneur, { naviguer }) {
         <h2 class="tuile__titre">${perso.nom}</h2>
         <p class="tuile__gros">Boss <b>${a.boss.rang + 1}</b> / 8</p>
         <span class="tuile__jauge"><span style="--v: ${a.battus / 8}"></span></span>
-        <p class="tuile__info">Premier KO : sa carte Boss, des invocations et une potion</p>
+        <p class="tuile__info">Premier KO : sa bordure Boss, des invocations et une potion</p>
         <div class="tuile__actions"><button type="button" class="bouton tuile__bouton" data-action="aller" data-nav="aventure" data-onglet="arene">Défier</button></div>
       </article>`;
   }
