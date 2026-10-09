@@ -22,6 +22,7 @@ import {
 import { FUSION } from "../donnees/invocations.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from "../ui/cartes.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { htmlSachet } from "../ui/sachet.js";
 import { annoncerTampons } from "../ui/toast.js";
@@ -52,14 +53,12 @@ export function afficherTirages(conteneur, { naviguer }) {
   conteneur.innerHTML = `
     ${htmlNavigation("tirages")}
     <div class="tirages">
-      <header class="tirages__entete">
-        <h1 class="equipe__titre">Invocations</h1>
-        <div class="boosters__onglets" role="tablist" aria-label="Invocations">
-          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="autel">Autel</button>
-          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="boutique">Boosters</button>
-          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="atelier">Atelier</button>
-        </div>
-      </header>
+      ${htmlEntete({
+        titre: "Invocations", kanji: "召喚", theme: "invocations", classe: "tirages__entete",
+        accroche: "L'autel pour invoquer, les boosters, et l'atelier pour fabriquer ce qui te manque.",
+        onglets: [["autel", "Autel"], ["boutique", "Boosters"], ["atelier", "Atelier"]]
+          .map(([id, nom]) => htmlOnglet(nom, { donnees: `data-action="vue" data-vue="${id}"` })).join(""),
+      })}
       <section class="boosters__reserve" id="reserve" aria-live="polite"></section>
       <div id="vue-boosters"></div>
     </div>

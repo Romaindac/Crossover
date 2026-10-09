@@ -1,0 +1,423 @@
+/* ==========================================================
+   REFONTE « MANGA PRO » : la base commune de tous les ecrans.
+   En-tete en bandeau d'encre, onglets uniques, largeurs
+   identiques, textes d'aide lisibles, ecrans « compte requis ».
+   Charge en dernier : il a le dernier mot.
+   ========================================================== */
+
+/* ---------- Largeur : tous les ecrans sur la meme colonne ---------- */
+.aventure,
+.collection,
+.equipe,
+.tirages,
+.reglages-page,
+.social,
+.social--large {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+/* ---------- L'en-tete d'ecran : un bandeau d'encre ---------- */
+header.entete-page {
+  --t1: #2a2f57;
+  --t2: #12142a;
+  --accent: var(--obi);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 0.9rem;
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 1.15rem 1.4rem 1rem;
+  overflow: hidden;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 88% 40%, color-mix(in srgb, var(--accent) 8%, transparent) 0deg 0.7deg, transparent 0.7deg 5deg),
+    radial-gradient(circle at 88% 40%, var(--t1), var(--t2) 72%);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.entete-page--aventure { --t1: #7a2a2a; --t2: #1e0c10; --accent: #ffad5c; }
+.entete-page--equipe { --t1: #1f4f73; --t2: #0d1a2b; --accent: #8fd3ff; }
+.entete-page--invocations { --t1: #55308a; --t2: #160d2a; --accent: #e9c46a; }
+.entete-page--collection { --t1: #6b4a12; --t2: #1d140a; --accent: #f4c84a; }
+.entete-page--social { --t1: #1d5c4a; --t2: #0a1d18; --accent: #7ee0a8; }
+.entete-page--reglages { --t1: #3a3d55; --t2: #13141f; --accent: #c9cbe0; }
+
+.entete-page__kanji {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  z-index: -1;
+  transform: translateY(-50%);
+  font-family: var(--police-mincho);
+  font-size: 7rem;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--accent) 18%, transparent);
+  pointer-events: none;
+}
+
+.entete-page__texte {
+  display: grid;
+  gap: 0.25rem;
+  max-width: 44rem;
+}
+
+.entete-page__titre {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--papier);
+  text-shadow: 0.06em 0.06em 0 var(--encre), 0.1em 0.1em 0 color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.entete-page__accroche {
+  margin: 0;
+  font-size: 0.95rem;
+  color: color-mix(in srgb, var(--papier) 82%, transparent);
+}
+
+.entete-page .equipe__chargement {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+.entete-page .equipe__chargement:empty { display: none; }
+
+.entete-page .equipe__chargement .bouton-texte { color: var(--papier); }
+
+/* Les onglets, integres au bandeau */
+.entete-page__onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.entete-page .onglet-page {
+  flex-shrink: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--papier) 85%, transparent);
+  background: color-mix(in srgb, var(--papier) 7%, transparent);
+  border: 2px solid color-mix(in srgb, var(--papier) 22%, transparent);
+  border-radius: 999px;
+  box-shadow: none;
+  clip-path: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.entete-page .onglet-page:hover:not(:disabled) {
+  color: var(--papier);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.entete-page .onglet-page[aria-selected="true"] {
+  color: var(--encre);
+  background: var(--accent);
+  border-color: var(--encre);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.entete-page .onglet-page:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.entete-page .onglet-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Textes d'aide : lisibles ---------- */
+.case__aide,
+.reglage__aide,
+.arene__intro,
+.donjon__maitrise small {
+  color: color-mix(in srgb, var(--encre) 74%, var(--papier));
+}
+
+/* ---------- Ecrans qui demandent un compte : un vrai panneau ---------- */
+.hotel--ferme {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  max-width: 34rem;
+  margin: 1.5rem auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 12px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.hotel--ferme .bouton {
+  width: auto;
+  justify-self: center;
+  padding: 0.55em 1.6em 0.6em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entete-page .onglet-page { transition: none; }
+}
+
+/* ---------- Telephone ---------- */
+@media (max-width: 40rem) {
+  .aventure,
+  .collection,
+  .equipe,
+  .tirages,
+  .reglages-page,
+  .social,
+  .social--large {
+    padding: 0.9rem 0.75rem 6rem;
+  }
+
+  header.entete-page {
+    gap: 0.7rem;
+    padding: 0.9rem 0.9rem 0.8rem;
+  }
+
+  .entete-page__kanji {
+    top: 1.6rem;
+    right: 0.4rem;
+    transform: none;
+    font-size: 4.2rem;
+  }
+
+  .entete-page__accroche {
+    font-size: 0.85rem;
+  }
+
+  .entete-page__onglets {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -0.9rem;
+    padding: 0.15rem 0.9rem 0.25rem;
+  }
+
+  .entete-page__onglets::-webkit-scrollbar { display: none; }
+
+  .entete-page .onglet-page {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ---------- Accueil : une couverture en encre, pas un bandeau jaune ---------- */
+.accueil {
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-rows: 1fr auto;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 36%, color-mix(in srgb, var(--obi) 7%, transparent) 0deg 0.8deg, transparent 0.8deg 6deg),
+    radial-gradient(ellipse at 50% 36%, #33407a 0%, #161a36 45%, #0b0c18 85%);
+}
+
+.accueil__trame { display: none; }
+
+.accueil .accueil__tranche {
+  color: color-mix(in srgb, var(--papier) 45%, transparent);
+}
+
+.accueil__couverture {
+  padding-bottom: 1rem;
+}
+
+.vitrine__carte {
+  border: 3px solid var(--encre);
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--obi) 70%, transparent), 6px 8px 0 #000;
+}
+
+.accueil__titre {
+  text-shadow:
+    0.035em 0 0 var(--encre), -0.035em 0 0 var(--encre), 0 0.035em 0 var(--encre), 0 -0.035em 0 var(--encre),
+    0.025em 0.025em 0 var(--encre), -0.025em 0.025em 0 var(--encre), 0.025em -0.025em 0 var(--encre), -0.025em -0.025em 0 var(--encre),
+    0.09em 0.09em 0 var(--sceau), 0 0 0.4em color-mix(in srgb, var(--obi) 35%, transparent);
+}
+
+.obi {
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.5rem 1.25rem 3rem;
+  text-align: center;
+  background: none;
+  border: 0;
+}
+
+.obi__texte {
+  max-width: 40rem;
+}
+
+.obi__accroche {
+  font-family: var(--police-mincho);
+  font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+  color: var(--papier);
+}
+
+.obi__detail {
+  margin-top: 0.4rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--papier) 78%, transparent);
+}
+
+.accueil__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accueil__stats li {
+  padding: 0.3rem 0.85rem;
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--papier) 85%, transparent);
+  background: color-mix(in srgb, var(--papier) 8%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--obi) 55%, transparent);
+  border-radius: 99px;
+}
+
+.accueil__stats b {
+  color: var(--obi);
+}
+
+.obi .bouton--principal {
+  padding: 0.55em 2.6em 0.6em;
+  font-size: 1.35rem;
+  color: var(--encre);
+  background: var(--obi);
+  border: 3px solid var(--encre);
+  box-shadow: 0 0 0 2px var(--obi), 6px 6px 0 #000;
+}
+
+@media (max-width: 40rem) {
+  .vitrine__carte {
+    width: 22vw;
+    margin: 0 -1.2vw;
+  }
+
+  .accueil__couverture {
+    padding-top: 3.5rem;
+  }
+}
+
+/* ---------- Filtres et choix : des pastilles, comme les onglets ---------- */
+.filtre,
+.choix-segmente__option {
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.filtre:hover:not(:disabled):not([aria-pressed="true"]),
+.choix-segmente__option:hover:not([aria-checked="true"]) {
+  background: color-mix(in srgb, var(--obi) 25%, var(--papier));
+}
+
+/* ---------- Equipe : les outils de formation sont de vrais boutons ---------- */
+.formation__outils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.formation__outils .bouton-texte {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.formation__outils .bouton-texte:hover {
+  background: color-mix(in srgb, var(--obi) 25%, var(--papier));
+}
+
+.formation__outils [data-action="meilleure"] {
+  background: var(--obi);
+}
+
+/* ---------- Premier booster : la suite de la couverture, en encre ---------- */
+.debut--booster {
+  max-width: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-content: start;
+  padding-top: 2rem;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 40%, color-mix(in srgb, var(--obi) 7%, transparent) 0deg 0.8deg, transparent 0.8deg 6deg),
+    radial-gradient(ellipse at 50% 40%, #33407a 0%, #161a36 45%, #0b0c18 85%);
+}
+
+.debut--booster > * {
+  max-width: 68rem;
+}
+
+.debut--booster .debut__titre {
+  color: var(--papier);
+  text-shadow: 0.06em 0.06em 0 var(--encre), 0.1em 0.1em 0 var(--sceau);
+}
+
+.debut--booster .debut__intro,
+.debut--booster .compagnons__cadeau {
+  color: color-mix(in srgb, var(--papier) 82%, transparent);
+}
+
+.debut--booster .lien-retour {
+  justify-self: start;
+  color: color-mix(in srgb, var(--papier) 75%, transparent);
+}
+
+.debut--booster .debut__consigne {
+  color: var(--obi);
+}
+
+.debut--booster .debut__sachet {
+  filter: drop-shadow(0 0 1.5rem color-mix(in srgb, var(--obi) 35%, transparent));
+}
+
+.debut--booster .bouton--principal {
+  color: var(--encre);
+  background: var(--obi);
+  border: 3px solid var(--encre);
+  box-shadow: 0 0 0 2px var(--obi), 6px 6px 0 #000;
+}
+
+.debut--booster .debut__role {
+  color: color-mix(in srgb, var(--papier) 70%, transparent);
+}
+
+/* Reglages : deux colonnes de cartes sur grand ecran */
+@media (min-width: 60rem) {
+  .reglages-page:not(.social) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}

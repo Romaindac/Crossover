@@ -23,6 +23,7 @@ import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINI
 import { htmlFiche } from "../ui/fiche.js";
 import { ouvrirChoixPiece } from "../ui/equipement-ui.js";
 import { jouerEveil } from "../ui/eveil.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation, ouvrirLexique } from "../ui/navigation.js";
 import { htmlSynergies } from "../ui/synergies.js";
 
@@ -51,10 +52,11 @@ export function afficherEquipe(conteneur, { naviguer }) {
   conteneur.innerHTML = `
     ${htmlNavigation("equipe")}
     <div class="equipe">
-      <header class="equipe__entete">
-        <h1 class="equipe__titre">Ton équipe</h1>
-        <p class="equipe__chargement" id="chargement" role="status" aria-live="polite"></p>
-      </header>
+      ${htmlEntete({
+        titre: "Ton équipe", kanji: "仲間", theme: "equipe", classe: "equipe__entete",
+        accroche: "Cinq persos sur deux lignes : la ligne avant encaisse, la ligne arrière frappe. Le placement compte.",
+        extra: '<p class="equipe__chargement" id="chargement" role="status" aria-live="polite"></p>',
+      })}
 
       <div class="equipe__haut">
         <section class="formation" aria-labelledby="titre-formation">
