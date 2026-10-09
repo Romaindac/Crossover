@@ -60,6 +60,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
       })}
 
       <div class="equipe__haut">
+        <div class="equipe__gauche">
         <section class="formation" aria-labelledby="titre-formation">
           <div class="formation__titre-ligne">
             <h2 id="titre-formation">Formation <span class="puissance-equipe" id="puissance-equipe"></span></h2>
@@ -74,18 +75,19 @@ export function afficherEquipe(conteneur, { naviguer }) {
           <div id="formation"></div>
           <p class="formation__message" id="message" role="status" aria-live="polite"></p>
         </section>
+        <section class="panneau-synergies" aria-labelledby="titre-synergies">
+          <div class="panneau-synergies__entete">
+            <h2 id="titre-synergies">Synergies</h2>
+            <p class="case__aide">Ce qui rend ton équipe plus forte que la somme de ses persos. Mis à jour à chaque changement.</p>
+            <button type="button" class="bouton-texte" data-action="aide-synergies">Comment devenir plus fort ?</button>
+          </div>
+          <div id="synergies"></div>
+        </section>
+        </div>
 
         <section class="detail" id="detail" aria-live="polite"></section>
       </div>
 
-      <section class="panneau-synergies" aria-labelledby="titre-synergies">
-        <div class="panneau-synergies__entete">
-          <h2 id="titre-synergies">Synergies</h2>
-          <p class="case__aide">Ce qui rend ton équipe plus forte que la somme de ses persos. Mis à jour à chaque changement.</p>
-          <button type="button" class="bouton-texte" data-action="aide-synergies">Comment devenir plus fort ?</button>
-        </div>
-        <div id="synergies"></div>
-      </section>
 
       <section class="selection" aria-labelledby="titre-selection">
         <div class="selection__entete">
