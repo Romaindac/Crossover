@@ -750,7 +750,7 @@ button:where(
   pointer-events: none;
   background:
     radial-gradient(circle, rgb(var(--c) / 0.55) 0%, rgb(var(--c) / 0.18) 22%, transparent 48%),
-    repeating-conic-gradient(from 0deg, rgb(var(--c) / 0.32) 0deg 6deg, transparent 6deg 18deg);
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%);
   -webkit-mask-image: radial-gradient(circle, #000 0 30%, transparent 62%);
   mask-image: radial-gradient(circle, #000 0 30%, transparent 62%);
   animation: rayons-tour 6s linear infinite, rayons-entree 0.5s ease-out both;
@@ -824,7 +824,7 @@ button:where(
   pointer-events: none;
   background:
     radial-gradient(circle, rgb(255 205 70 / 0.35) 0%, transparent 35%),
-    repeating-conic-gradient(from 0deg, rgb(255 205 70 / 0.14) 0deg 5deg, transparent 5deg 15deg);
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%);
   -webkit-mask-image: radial-gradient(circle, #000 0 20%, transparent 55%);
   mask-image: radial-gradient(circle, #000 0 20%, transparent 55%);
   animation: rayons-tour 14s linear infinite, nuit-fondu 0.6s ease-out both;

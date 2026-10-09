@@ -1,0 +1,217 @@
+/* ==========================================================
+   DOUX : pas de lignes geometriques. Du grain de papier, des
+   lavis d'encre irreguliers et des lueurs diffuses, comme une
+   page peinte a l'encre plutot qu'un motif trace a la regle.
+   Charge en tout dernier.
+   ========================================================== */
+
+:root {
+  /* Grain de papier (bruit), tres discret */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.09'/%3E%3C/svg%3E");
+  /* Lavis d'encre : des nappes de couleur irregulieres, sans aucun trait */
+  --lavis:
+    radial-gradient(ellipse 55% 40% at 18% 22%, rgb(120 90 220 / 0.22), transparent 70%),
+    radial-gradient(ellipse 45% 55% at 82% 78%, rgb(196 55 43 / 0.14), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 62% 18%, rgb(239 189 43 / 0.08), transparent 70%);
+}
+
+/* ---------- Le fond du jeu : un papier sombre lave d'encre ---------- */
+body {
+  background-image:
+    radial-gradient(ellipse 70% 50% at 20% -5%, rgb(110 90 200 / 0.28), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 95% 105%, rgb(196 55 43 / 0.14), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 70% 40%, rgb(40 60 140 / 0.12), transparent 70%);
+  background-size: auto;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: var(--grain);
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+}
+
+/* ---------- Les bandeaux sombres : lavis + grain au lieu des rayons ---------- */
+header.entete-page,
+.tuile,
+.qg-hero,
+.entete-secrets,
+.index__tete,
+.donjon__entree,
+.accueil,
+.debut--booster {
+  background-blend-mode: normal;
+}
+
+header.entete-page {
+  background:
+    radial-gradient(ellipse 50% 90% at 85% 30%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 70% at 10% 100%, color-mix(in srgb, var(--t1) 80%, transparent), transparent 70%),
+    var(--grain),
+    linear-gradient(160deg, var(--t1), var(--t2) 75%);
+}
+
+.tuile {
+  background:
+    radial-gradient(ellipse 60% 70% at 85% 20%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 70%),
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgb(0 0 0 / 0.35), transparent 70%),
+    var(--grain),
+    linear-gradient(165deg, var(--t1), var(--t2) 80%);
+}
+
+.qg-hero {
+  background:
+    radial-gradient(ellipse 45% 70% at 72% 40%, color-mix(in srgb, var(--s1) 55%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 60% at 15% 90%, color-mix(in srgb, var(--s2) 14%, transparent), transparent 70%),
+    var(--grain),
+    linear-gradient(160deg, #1b1d3e, #0d0f22 70%);
+}
+
+.accueil,
+.debut--booster {
+  background:
+    radial-gradient(ellipse 50% 45% at 50% 38%, rgb(90 100 200 / 0.45), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 20% 80%, rgb(196 55 43 / 0.18), transparent 70%),
+    radial-gradient(ellipse 35% 30% at 80% 15%, rgb(239 189 43 / 0.12), transparent 70%),
+    var(--grain),
+    #0b0c18;
+}
+
+.combat {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 45%, rgb(60 70 150 / 0.4), transparent 75%),
+    var(--grain),
+    #0a0b16;
+}
+
+/* ---------- La vedette du QG : un fondu, pas de diagonale ---------- */
+.qg-hero__vedette::before { display: none; }
+
+.qg-hero__image {
+  clip-path: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 30%);
+}
+
+.qg-hero__image::after {
+  background: linear-gradient(180deg, transparent 50%, rgb(10 11 26 / 0.9) 100%);
+}
+
+.qg-hero__plaque { left: 0; }
+
+/* Le texte de la banniere ne deborde plus (telephone) */
+.qg-hero__texte { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+
+@media (max-width: 52rem) {
+  .qg-hero__image {
+    -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  }
+}
+
+/* ---------- Plus de motifs graves ni de lignes de vitesse ---------- */
+[data-motif]::before,
+.carte[data-motif]::before,
+.carte-manquante::before {
+  opacity: 0 !important;
+}
+
+.decor__vitesse,
+.decor__onde {
+  display: none;
+}
+
+/* La scene de l'autel : une lueur, sans rayons traces */
+.autel__scene {
+  background:
+    radial-gradient(ellipse 45% 55% at 50% 48%, rgb(150 110 255 / 0.3), transparent 70%),
+    radial-gradient(ellipse 30% 30% at 20% 80%, rgb(239 189 43 / 0.08), transparent 70%),
+    var(--grain),
+    #14112c;
+}
+
+/* Les rayons de tirage deviennent une aura qui respire */
+.autel__rayons {
+  -webkit-mask-image: none;
+  mask-image: none;
+  background: radial-gradient(circle, rgb(var(--c) / 0.6) 0%, rgb(var(--c) / 0.22) 25%, transparent 55%);
+  animation: aura-respire 1.6s ease-in-out infinite alternate, rayons-entree 0.5s ease-out both;
+}
+
+@keyframes aura-respire {
+  from { scale: 0.92; opacity: 0.85; }
+  to { scale: 1.06; opacity: 1; }
+}
+
+.voile:has(.resultat__titre--victoire)::before {
+  -webkit-mask-image: none;
+  mask-image: none;
+  background: radial-gradient(circle, rgb(255 205 70 / 0.32) 0%, rgb(255 205 70 / 0.1) 22%, transparent 45%);
+  animation: aura-respire 2.4s ease-in-out infinite alternate;
+}
+
+/* Les panneaux du QG et les cartes sombres : un peu de grain aussi */
+.qg .planche .case,
+.qg .guide,
+.qg .passe {
+  background: var(--grain), linear-gradient(180deg, #1b1e3c, #141631);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autel__rayons, .voile:has(.resultat__titre--victoire)::before { animation: none; }
+}
+
+.qg-hero .quoi-de-neuf { min-width: 0; max-width: 100%; overflow: hidden; }
+.qg-hero .quoi-de-neuf ul { min-width: 0; max-width: 100%; }
+
+/* ==========================================================
+   ECRAN EQUIPE : la formation en encre, des places plus lisibles
+   ========================================================== */
+.equipe .formation {
+  color: var(--sur-nuit);
+  background: var(--grain), linear-gradient(180deg, #1b1e3c, #131530);
+  border: 1.5px solid rgb(255 255 255 / 0.1);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+
+.equipe .formation h2,
+.equipe .formation .ligne__nom,
+.equipe .formation .formation__ligne-nom { color: #fff; }
+
+.equipe .formation .case__aide { color: var(--sur-nuit-doux); opacity: 1; }
+.equipe .formation .bouton-texte { color: var(--obi); }
+.equipe .formation .formation__outils .bouton-texte { color: var(--encre); }
+
+.place__infos { padding: 0.4rem 0.55rem 0.5rem; gap: 0.15rem; }
+.place:not(.place--vide) .place__perso { font-size: 1rem; }
+.place:not(.place--vide) .place__nom { font-size: 0.8rem; }
+
+.place__puissance {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.05rem 0.5rem 0.05rem 0.4rem;
+  font-family: var(--police-titre);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  color: var(--encre);
+  background: linear-gradient(180deg, #ffe58a, var(--obi) 60%, #c98a00);
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+}
+
+.place__puissance::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.75rem;
+  background: currentColor;
+  clip-path: polygon(55% 0, 0 58%, 42% 58%, 35% 100%, 100% 38%, 58% 38%);
+}
+
+.place__vise { font-size: 0.75rem; }

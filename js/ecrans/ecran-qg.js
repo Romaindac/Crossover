@@ -20,14 +20,15 @@ import {
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
   etatPasse, reclamerPasse, etatExplorations, lancerExploration, recupererExploration,
-  etatInvocations, prochainBossArene, etatDonjon, nbPersosCollection, secretsPossedes, puissanceDeMonEquipe,
+  etatInvocations, prochainBossArene, etatDonjon, nbPersosCollection, secretsPossedes, puissanceDeMonEquipe, puissancePerso, etatArene,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { ouvrirCompte } from "../ui/compte.js";
 import { ouvrirTutoriel, tutorielVu } from "../ui/tutoriel.js";
-import { enLigneDisponible, connecte } from "../services/enligne.js";
+import { enLigneDisponible, connecte, pseudoConnecte } from "../services/enligne.js";
+import { varsSerie } from "../donnees/series.js";
 import { lire as lireReglage, ecrire as ecrireReglage } from "../services/sauvegarde.js";
 import { annoncerTampons } from "../ui/toast.js";
 import { serieDeLaSemaine, numeroDuMagazine, BONUS_HONNEUR, BUTIN_HONNEUR } from "../donnees/hebdo.js";
@@ -36,6 +37,8 @@ import { nomSaison } from "../donnees/saisons.js";
 import { ZONES } from "../donnees/zones.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
+const echapperTexte = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const salutation = () => { const h = new Date().getHours(); return h < 6 ? "Encore debout" : h < 12 ? "Bonjour" : h < 18 ? "Bon retour" : "Bonsoir"; };
 
 function duree(heures) {
   const h = Math.floor(heures);
@@ -131,19 +134,30 @@ export function afficherQg(conteneur, { naviguer }) {
     ${htmlNavigation("qg")}
     <main class="qg">
       <h1 class="visuellement-cache">Ton QG</h1>
-      <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
-      <section class="hub" aria-label="Où jouer maintenant">
+      <section class="qg-hero" aria-label="Ton QG" style="${star ? `${varsSerie(star.serie)}; --aff: ${COULEURS_AFFINITE[star.affinite]}` : ""}">
+        <div class="qg-hero__texte">
+          <p class="qg-hero__salut">${salutation()}, <b>${echapperTexte(pseudoConnecte() ?? "invocateur")}</b></p>
+          <p class="qg-hero__titre">« ${titreActuel()} »</p>
+          <ul class="qg-hero__chiffres">
+            <li class="qg-hero__chiffre qg-hero__chiffre--or"><span>Puissance d'équipe</span><b>${puissanceDeMonEquipe(equipe).toLocaleString("fr-FR")}</b></li>
+            <li class="qg-hero__chiffre"><span>Collection</span><b>${nbPersosCollection()}<small> / ${PERSOS.length}</small></b></li>
+            <li class="qg-hero__chiffre"><span>Autel</span><b>niv. ${etatInvocations().niveau}</b></li>
+            <li class="qg-hero__chiffre"><span>Boss vaincus</span><b>${etatArene().battus.filter((c) => !c.includes("@")).length}<small> / ${etatArene().total}</small></b></li>
+          </ul>
+          <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
+        </div>
         ${star ? `
-        <div class="case case--vedette hub__vedette cadre--${cadreActuel()}" aria-label="Ton perso en vedette : ${star.nom}" style="--aff: ${COULEURS_AFFINITE[star.affinite]}">
-          <div class="vedette__image">${htmlPortrait(star)}</div>
-          <p class="vedette__nom">${star.nom}</p>
-          <div class="vedette__pied">
+        <div class="qg-hero__vedette cadre--${cadreActuel()}" aria-label="Ton perso en vedette : ${star.nom}">
+          <div class="qg-hero__image">${htmlPortrait(star)}</div>
+          <div class="qg-hero__plaque">
             ${htmlObi(star)}
-            <p class="vedette__titre">« ${titreActuel()} »</p>
-            <p class="vedette__infos"><span>${star.serie}</span><span>Niv. ${progStar.niveau}</span>${htmlEtoiles(progStar.etoiles)}</p>
+            <p class="qg-hero__nom">${star.nom}</p>
+            <p class="qg-hero__infos"><span>${star.serie}</span><span>Niv. ${progStar.niveau}</span>${htmlEtoiles(progStar.etoiles)}<span class="qg-hero__pui">${puissancePerso(star.id).toLocaleString("fr-FR")}</span></p>
             <button type="button" class="vedette__changer" data-action="collection">Changer de vedette</button>
           </div>
         </div>` : ""}
+      </section>
+      <section class="hub" aria-label="Où jouer maintenant">
         <div class="hub__tuiles">
           ${htmlTuileAutel()}
           ${htmlTuileArene()}

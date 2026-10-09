@@ -19,7 +19,7 @@ import {
   eveiller, choisirTalent, equipesEnregistrees, enregistrerEquipe, chargerEquipe,
   puissancePerso, puissanceDeMonEquipe,
 } from "../services/partie.js";
-import { chargerPortraits, nombrePortraits } from "../services/portraits.js";
+import { chargerPortraits, nombrePortraits, portraitDe } from "../services/portraits.js";
 import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { htmlFiche } from "../ui/fiche.js";
 import { ouvrirChoixPiece } from "../ui/equipement-ui.js";
@@ -166,7 +166,8 @@ export function afficherEquipe(conteneur, { naviguer }) {
           ${htmlPortrait(perso)}
           <span class="place__infos">
             <span class="place__perso">${perso.nom}</span>
-            <span class="place__nom">Niv. ${prog.niveau} · <b class="place__puissance">${puissancePerso(id).toLocaleString("fr-FR")}</b></span>
+            <span class="place__nom">Niv. ${prog.niveau}</span>
+            <span class="place__puissance">${puissancePerso(id).toLocaleString("fr-FR")}</span>
             ${htmlVise(i)}
           </span>
         </button>`;
@@ -470,7 +471,10 @@ export function afficherEquipe(conteneur, { naviguer }) {
         zone.textContent = "";
         return;
       }
-      zone.innerHTML = `${manquants} portraits manquent${erreur ? ` (${erreur})` : ""} : les initiales s'affichent à la place.
+      // Les noms des persos sans portrait (pour signaler ceux a corriger)
+      const sans = PERSOS.filter((p) => !portraitDe(p.id)).map((p) => p.nom);
+      const liste = sans.length && sans.length <= 15 ? ` <span class="equipe__sans-portrait">(${sans.join(", ")})</span>` : "";
+      zone.innerHTML = `${manquants} portraits manquent${erreur ? ` (${erreur})` : ""} : les initiales s'affichent à la place.${liste}
         <button type="button" class="bouton-texte" data-action="reessayer-portraits">Réessayer</button>`;
     });
   }

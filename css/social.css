@@ -620,7 +620,7 @@
   padding: 0.75rem 1rem;
   color: var(--papier);
   background:
-    repeating-linear-gradient(135deg, transparent 0 14px, rgb(255 255 255 / 0.05) 14px 28px),
+    linear-gradient(transparent, transparent),
     var(--encre);
   border-left: 8px solid var(--obi);
   border-radius: 4px;

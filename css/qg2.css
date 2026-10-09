@@ -1,0 +1,360 @@
+/* ==========================================================
+   LE QG, VERSION 2 : une grande banniere avec ta vedette et tes
+   chiffres, les 4 tuiles en ligne, puis les panneaux en encre.
+   Charge en dernier.
+   ========================================================== */
+
+/* ---------- La banniere ---------- */
+.qg-hero {
+  --s1: #3b3f86;
+  --s2: #efbd2b;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 24rem);
+  min-height: 21rem;
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+  color: var(--sur-nuit);
+  background:
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(circle at 78% 45%, color-mix(in srgb, var(--s1) 70%, #1a1d3c), #0d0f22 70%);
+  border: 3px solid var(--encre);
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.qg-hero__texte {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  gap: 0.6rem;
+  padding: 1.6rem 1.8rem;
+}
+
+.qg-hero__salut {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--sur-nuit-doux);
+}
+
+.qg-hero__salut b {
+  display: block;
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0.05em 0.05em 0 var(--encre), 0.09em 0.09em 0 color-mix(in srgb, var(--s2) 70%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.qg-hero__titre {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-style: italic;
+  font-weight: 800;
+  color: var(--obi);
+}
+
+.qg-hero__chiffres {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qg-hero__chiffre {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.75rem;
+  background: rgb(255 255 255 / 0.06);
+  border: 1.5px solid rgb(255 255 255 / 0.12);
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+}
+
+.qg-hero__chiffre span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sur-nuit-doux);
+}
+
+.qg-hero__chiffre b {
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.qg-hero__chiffre small {
+  font-family: var(--police-texte);
+  font-size: 0.8rem;
+  color: var(--sur-nuit-doux);
+}
+
+.qg-hero__chiffre--or {
+  background: linear-gradient(160deg, rgb(239 189 43 / 0.28), rgb(239 189 43 / 0.08));
+  border-color: rgb(239 189 43 / 0.55);
+}
+
+.qg-hero__chiffre--or b { color: var(--obi); text-shadow: 0 0 14px rgb(239 189 43 / 0.45); }
+
+/* « Quoi de neuf » : une rangee de pastilles dans la banniere */
+.qg-hero .quoi-de-neuf {
+  margin: 0.3rem 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.qg-hero .quoi-de-neuf__titre { display: none; }
+
+/* La vedette : grande, en biais, fondue dans la scene */
+.qg-hero__vedette {
+  position: relative;
+  min-height: 100%;
+  border: 0;
+  box-shadow: none;
+}
+
+.qg-hero__image {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.qg-hero__image .portrait {
+  height: 100%;
+  aspect-ratio: auto;
+  background: transparent;
+}
+
+.qg-hero__image .portrait img {
+  object-position: var(--cadrage, 50% 18%);
+}
+
+.qg-hero__image .portrait__initiales { font-size: 6rem; }
+
+.qg-hero__image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #0d0f22 0%, transparent 28%),
+    linear-gradient(180deg, transparent 45%, rgb(10 11 26 / 0.92) 100%);
+}
+
+.qg-hero__vedette::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 1;
+  width: 14%;
+  background: linear-gradient(100deg, transparent 49%, var(--s2) 50% 53%, transparent 54%);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.qg-hero__plaque {
+  position: absolute;
+  left: 14%;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0 1.2rem 1.1rem;
+  color: #fff;
+}
+
+.qg-hero__plaque .obi-rarete {
+  position: static;
+  justify-self: start;
+  padding: 0.05rem 0.6rem;
+  font-size: 0.7rem;
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+}
+
+.qg-hero__nom {
+  margin: 0;
+  font-family: var(--police-titre);
+  font-size: 1.6rem;
+  line-height: 1.05;
+  text-shadow: 0.05em 0.05em 0 var(--encre);
+}
+
+.qg-hero__infos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.qg-hero__pui {
+  padding: 0.05rem 0.5rem;
+  font-family: var(--police-titre);
+  font-weight: 400;
+  color: var(--encre);
+  background: linear-gradient(180deg, #ffe58a, var(--obi));
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+}
+
+.qg-hero .vedette__changer { color: rgb(255 255 255 / 0.8); }
+
+/* ---------- Les 4 tuiles, en ligne ---------- */
+.qg .hub {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.qg .hub__tuiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.qg .tuile { min-height: 15rem; }
+.qg .tuile__titre { font-size: clamp(1.2rem, 1.8vw, 1.55rem); }
+
+/* ---------- Les panneaux du QG, en encre ---------- */
+.qg .planche .case,
+.qg .guide,
+.qg .passe,
+.qg .bandeau-compte {
+  color: var(--sur-nuit);
+  background: linear-gradient(180deg, #1b1e3c, #141631);
+  border: 1.5px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+}
+
+.qg .planche .case__titre,
+.qg .guide__objectif,
+.qg .passe__titre {
+  color: #fff;
+}
+
+.qg .planche .case__titre {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--police-titre);
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.qg .planche .case__titre::before {
+  content: "";
+  width: 0.35rem;
+  height: 1.1em;
+  background: var(--obi);
+  border-radius: 99px;
+}
+
+.qg .planche .case__aide,
+.qg .guide__aide,
+.qg .passe__aide,
+.qg .guide__numero,
+.qg .case__surtitre {
+  color: var(--sur-nuit-doux);
+  opacity: 1;
+}
+
+.qg .guide { border-left: 6px solid var(--obi); }
+.qg .guide--pret { background: linear-gradient(180deg, #3a3216, #1d1a10); }
+.qg .passe { border-left: 6px solid #7a5cff; }
+
+/* Les petites cases a l'interieur (missions, evenements, paliers...) */
+.qg .mission,
+.qg .evenement:not(.evenement--heure),
+.qg .exploration,
+.qg .exploration-mission,
+.qg .passe__palier,
+.qg .calendrier__case,
+.qg .expedition-ciblee,
+.qg .qg-stats > div,
+.qg .qg-resume > div {
+  color: var(--sur-nuit);
+  background: rgb(255 255 255 / 0.05);
+  border-color: rgb(255 255 255 / 0.12);
+}
+
+.qg .passe__palier--gros { background: rgb(239 189 43 / 0.16); border-color: rgb(239 189 43 / 0.5); }
+.qg .calendrier__case--jour { background: rgb(239 189 43 / 0.25); border-color: var(--obi); }
+.qg .calendrier__case--prise { opacity: 0.55; }
+
+.qg .exploration-mission small,
+.qg .evenement__quand,
+.qg .qg-stats dt,
+.qg .qg-resume dt,
+.qg .mission .case__aide {
+  color: var(--sur-nuit-doux);
+}
+
+.qg .evenement__nom,
+.qg .qg-stats dd,
+.qg .qg-resume dd,
+.qg .case__chiffre { color: #fff; }
+
+.qg .barre-xp,
+.qg .autel__jauge {
+  background: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.2);
+}
+
+.qg .bouton-texte { color: var(--obi); }
+
+.qg .tournoi__palier {
+  color: var(--sur-nuit);
+  background: rgb(255 255 255 / 0.06);
+  border-color: rgb(255 255 255 / 0.18);
+}
+
+.qg .tournoi__palier--pris { opacity: 0.5; }
+
+.qg .bouton--clair {
+  color: var(--sur-nuit);
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.3);
+}
+
+.qg select {
+  color: var(--sur-nuit);
+  background: #23264a;
+  border-color: rgb(255 255 255 / 0.25);
+}
+
+/* La couverture de l'Hebdo garde son papier */
+.qg .hebdo__contenu .mission { background: rgb(255 255 255 / 0.05); }
+
+/* ---------- Ecrans moyens et telephone ---------- */
+@media (max-width: 72rem) {
+  .qg .hub__tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 52rem) {
+  .qg-hero { grid-template-columns: minmax(0, 1fr); }
+  .qg-hero__vedette { min-height: 18rem; order: -1; }
+  .qg-hero__image { clip-path: none; }
+  .qg-hero__image::after { background: linear-gradient(180deg, transparent 40%, rgb(10 11 26 / 0.95) 100%); }
+  .qg-hero__vedette::before { display: none; }
+  .qg-hero__plaque { left: 0; }
+  .qg-hero__chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 38rem) {
+  .qg .hub__tuiles { grid-template-columns: minmax(0, 1fr); }
+  .qg-hero__texte { padding: 1.1rem 1rem; }
+  .qg-hero__chiffre b { font-size: 1.2rem; }
+}
