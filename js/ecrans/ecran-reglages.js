@@ -4,13 +4,14 @@
 
 import { NOMS_CASES, NOMS_PORTRAITS, reglage, changerReglage, tousLesReglages, restaurerReglages } from "../services/reglages.js";
 import { exporterPartie, importerPartie, effacerPartie, utiliserCode } from "../services/partie.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 
 export function afficherReglages(conteneur, { naviguer }) {
   conteneur.innerHTML = `
     ${htmlNavigation("reglages")}
     <div class="reglages-page">
-      <h1 class="equipe__titre">Réglages</h1>
+      ${htmlEntete({ titre: "Réglages", kanji: "設定", theme: "reglages", accroche: "Le jeu à ta façon : combat, affichage, sons, chat et sauvegarde." })}
 
       <section class="carte-reglage" aria-labelledby="titre-combat">
         <h2 id="titre-combat">Combat</h2>

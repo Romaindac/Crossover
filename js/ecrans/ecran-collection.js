@@ -35,6 +35,7 @@ import { TAMPONS, PAGES } from "../donnees/tampons.js";
 import { CADRES } from "../donnees/saisons.js";
 import { LIENS, LIENS_PAR_CLE, niveauLien, VICTOIRES_DECOUVERTE, BONUS_PAR_NIVEAU_LIEN } from "../donnees/liens.js";
 import { ouvrirChoixPiece, htmlDetailsPiece, iconeEmplacement, ligneTexte, texteOrigine, htmlPieceCarte } from "../ui/equipement-ui.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { afficherHotel } from "../ui/hotel.js";
 
@@ -47,18 +48,12 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
   conteneur.innerHTML = `
     ${htmlNavigation("collection")}
     <div class="collection">
-      <header class="collection__entete">
-        <h1 class="equipe__titre">Collection</h1>
-        <div class="onglets-collection" role="tablist" aria-label="Collection">
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="persos">Persos</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="index">Index</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="equipement">Équipement</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="hotel">Hôtel des ventes</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="encyclopedie">Encyclopédie</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="liens">Liens</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="onglet" data-onglet="carnet">Carnet</button>
-        </div>
-      </header>
+      ${htmlEntete({
+        titre: "Collection", kanji: "蒐集", theme: "collection", classe: "collection__entete",
+        accroche: `${idsPossedes().length} persos sur ${PERSOS.length}, ton équipement, tes liens et ton carnet.`,
+        onglets: [["persos", "Persos"], ["index", "Index"], ["equipement", "Équipement"], ["hotel", "Hôtel des ventes"], ["encyclopedie", "Encyclopédie"], ["liens", "Liens"], ["carnet", "Carnet"]]
+          .map(([id, nom]) => htmlOnglet(nom, { classe: "onglet-collection", donnees: `data-action="onglet" data-onglet="${id}"` })).join(""),
+      })}
       <div class="collection__contenu" id="contenu"></div>
     </div>
     <div id="fiche"></div>

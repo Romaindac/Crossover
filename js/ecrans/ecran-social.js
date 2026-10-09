@@ -12,6 +12,7 @@ import { lire, ecrire } from "../services/sauvegarde.js";
 import { numeroSemaine } from "../donnees/tour.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlCarte, rafraichirPortrait } from "../ui/cartes.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { brancherChat } from "../ui/chat.js";
 import { afficherHotel } from "../ui/hotel.js";
@@ -48,14 +49,12 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
   conteneur.innerHTML = `
     ${htmlNavigation("social")}
     <div class="reglages-page social">
-      <h1 class="equipe__titre">Social</h1>
-      <div class="choix-segmente choix-segmente--gauche social__onglets" role="tablist" aria-label="Social">
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="chat">Chat</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="echanges">Échanges</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="hotel">Hôtel des ventes</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="classements">Classements</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="vitrine">Ma vitrine</button>
-      </div>
+      ${htmlEntete({
+        titre: "Social", kanji: "交流", theme: "social",
+        accroche: "Discute, échange tes doublons, vends ton équipement et compare-toi aux autres joueurs.",
+        onglets: [["chat", "Chat"], ["echanges", "Échanges"], ["hotel", "Hôtel des ventes"], ["classements", "Classements"], ["vitrine", "Ma vitrine"]]
+          .map(([id, nom]) => htmlOnglet(nom, { classe: "choix-segmente__option", donnees: `data-action="onglet-social" data-onglet="${id}"` })).join(""),
+      })}
       <div class="social__compte" id="compte"></div>
 
       <section class="carte-reglage social__chat" data-panneau="chat" aria-label="Chat">

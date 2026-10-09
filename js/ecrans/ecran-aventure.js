@@ -29,6 +29,7 @@ import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlDecor } from "../ui/decors.js";
 import { iconeEmplacement } from "../ui/equipement-ui.js";
+import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { afficherArene } from "../ui/arene.js";
@@ -60,18 +61,12 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
   conteneur.innerHTML = `
     ${htmlNavigation("aventure")}
     <div class="aventure">
-      <header class="aventure__entete">
-        <h1 class="equipe__titre">Aventure</h1>
-        <div class="onglets-collection" role="tablist" aria-label="Aventure">
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="arene">Arène</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="campagne">Campagne</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="chasse">Chasse</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="tour">Tour</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="raid">Raid</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="donjon">Donjon</button>
-          <button type="button" role="tab" class="onglet-collection" data-action="vue" data-vue="duels">Duels</button>
-        </div>
-      </header>
+      ${htmlEntete({
+        titre: "Aventure", kanji: "冒険", theme: "aventure", classe: "aventure__entete",
+        accroche: "Boss de l'Arène, campagne, Tour, donjon ou duels : choisis ton combat.",
+        onglets: [["arene", "Arène"], ["campagne", "Campagne"], ["chasse", "Chasse"], ["tour", "Tour"], ["raid", "Raid"], ["donjon", "Donjon"], ["duels", "Duels"]]
+          .map(([id, nom]) => htmlOnglet(nom, { classe: "onglet-collection", donnees: `data-action="vue" data-vue="${id}"` })).join(""),
+      })}
       <div id="vue" class="aventure__vue"></div>
     </div>
   `;

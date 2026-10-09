@@ -5,8 +5,7 @@
 // ==========================================================
 
 import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
-import { PALIERS } from "../donnees/ennemis.js";
-import { aUnePartie, equipeSauvee, idsPossedes, palierMaxDebloque, estBattu } from "../services/partie.js";
+import { aUnePartie, equipeSauvee, idsPossedes, etatInvocations, etatArene } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait } from "../ui/cartes.js";
 
@@ -16,19 +15,25 @@ export function afficherAccueil(conteneur, { naviguer }) {
   const partie = aUnePartie();
   const equipe = partie ? equipeSauvee().filter(Boolean) : [];
   const vitrine = (equipe.length >= 3 ? equipe : VITRINE).slice(0, 5);
-  const meilleurBattu = PALIERS.filter((p) => estBattu(p.palier)).length;
+  const nbSeries = new Set(PERSOS.map((p) => p.serie)).size;
+  const autel = partie ? etatInvocations() : null;
+  const boss = partie ? (etatArene()?.battus ?? []).filter((cle) => !cle.includes("@")).length : 0;
 
   const accroche = partie
-    ? `<p class="obi__accroche">Bon retour parmi les héros.</p>
-       <p class="obi__detail">${meilleurBattu ? `${meilleurBattu} palier${meilleurBattu > 1 ? "s" : ""} battu${meilleurBattu > 1 ? "s" : ""} sur ${PALIERS.length}` : "Aucun palier battu pour l'instant"}, ${idsPossedes().length} persos sur ${PERSOS.length}.</p>`
+    ? `<p class="obi__accroche">Bon retour, invocateur.</p>
+       <ul class="accueil__stats">
+         <li><b>${idsPossedes().length}</b> / ${PERSOS.length} persos</li>
+         ${autel ? `<li>Autel niveau <b>${autel.niveau}</b></li>` : ""}
+         <li><b>${boss}</b> boss de l'Arène vaincus</li>
+       </ul>`
     : `<p class="obi__accroche">Goku, Naruto, Pikachu et Guts dans la même équipe.</p>
-       <p class="obi__detail">Les héros de tous les mangas, enfin réunis.</p>`;
+       <p class="obi__detail">${PERSOS.length} héros de ${nbSeries} mangas. Invoque-les, forme ton équipe, fais tomber les boss.</p>`;
 
   conteneur.innerHTML = `
     <main class="accueil">
       <div class="accueil__trame accueil__trame--rose" aria-hidden="true"></div>
       <div class="accueil__trame accueil__trame--ciel" aria-hidden="true"></div>
-      <p class="accueil__tranche" aria-hidden="true">Crossover, volume 0.2</p>
+      <p class="accueil__tranche" aria-hidden="true">Crossover · ${PERSOS.length} héros · ${nbSeries} mangas</p>
 
       <div class="accueil__couverture">
         <div class="vitrine" aria-hidden="true">
