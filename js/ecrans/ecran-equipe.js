@@ -20,7 +20,7 @@ import {
   puissancePerso, puissanceDeMonEquipe, ascensionner,
 } from "../services/partie.js";
 import { chargerPortraits, nombrePortraits, portraitDe } from "../services/portraits.js";
-import { htmlCarte, htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
+import { htmlPortrait, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { htmlFiche } from "../ui/fiche.js";
 import { ouvrirChoixPiece } from "../ui/equipement-ui.js";
 import { jouerEveil, jouerAscension } from "../ui/eveil.js";
@@ -31,6 +31,9 @@ import { htmlSynergies } from "../ui/synergies.js";
 const NOMS_PLACES = ["Avant 1", "Avant 2", "Arrière 1", "Arrière 2", "Arrière 3"];
 const ORDRE_ROLES = ["tous", "tank", "attaquant", "assassin", "soutien", "controle"];
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
+const sansAccents = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const echapper = (t) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const nombreCourt = (n) => (n >= 10000 ? `${(n / 1000).toFixed(n >= 100000 ? 0 : 1).replace(".", ",")}k` : Math.round(n).toLocaleString("fr-FR"));
 
 export function afficherEquipe(conteneur, { naviguer }) {
   // ---------- Etat de l'ecran ----------
@@ -38,6 +41,10 @@ export function afficherEquipe(conteneur, { naviguer }) {
   let palier = Math.min(palierSauve(), palierMaxDebloque());
   let placeChoisie = null;
   let filtre = "tous";
+  let recherche = "";        // texte tape dans la recherche (nom ou serie)
+  let tri = "puissance";
+  let horsEquipe = false;    // cacher les persos deja dans l'equipe
+  let cleGrille = "";        // pour ne pas reconstruire la liste sans raison
   let detail = equipe.find(Boolean) ?? idsPossedes()[0];
   let message = "";
   let chances = {};          // palier -> taux de victoire estime
@@ -89,13 +96,30 @@ export function afficherEquipe(conteneur, { naviguer }) {
       </div>
 
 
-      <section class="selection" aria-labelledby="titre-selection">
-        <div class="selection__entete">
+      <section class="selection roster" aria-labelledby="titre-selection">
+        <div class="roster__entete">
           <h2 id="titre-selection">Tes persos <span class="selection__compte" id="compte"></span></h2>
+          <div class="roster__outils">
+            <label class="roster__recherche">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+              <input type="search" id="recherche" placeholder="Chercher un perso ou une série" autocomplete="off" aria-label="Chercher un perso par nom ou par série">
+            </label>
+            <label class="roster__tri">
+              <span class="visuellement-cache">Trier par</span>
+              <select id="tri" aria-label="Trier par">
+                <option value="puissance">Puissance</option>
+                <option value="niveau">Niveau</option>
+                <option value="rarete">Rareté</option>
+                <option value="serie">Série</option>
+                <option value="nom">Nom</option>
+              </select>
+            </label>
+            <button type="button" class="filtre roster__hors" data-action="hors-equipe" aria-pressed="false">Hors équipe</button>
+          </div>
           <div class="filtres" role="group" aria-label="Filtrer par rôle" id="filtres"></div>
         </div>
-        <div class="grille" id="grille"></div>
-        <p class="selection__aide">Les autres persos s'obtiennent dans les <button type="button" class="bouton-texte" data-action="tirages">boosters</button>.</p>
+        <div class="roster__liste" id="grille"></div>
+        <p class="selection__aide">Clique sur une place de la formation, puis sur un perso pour l'y mettre (ou glisse-le). Les autres persos s'obtiennent dans les <button type="button" class="bouton-texte" data-action="tirages">boosters</button>.</p>
       </section>
 
       <section class="adversaire" aria-labelledby="titre-adversaire">
@@ -114,7 +138,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
   // ---------- Rendu de chaque zone ----------
 
   function rendreEntete() {
-    $("#compte").textContent = `${persosObtenus().length} sur ${PERSOS.length}`;
+    // le compte est ecrit par rendreGrille (il tient compte de la recherche)
   }
 
   function rendreEquipesEnregistrees() {
@@ -200,15 +224,59 @@ export function afficherEquipe(conteneur, { naviguer }) {
     `).join("");
   }
 
-  function rendreGrille() {
+  // La liste compacte de tes persos. Elle n'est reconstruite que si le filtre,
+  // la recherche ou le tri changent (ou si on la force) ; sinon on met juste
+  // a jour les pastilles « dans l'equipe ». Les vignettes hors de l'ecran ne
+  // sont pas dessinees (content-visibility), ce qui garde l'ecran fluide.
+  function rendreGrille(forcer = false) {
+    const cle = [filtre, recherche, tri, horsEquipe, horsEquipe ? equipe.join() : ""].join("|");
+    if (!forcer && cle === cleGrille) return majPrises();
+    cleGrille = cle;
+    const q = sansAccents(recherche.trim());
+    const ordre = (p) => RARETES[p.rarete]?.ordre ?? 0;
     const visibles = persosObtenus()
       .filter((p) => filtre === "tous" || p.role === filtre)
-      .map((p) => ({ p, pui: puissancePerso(p.id) }))
-      .sort((a, b) => b.pui - a.pui)
-      .map((x) => x.p);   // les plus puissants d'abord
+      .filter((p) => !horsEquipe || !equipe.includes(p.id))
+      .filter((p) => !q || sansAccents(`${p.nom} ${p.serie}`).includes(q))
+      .map((p) => ({ p, prog: progressionDe(p.id), pui: puissancePerso(p.id) }))
+      .sort((a, b) =>
+        tri === "niveau" ? b.prog.niveau - a.prog.niveau || b.pui - a.pui
+        : tri === "rarete" ? ordre(b.p) - ordre(a.p) || b.pui - a.pui
+        : tri === "serie" ? a.p.serie.localeCompare(b.p.serie, "fr") || b.pui - a.pui
+        : tri === "nom" ? a.p.nom.localeCompare(b.p.nom, "fr")
+        : b.pui - a.pui);
+    $("#compte").textContent = visibles.length === persosObtenus().length
+      ? `${persosObtenus().length} sur ${PERSOS.length}`
+      : `${visibles.length} affichés sur ${persosObtenus().length}`;
     $("#grille").innerHTML = visibles.length
-      ? visibles.map((p) => htmlCarte(p, { dansEquipe: equipe.includes(p.id), progression: progressionDe(p.id) })).join("")
-      : '<p class="grille__vide">Aucun perso de ce rôle pour l\'instant.</p>';
+      ? visibles.map(htmlVignette).join("")
+      : `<p class="grille__vide">${q ? `Aucun perso ne correspond à « ${echapper(recherche.trim())} ».` : "Aucun perso ici pour l'instant."}</p>`;
+  }
+
+  function htmlVignette({ p, prog, pui }) {
+    const prise = equipe.includes(p.id);
+    return `
+      <button type="button" class="vignette vignette--${p.rarete}${prise ? " vignette--prise" : ""}" data-action="choisir-perso" data-perso="${p.id}" draggable="true"
+        style="--aff: ${COULEURS_AFFINITE[p.affinite]}; ${varsSerie(p.serie)}" aria-pressed="${prise}"
+        aria-label="${p.nom}, ${RARETES[p.rarete].nom}, ${ROLES[p.role].nom}, niveau ${prog.niveau}, puissance ${pui}${prise ? ", dans ton équipe" : ""}">
+        <span class="vignette__visuel">
+          ${htmlPortrait(p)}
+          <span class="vignette__role" title="${ROLES[p.role].nom}">${iconeRole(p.role)}</span>
+          <span class="vignette__prise" aria-hidden="true">Équipe</span>
+        </span>
+        <span class="vignette__pui"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg>${nombreCourt(pui)}</span>
+        <span class="vignette__nom">${p.nom}</span>
+        <span class="vignette__niv">Niv. ${prog.niveau}<span class="vignette__etoiles">${prog.ascension ? `<b class="vignette__rouge">${prog.ascension}</b>` : prog.etoiles}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="currentColor"/></svg></span></span>
+      </button>`;
+  }
+
+  // Sans reconstruire : seulement les pastilles « dans l'equipe »
+  function majPrises() {
+    conteneur.querySelectorAll("#grille .vignette").forEach((v) => {
+      const prise = equipe.includes(v.dataset.perso);
+      v.classList.toggle("vignette--prise", prise);
+      v.setAttribute("aria-pressed", String(prise));
+    });
   }
 
   function rendreDetail() {
@@ -338,7 +406,7 @@ export function afficherEquipe(conteneur, { naviguer }) {
     }
     if (action === "ascension") {
       const r = ascensionner(cible.dataset.perso);
-      if (r.ok) jouerAscension(conteneur, PERSOS_PAR_ID[cible.dataset.perso], r.palier).then(() => { rendreDetail(); rendreFormation(); rendreGrille(); estimerChances(); });
+      if (r.ok) jouerAscension(conteneur, PERSOS_PAR_ID[cible.dataset.perso], r.palier).then(() => { rendreDetail(); rendreFormation(); rendreGrille(true); estimerChances(); });
       else { message = r.erreur; rendreFormation(); }
       return;
     }
@@ -391,6 +459,9 @@ export function afficherEquipe(conteneur, { naviguer }) {
       }
     } else if (action === "filtre") {
       filtre = cible.dataset.filtre;
+    } else if (action === "hors-equipe") {
+      horsEquipe = !horsEquipe;
+      cible.setAttribute("aria-pressed", String(horsEquipe));
     } else if (action === "palier") {
       const choix = Number(cible.dataset.palier);
       if (choix > palierMaxDebloque()) return;
@@ -424,12 +495,30 @@ export function afficherEquipe(conteneur, { naviguer }) {
   });
 
   // Survol d'une carte : on affiche son detail (sur ordinateur)
+  // (petit delai : balayer la liste a la souris ne redessine pas la fiche a chaque vignette)
+  let survol = null;
   conteneur.addEventListener("mouseover", (e) => {
-    const carte = e.target.closest(".carte[data-perso]");
-    if (carte && carte.dataset.perso !== detail) {
+    const carte = e.target.closest(".vignette[data-perso], .carte[data-perso]");
+    if (!carte || carte.dataset.perso === detail) return;
+    clearTimeout(survol);
+    survol = setTimeout(() => {
+      if (!carte.isConnected || carte.dataset.perso === detail) return;
       detail = carte.dataset.perso;
       rendreDetail();
-    }
+    }, 90);
+  });
+
+  // ---------- Recherche et tri ----------
+  let frappe = null;
+  conteneur.addEventListener("input", (e) => {
+    if (e.target.id !== "recherche") return;
+    clearTimeout(frappe);
+    frappe = setTimeout(() => { recherche = e.target.value; rendreGrille(); }, 120);
+  });
+  conteneur.addEventListener("change", (e) => {
+    if (e.target.id !== "tri") return;
+    tri = e.target.value;
+    rendreGrille();
   });
 
   // ---------- Glisser-deposer (sur ordinateur) ----------
