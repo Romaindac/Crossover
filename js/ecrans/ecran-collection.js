@@ -465,7 +465,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
             ${tour < CHANCE_TOUR_MAX ? `<li><b>Tour</b> : atteins l'étage ${prochaineDizaine(d.tour)} pour +${pct(CHANCE_PAR_10_ETAGES)}</li>` : ""}
             ${donjon < CHANCE_DONJON_MAX ? `<li><b>Donjon</b> : descends jusqu'à l'étage ${prochaineDizaine(d.donjon)} pour +${pct(CHANCE_PAR_10_ETAGES_DONJON)}</li>` : ""}
             ${eveils < CHANCE_EVEIL_MAX ? `<li><b>Éveil</b> : chaque palier d'éveil d'un perso donne +${pct(CHANCE_PAR_EVEIL)}</li>` : ""}
-            <li><b>Bordures</b> : la fusion de l'Atelier (Invocations) transforme les doublons en bordures, et chaque boss de l'Arène donne sa carte Boss au premier KO</li>
+            <li><b>Bordures</b> : la fusion de l'Atelier (Invocations) transforme les doublons en bordures, et chaque boss de l'Arène donne sa bordure Boss au premier KO</li>
           </ul>
           <div class="donjon__actions">
             <button type="button" class="bouton bouton--obi-petit" data-action="aller" data-ecran="tirages">Aller à l'autel</button>
