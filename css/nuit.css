@@ -954,3 +954,22 @@ button:where(
 .carte[data-motif] .obi-rarete__long { display: none; }
 .carte[data-motif] .obi-rarete__court { display: inline; }
 .carte[data-motif] .obi-rarete { max-width: none; overflow: visible; }
+
+/* Collection : les cartes a obtenir ont la meme hauteur que les autres, alignees en haut */
+.etagere__rang--cartes {
+  align-items: stretch;
+}
+
+.etagere__rang--cartes > .carte-manquante,
+.etagere__rang--cartes > .carte-collection,
+.etagere__rang--cartes > .carte-secrete {
+  align-self: stretch;
+  height: 100%;
+}
+
+.carte-collection > .carte { height: 100%; }
+
+.carte-manquante {
+  grid-template-rows: auto 1fr auto;
+  align-content: start;
+}
