@@ -76,3 +76,17 @@ setInterval(async () => {
 // Messages prives non lus : un coup d'oeil par minute (pastille de l'onglet Social)
 if (connecte()) rafraichirNonLus();
 setInterval(() => { if (connecte() && !document.hidden) rafraichirNonLus(); }, 60 * 1000);
+
+// Echap ferme la fenetre du dessus (aide, compte, objet...), si son ecran ne l'a pas deja fait.
+// On attend un tour : les ecrans qui gerent Echap eux-memes passent d'abord.
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const voile = [...document.querySelectorAll(".voile")].pop();
+  if (!voile) return;
+  setTimeout(() => {
+    if (!voile.isConnected) return;
+    const bouton = voile.querySelector('[data-action^="fermer"], [data-hv="fermer"], [data-fermer]')
+      ?? [...voile.querySelectorAll("button")].find((b) => /^(Fermer|Annuler|Retour)$/.test(b.textContent.trim()));
+    bouton?.click();
+  }, 0);
+});
