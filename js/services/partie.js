@@ -1882,6 +1882,7 @@ export function resumeJoueur() {
     etoiles: progs.reduce((s, p) => s + (p.etoiles ?? 0), 0),
     tour: partie.tour.record,
     raid: Math.max(0, ...Object.values(partie.raid?.records ?? {})),
+    donjon: partie.donjon?.record ?? 0,
   };
 }
 
@@ -2623,4 +2624,47 @@ export function acheterMaitrise(id) {
   partie.donjon.maitrises[id] = n + 1;
   sauver();
   return true;
+}
+
+// ==========================================================
+// DUELS (PvP) : la meme regle pour tous, sans equipement ni talents
+// (niveau, etoiles, eveil seulement), pour que ce soit le deck et le
+// placement qui comptent. Le combat se joue ici avec une graine ;
+// le serveur ajuste les points.
+// ==========================================================
+
+export const RECOMPENSE_DUEL = { encre: 25, invocations: 2 };
+
+// L'equipe telle qu'elle part en defense (ou en attaque)
+export function equipeDuel(ids = equipeSauvee()) {
+  return ids.filter((id) => id && partie?.collection[id]).map((id) => {
+    const p = partie.collection[id];
+    return { id, niveau: p.niveau, etoiles: p.etoiles, eveil: p.eveil ?? 0 };
+  });
+}
+export const puissanceEquipe = (equipe) => equipe.reduce((t, e) => t + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).atq * 4 + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).pv / 3, 0);
+
+export function jouerDuel(defense, graine = Math.floor(Math.random() * 2147483647)) {
+  const attaque = equipeDuel();
+  const r = simulerCombat({ equipeA: attaque, equipeB: defense, graine, journal: false });
+  return {
+    victoire: r.vainqueur === 0, duree: r.duree, graine,
+    koA: r.unites.filter((u) => u.camp === 0 && u.pv <= 0).length,
+    koB: r.unites.filter((u) => u.camp === 1 && u.pv <= 0).length,
+  };
+}
+
+// La recompense locale d'un duel gagne (le serveur limite a 10 duels par jour)
+export function recompenserDuel(victoire) {
+  if (!partie) return null;
+  partie.stats.duels = (partie.stats.duels ?? 0) + 1;
+  partie.stats.combats += 1;
+  if (!victoire) { sauver(); return null; }
+  partie.stats.victoires += 1;
+  partie.encre += RECOMPENSE_DUEL.encre;
+  donnerInvocations(RECOMPENSE_DUEL.invocations);
+  signaler("victoire");
+  gagnerXpPasse(XP_VICTOIRE);
+  sauver();
+  return RECOMPENSE_DUEL;
 }

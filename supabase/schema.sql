@@ -475,3 +475,149 @@ $$;
 grant execute on function public.accepter_echange(bigint) to authenticated;
 grant execute on function public.annuler_echange(bigint) to authenticated;
 grant execute on function public.recuperer_echanges() to authenticated;
+
+-- ==========================================================
+-- CLASSEMENT DU DONJON
+-- ==========================================================
+
+alter table public.joueurs add column if not exists donjon integer not null default 0;
+create index if not exists joueurs_donjon on public.joueurs (donjon desc);
+
+-- ==========================================================
+-- DUELS (PvP en defense classee)
+-- Chaque joueur enregistre une equipe de defense. Les autres
+-- l'attaquent (le combat se joue dans le navigateur de l'attaquant,
+-- avec une graine) puis envoient le resultat : le serveur ajuste les
+-- points des deux joueurs. 10 attaques par jour, 3 contre la meme
+-- defense. Les points repartent a 1000 chaque mois (saison).
+-- ==========================================================
+
+create table if not exists public.defenses (
+  joueur uuid primary key default auth.uid() references public.joueurs (id) on delete cascade,
+  pseudo text not null default '',
+  equipe jsonb not null,
+  puissance integer not null default 0,
+  points integer not null default 1000,
+  saison text not null default '',
+  victoires integer not null default 0,
+  defaites integer not null default 0,
+  maj timestamptz not null default now()
+);
+create index if not exists defenses_points on public.defenses (saison, points desc);
+alter table public.defenses enable row level security;
+
+create table if not exists public.duels (
+  id bigint generated always as identity primary key,
+  attaquant uuid not null references public.joueurs (id) on delete cascade,
+  pseudo_attaquant text not null default '',
+  cible uuid not null references public.joueurs (id) on delete cascade,
+  pseudo_cible text not null default '',
+  victoire boolean not null,
+  graine bigint not null default 0,
+  gain integer not null default 0,
+  perte integer not null default 0,
+  cree timestamptz not null default now()
+);
+create index if not exists duels_cible on public.duels (cible, cree desc);
+create index if not exists duels_attaquant on public.duels (attaquant, cree desc);
+alter table public.duels enable row level security;
+
+create or replace function public.saison_serveur() returns text
+language sql stable as $$ select to_char(now() at time zone 'Europe/Paris', 'YYYY-MM'); $$;
+
+-- Une equipe de defense possible : 5 persos connus, differents, niveaux et etoiles plausibles
+create or replace function public.equipe_valide(e jsonb) returns boolean
+language plpgsql stable security definer set search_path = public as $$
+declare i integer; x jsonb;
+begin
+  if jsonb_typeof(e) <> 'array' or jsonb_array_length(e) <> 5 then return false; end if;
+  for i in 0 .. 4 loop
+    x := e->i;
+    if not exists (select 1 from public.persos_catalogue where id = x->>'id') then return false; end if;
+    if (x->>'niveau')::integer not between 1 and 50 then return false; end if;
+    if (x->>'etoiles')::integer not between 1 and 5 then return false; end if;
+    if coalesce((x->>'eveil')::integer, 0) not between 0 and 5 then return false; end if;
+  end loop;
+  if (select count(distinct v->>'id') from jsonb_array_elements(e) v) <> 5 then return false; end if;
+  return true;
+exception when others then
+  return false;
+end $$;
+
+create or replace function public.avant_defense() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  -- Les mises a jour faites par resultat_duel() passent telles quelles
+  if tg_op = 'UPDATE' and current_setting('crossover.duel', true) = '1' then return new; end if;
+  new.joueur := auth.uid();
+  select pseudo into new.pseudo from public.joueurs where id = auth.uid();
+  if new.pseudo is null then raise exception 'profil introuvable'; end if;
+  if not public.equipe_valide(new.equipe) then raise exception 'equipe refusee'; end if;
+  if tg_op = 'INSERT' then
+    new.points := 1000; new.saison := public.saison_serveur(); new.victoires := 0; new.defaites := 0;
+  else
+    -- Changer sa defense ne touche pas aux points (sauf nouvelle saison)
+    new.points := old.points; new.victoires := old.victoires; new.defaites := old.defaites; new.saison := old.saison;
+    if old.saison <> public.saison_serveur() then
+      new.points := 1000; new.saison := public.saison_serveur(); new.victoires := 0; new.defaites := 0;
+    end if;
+  end if;
+  new.maj := now();
+  return new;
+end $$;
+drop trigger if exists avant_defense on public.defenses;
+create trigger avant_defense before insert or update on public.defenses for each row execute function public.avant_defense();
+
+drop policy if exists "defenses lisibles" on public.defenses;
+create policy "defenses lisibles" on public.defenses for select using (true);
+drop policy if exists "defense creee" on public.defenses;
+create policy "defense creee" on public.defenses for insert with check (auth.uid() is not null);
+drop policy if exists "defense modifiee" on public.defenses;
+create policy "defense modifiee" on public.defenses for update using (auth.uid() = joueur);
+
+drop policy if exists "duels lus" on public.duels;
+create policy "duels lus" on public.duels for select using (auth.uid() = attaquant or auth.uid() = cible);
+-- Aucune ecriture directe : resultat_duel() s'en charge
+
+-- Le resultat d'un duel : points de l'attaquant (+20 / -10, plus si la cible est mieux classee)
+-- et de la defense (+5 / -10). Les points d'une ancienne saison repartent a 1000.
+create or replace function public.resultat_duel(p_cible uuid, p_victoire boolean, p_graine bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  moi record; lui record; s text := public.saison_serveur();
+  gain integer; perte integer;
+begin
+  if auth.uid() is null then raise exception 'connexion requise'; end if;
+  if p_cible = auth.uid() then raise exception 'cible refusee'; end if;
+  select * into moi from public.defenses where joueur = auth.uid() for update;
+  if not found then raise exception 'defense requise'; end if;
+  select * into lui from public.defenses where joueur = p_cible for update;
+  if not found then raise exception 'cible refusee'; end if;
+  if (select count(*) from public.duels where attaquant = auth.uid() and cree > now() - interval '1 day') >= 10 then
+    raise exception 'limite duels jour';
+  end if;
+  if (select count(*) from public.duels where attaquant = auth.uid() and cible = p_cible and cree > now() - interval '1 day') >= 3 then
+    raise exception 'limite meme cible';
+  end if;
+  perform set_config('crossover.duel', '1', true);
+  if moi.saison <> s then moi.points := 1000; moi.victoires := 0; moi.defaites := 0; end if;
+  if lui.saison <> s then lui.points := 1000; lui.victoires := 0; lui.defaites := 0; end if;
+  if p_victoire then
+    gain := greatest(10, least(40, 20 + (lui.points - moi.points) / 20));
+    perte := 10;
+    update public.defenses set points = moi.points + gain, saison = s, victoires = moi.victoires + 1 where joueur = auth.uid();
+    update public.defenses set points = greatest(0, lui.points - perte), saison = s, defaites = lui.defaites + 1 where joueur = p_cible;
+  else
+    gain := 5;
+    perte := 10;
+    update public.defenses set points = greatest(0, moi.points - perte), saison = s, defaites = moi.defaites + 1 where joueur = auth.uid();
+    update public.defenses set points = lui.points + gain, saison = s, victoires = lui.victoires + 1 where joueur = p_cible;
+  end if;
+  insert into public.duels (attaquant, pseudo_attaquant, cible, pseudo_cible, victoire, graine, gain, perte)
+    values (auth.uid(), moi.pseudo, p_cible, lui.pseudo, p_victoire, p_graine, gain, perte);
+  perform set_config('crossover.duel', '0', true);
+  return (select jsonb_build_object('points', points, 'gain', case when p_victoire then gain else -perte end) from public.defenses where joueur = auth.uid());
+end $$;
+
+grant execute on function public.resultat_duel(uuid, boolean, bigint) to authenticated;
+grant execute on function public.saison_serveur() to authenticated, anon;
