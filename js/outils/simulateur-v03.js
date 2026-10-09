@@ -23,7 +23,7 @@ const TICKETS_GRATUITS_PAR_JOUR = 2 * STOCK_GRATUIT_MAX;
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
 import { invoquer } from "../moteur/invocations.js";
-import { INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_MAX, MONDES, NIVEAUX_AUTEL, CHANCE_PAR_NIVEAU } from "../donnees/invocations.js";
+import { INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_MAX, MONDES, NIVEAUX_AUTEL, POINTS_PAR_NIVEAU, CHANCE_PAR_POINT, BRANCHES_AUTEL } from "../donnees/invocations.js";
 import { composerEquipe } from "../moteur/composition.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { creerPiece, tirerButin, objetAuHasard, scorePiece, coutAmelioration, bonusEquipement } from "../moteur/equipement.js";
@@ -62,7 +62,8 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     }
   };
 
-  // Vide la reserve d'invocations, en tournant entre les autels ouverts (chance : niveau d'autel seulement)
+  // Vide la reserve d'invocations, en tournant entre les autels ouverts
+  // (chance : tous les points d'autel places en Chance, Index et phases ignores)
   const invoquerTout = () => {
     const mondes = MONDES.filter((m) => m.chapitre === 0 || j.battues.has(m.chapitre * 8));
     while (j.invocations > 0) {
@@ -70,7 +71,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
       let niveau = 0;
       while (niveau + 1 < NIVEAUX_AUTEL.length && j.totalInvocations >= NIVEAUX_AUTEL[niveau + 1].invocations) niveau += 1;
       const monde = mondes[j.totalInvocations++ % mondes.length];
-      const r = invoquer(h.nombre, monde.edition, { chance: 1 + niveau * CHANCE_PAR_NIVEAU, pitie: j.pitieAutel });
+      const r = invoquer(h.nombre, monde.edition, { chance: 1 + Math.min(BRANCHES_AUTEL[0].max, niveau * POINTS_PAR_NIVEAU) * CHANCE_PAR_POINT, pitie: j.pitieAutel });
       j.pitieAutel = r.pitie;
       if (!j.collection[r.id]) j.collection[r.id] = nouvelleProgression();
       else ajouterDoublon(j.collection[r.id]);

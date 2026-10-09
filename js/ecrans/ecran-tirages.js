@@ -17,8 +17,9 @@ import { styleSerie, varsSerie, motifSerie } from "../donnees/series.js";
 import { serieDeLaSemaine } from "../donnees/hebdo.js";
 import {
   encre, idsPossedes, possede, progressionDe, etatBoosters, ouvrirBoosterJoueur, fabriquerCarte, coutFabrication,
-  verifierTampons, progressionSerie,
+  verifierTampons, progressionSerie, prochaineFusion, fusionner,
 } from "../services/partie.js";
+import { FUSION } from "../donnees/invocations.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
@@ -149,20 +150,49 @@ export function afficherTirages(conteneur, { naviguer }) {
       ${htmlTaux()}`;
   }
 
-  // ---------- Atelier : fabriquer une carte avec la poussiere ----------
+  // ---------- Atelier : fabriquer une carte avec la poussiere, ou fusionner ----------
+
+  const htmlOngletsAtelier = () => `
+    <div class="choix-segmente choix-segmente--gauche" role="radiogroup" aria-label="Atelier">
+      <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="manquants" aria-checked="${filtreAtelier === "manquants"}">Persos manquants</button>
+      <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="tous" aria-checked="${filtreAtelier === "tous"}">Tous (pour les étoiles)</button>
+      <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="fusion" aria-checked="${filtreAtelier === "fusion"}">Fusion de bordures</button>
+    </div>`;
+
+  // La fusion : les doublons au-dela de 5 etoiles forgent une bordure
+  function htmlFusion() {
+    const liste = idsPossedes().map((id) => ({ p: PERSOS_PAR_ID[id], f: prochaineFusion(id) }))
+      .filter((x) => x.p && x.f && x.f.surplus > 0)
+      .sort((a, c) => Number(c.f.pret) - Number(a.f.pret) || c.f.surplus / c.f.doublons - a.f.surplus / a.f.doublons);
+    return `
+      <p class="case__aide">Un perso déjà à ${ETOILES_MAX} étoiles garde ses doublons en réserve (en plus de la poussière). Assez de doublons forgent sa bordure : ${FUSION.map((f) => `${nomBordure(f.bordure)} ${f.doublons}`).join(", ")}.</p>
+      <p class="case__message" role="status" aria-live="polite">${messageAtelier}</p>
+      <div class="atelier__grille">
+        ${liste.length ? liste.map(({ p, f }) => `
+          <div class="atelier__carte ${f.pret ? "atelier__carte--prete" : ""}" data-motif="${motifSerie(p.serie)}" style="${varsSerie(p.serie)}">
+            <span class="atelier__portrait">${htmlPortrait(p)}<span class="obi-rarete obi-rarete--${p.rarete}">${RARETES[p.rarete].nom}</span></span>
+            <span class="atelier__nom">${p.nom}</span>
+            <span class="atelier__info">Doublons ${Math.min(f.surplus, f.doublons)} / ${f.doublons} vers <b>${nomBordure(f.bordure)}</b></span>
+            <span class="barre-xp"><span class="barre-xp__rempli" style="--xp: ${Math.min(1, f.surplus / f.doublons)}"></span></span>
+            <button type="button" class="bouton bouton--obi-petit" data-action="fusionner" data-perso="${p.id}" ${f.pret ? "" : "disabled"}>Fusionner</button>
+          </div>`).join("") : `<p class="case__aide">Aucun doublon en réserve pour l'instant : ils arrivent quand un perso à ${ETOILES_MAX} étoiles ressort à l'autel ou dans un booster.</p>`}
+      </div>`;
+  }
 
   function rendreAtelier() {
     const b = etatBoosters();
+    if (filtreAtelier === "fusion") {
+      $("#vue-boosters").innerHTML = `<section class="atelier">${htmlOngletsAtelier()}${htmlFusion()}</section>`;
+      chargerPortraits((id) => rafraichirPortrait(conteneur, id));
+      return;
+    }
     const liste = PERSOS.filter((p) => filtreAtelier === "tous" || !possede(p.id))
       .sort((a, c) => RARETES[a.rarete].ordre - RARETES[c.rarete].ordre || a.nom.localeCompare(c.nom));
     const ordre = ORDRE_RARETES.slice().reverse();
     $("#vue-boosters").innerHTML = `
       <section class="atelier">
         <p class="case__aide">La poussière vient des boosters (${POUSSIERE_PAR_BOOSTER} par booster) et des doublons d'un perso déjà à ${ETOILES_MAX} étoiles. Coût : ${ordre.map((r) => `${RARETES[r].nom} ${nombre(COUT_FABRICATION[r])}`).join(", ")}.</p>
-        <div class="choix-segmente choix-segmente--gauche" role="radiogroup" aria-label="Persos affichés">
-          <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="manquants" aria-checked="${filtreAtelier === "manquants"}">Persos manquants</button>
-          <button type="button" role="radio" class="choix-segmente__option" data-action="filtre-atelier" data-valeur="tous" aria-checked="${filtreAtelier === "tous"}">Tous (pour les étoiles)</button>
-        </div>
+        ${htmlOngletsAtelier()}
         <p class="case__message" role="status" aria-live="polite">${messageAtelier}</p>
         <div class="atelier__grille">
           ${liste.length ? liste.map((p) => {
@@ -479,7 +509,12 @@ export function afficherTirages(conteneur, { naviguer }) {
     if (action === "reveler") reveler(Number(cible.dataset.index));
     if (action === "tout-reveler" && revelation) toutReveler();
     if (action === "fermer") fermer();
-    if (action === "filtre-atelier") { filtreAtelier = cible.dataset.valeur; rendreAtelier(); }
+    if (action === "filtre-atelier") { filtreAtelier = cible.dataset.valeur; messageAtelier = ""; rendreAtelier(); }
+    if (action === "fusionner") {
+      const bordure = fusionner(cible.dataset.perso);
+      if (bordure) { messageAtelier = `${PERSOS_PAR_ID[cible.dataset.perso].nom} : bordure ${nomBordure(bordure)} forgée !`; sonRarete("legendaire"); }
+      rendreAtelier();
+    }
     if (action === "fabriquer") {
       const r = fabriquerCarte(cible.dataset.perso);
       const perso = PERSOS_PAR_ID[cible.dataset.perso];

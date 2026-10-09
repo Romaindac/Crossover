@@ -32,9 +32,10 @@ function persosDe(edition, rarete) {
   return dansEdition;
 }
 
-export function tirerPersoEdition(aleatoire, edition, rarete, serieVedette) {
+export function tirerPersoEdition(aleatoire, edition, rarete, serieVedette, poidsVedette = 2) {
   const liste = persosDe(edition, rarete);
-  const poids = liste.map((p) => (p.serie === serieVedette ? 2 : 1));
+  const vedettes = Array.isArray(serieVedette) ? serieVedette : [serieVedette];
+  const poids = liste.map((p) => (vedettes.includes(p.serie) ? poidsVedette : 1));
   let x = aleatoire() * poids.reduce((a, b) => a + b, 0);
   for (let i = 0; i < liste.length; i++) {
     x -= poids[i];

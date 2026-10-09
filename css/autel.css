@@ -1078,3 +1078,180 @@
 body:has(.revelation, .voile--tuto, .arene-combat) .bulle-chat:not(.bulle-chat--ouverte) {
   display: none;
 }
+
+/* ==========================================================
+   PHASES DE L'AUTEL, POINTS D'AUTEL, ANNONCES, FUSION
+   ========================================================== */
+
+.autel__phase {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.7rem;
+  z-index: 3;
+  display: grid;
+  max-width: min(17rem, calc(100% - 1.4rem));
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: var(--papier);
+  background: rgb(10 10 25 / 0.55);
+  border: 1.5px solid color-mix(in srgb, var(--papier) 45%, transparent);
+  border-radius: 6px;
+}
+
+.autel__phase b {
+  font-family: var(--police-titre);
+  font-size: 0.95rem;
+  font-weight: 400;
+}
+
+.autel__phase small {
+  opacity: 0.75;
+}
+
+.autel__phase--sang { border-color: #ff6b5b; box-shadow: 0 0 12px rgb(255 80 60 / 0.45); }
+.autel__phase--sang b { color: #ff8a7a; }
+.autel__phase--eclipse { border-color: #b36bff; box-shadow: 0 0 12px rgb(179 107 255 / 0.45); }
+.autel__phase--eclipse b { color: #d2b0ff; }
+.autel__phase--etoiles { border-color: #ffd23f; box-shadow: 0 0 12px rgb(255 210 63 / 0.4); }
+.autel__phase--etoiles b { color: #ffe17a; }
+.autel__phase--maree { border-color: #4cc9ff; box-shadow: 0 0 12px rgb(76 201 255 / 0.4); }
+.autel__phase--maree b { color: #8fdcff; }
+.autel__phase--neant { border-color: #e9d5ff; box-shadow: 0 0 18px rgb(190 120 255 / 0.7); animation: phase-neant 2s ease-in-out infinite; }
+.autel__phase--neant b { color: #f3e8ff; }
+
+@keyframes phase-neant {
+  50% { box-shadow: 0 0 26px rgb(190 120 255 / 0.95); }
+}
+
+/* La scene prend la couleur de la phase */
+.autel__scene[data-phase="sang"] { background-color: #3a0f14; }
+.autel__scene[data-phase="sang"] .autel__sceau { color: #ff8a7a; }
+.autel__scene[data-phase="eclipse"] .autel__sceau { color: #d2b0ff; }
+.autel__scene[data-phase="etoiles"] .autel__sceau { color: #ffe17a; }
+.autel__scene[data-phase="maree"] .autel__sceau { color: #8fdcff; }
+.autel__scene[data-phase="maree"] .autel__anneau { animation-duration: 16s; }
+.autel__scene[data-phase="neant"] .autel__sceau { color: #e9d5ff; filter: drop-shadow(0 0 10px #b36bff); }
+.autel__scene[data-phase="neant"] .autel__halo { background: radial-gradient(circle, rgb(190 120 255 / 0.65), transparent 65%); }
+
+/* L'annonce de niveau descend sous la phase */
+.autel__annonce {
+  top: 3.9rem;
+}
+
+/* Points d'autel */
+.autel__points-titre {
+  margin: 0.3rem 0 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.autel__points-libres {
+  margin-left: 0.3rem;
+  padding: 0 0.4rem;
+  color: var(--encre);
+  background: var(--obi);
+  border: 1.5px solid var(--encre);
+  border-radius: 3px;
+  animation: bulle-pastille 1.8s ease-in-out infinite;
+}
+
+.autel__branches {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.autel__branche {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.2rem 0.2rem 0.2rem 0.5rem;
+  background: color-mix(in srgb, var(--encre) 5%, var(--papier));
+  border: 1.5px solid color-mix(in srgb, var(--encre) 30%, transparent);
+  border-radius: 5px;
+}
+
+.autel__branche-nom {
+  display: grid;
+  font-size: 0.82rem;
+}
+
+.autel__branche-nom small {
+  font-size: 0.72rem;
+  color: var(--encre-douce);
+}
+
+.autel__plus {
+  width: 1.9rem;
+  height: 1.9rem;
+  flex: none;
+  font-family: var(--police-titre);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.autel__plus:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.autel__redistribuer {
+  justify-self: start;
+  font-size: 0.75rem;
+}
+
+/* Annonce automatique dans le chat */
+.msg-annonce {
+  align-self: center;
+  max-width: 95%;
+  margin: 0.2rem 0;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+  text-align: center;
+  background: linear-gradient(100deg, #fff1b8, #ffe08a, #fff1b8);
+  border: 1.5px solid #c99a1d;
+  border-radius: 99px;
+  overflow-wrap: anywhere;
+}
+
+.msg-annonce time {
+  margin-left: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--encre-douce);
+}
+
+/* Fusion : la carte prete a fusionner brille */
+.atelier__carte--prete {
+  box-shadow: 0 0 0 3px var(--obi), 0 0 16px rgb(239 189 43 / 0.6);
+}
+
+/* Code cadeau */
+.code-cadeau__champ input {
+  min-width: 0;
+  flex: 1 1 10rem;
+  font-family: var(--police-titre);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autel__phase--neant,
+  .autel__points-libres {
+    animation: none;
+  }
+}
+
+.code-cadeau__champ {
+  flex: 1 1 10rem;
+  min-width: 0;
+}

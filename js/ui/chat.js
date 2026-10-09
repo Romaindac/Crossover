@@ -122,6 +122,10 @@ export function brancherChat(zone, { ouvrirJoueur }) {
     liste.innerHTML = messages.length ? messages.map((m, i) => {
       const suite = i > 0 && messages[i - 1].auteur === m.auteur && new Date(m.cree) - new Date(messages[i - 1].cree) < 5 * 60000;
       const mien = m.auteur === moi;
+      // Annonce automatique d'une invocation tres rare : une ligne dorée au milieu du fil
+      if (m.texte.startsWith("[Autel] ")) {
+        return `<p class="msg-annonce"><b>${echapper(m.pseudo)}</b> ${echapper(m.texte.slice(8))} <time>${heure(m.cree)}</time></p>`;
+      }
       return `
         <div class="msg ${mien ? "msg--moi" : ""} ${suite ? "msg--suite" : ""}">
           ${suite ? "" : `<div class="msg__tete">

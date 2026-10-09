@@ -3,7 +3,7 @@
 // ==========================================================
 
 import { NOMS_CASES, NOMS_PORTRAITS, reglage, changerReglage, tousLesReglages, restaurerReglages } from "../services/reglages.js";
-import { exporterPartie, importerPartie, effacerPartie } from "../services/partie.js";
+import { exporterPartie, importerPartie, effacerPartie, utiliserCode } from "../services/partie.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 
 export function afficherReglages(conteneur, { naviguer }) {
@@ -53,6 +53,24 @@ export function afficherReglages(conteneur, { naviguer }) {
         <div class="reglage">
           <label class="interrupteur"><input type="checkbox" data-action="sons" ${reglage("sons") ? "checked" : ""}><span>Effets sonores</span></label>
           <p class="reglage__aide">La déchirure du sachet, les cartes qui se retournent, le carillon des grosses raretés.</p>
+        </div>
+      </section>
+
+      <section class="carte-reglage" aria-labelledby="titre-code">
+        <h2 id="titre-code">Code cadeau</h2>
+        <p class="reglage__aide">Un code partagé sur le chat ou par le créateur du jeu ? Entre-le ici. Chaque code ne marche qu'une fois par partie, et certains demandent d'avoir déjà bien joué.</p>
+        <form class="reglage__boutons code-cadeau" id="code-cadeau">
+          <label class="champ-social code-cadeau__champ"><span class="visuellement-cache">Code cadeau</span><input type="text" name="code" maxlength="30" autocomplete="off" placeholder="TON CODE"></label>
+          <button type="submit" class="bouton bouton--obi-petit">Valider</button>
+        </form>
+        <p class="reglage__message" id="message-code" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="carte-reglage" aria-labelledby="titre-chat">
+        <h2 id="titre-chat">Chat</h2>
+        <div class="reglage">
+          <label class="interrupteur"><input type="checkbox" data-action="annonces" ${reglage("annonces") ? "checked" : ""}><span>Annoncer mes invocations très rares</span></label>
+          <p class="reglage__aide">Une Légendaire avec bordure, une Arc-en-ciel ou une Néant : le canal Général le saura (avec un compte connecté, une annonce au plus toutes les 30 secondes).</p>
         </div>
       </section>
 
@@ -109,6 +127,21 @@ export function afficherReglages(conteneur, { naviguer }) {
   };
   let confirmationEffacement = false;
 
+  // Code cadeau
+  $("#code-cadeau").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const champ = e.target.elements.code;
+    const r = await utiliserCode(champ.value);
+    const zone = $("#message-code");
+    zone.classList.toggle("reglage__message--erreur", !r.ok);
+    if (!r.ok) { zone.textContent = r.erreur; return; }
+    const x = r.recompense;
+    const noms = { chance: "de chance", bordure: "de bordure", vitesse: "de vitesse", lune: "de lune" };
+    zone.textContent = `Code accepté ! ${[x.encre && `+${x.encre} encre`, x.invocations && `+${x.invocations} invocations`, x.ticketsDores && `+${x.ticketsDores} booster doré`, x.tickets && `+${x.tickets} tickets`, ...Object.entries(x.potions ?? {}).map(([id, n]) => `+${n} potion${n > 1 ? "s" : ""} ${noms[id]}`)].filter(Boolean).join(", ")}.`;
+    champ.value = "";
+    majEncre?.();
+  });
+
   conteneur.addEventListener("click", async (e) => {
     const cible = e.target.closest("[data-action]");
     if (!cible) return;
@@ -120,6 +153,7 @@ export function afficherReglages(conteneur, { naviguer }) {
     }
     if (action === "secousses") changerReglage("secousses", cible.checked);
     if (action === "sons") changerReglage("sons", cible.checked);
+    if (action === "annonces") changerReglage("annonces", cible.checked);
     if (action === "portraits") {
       changerReglage("portraits", cible.dataset.valeur);
       document.body.classList.toggle("portraits-encre", cible.dataset.valeur === "encre");
