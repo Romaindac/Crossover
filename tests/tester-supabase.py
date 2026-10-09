@@ -3,7 +3,7 @@
 # Charge supabase/schema.sql et catalogue.sql dans un PostgreSQL local
 # qui imite Supabase (auth.uid(), role authenticated), puis verifie
 # avec 3 faux joueurs : profils, sauvegardes, chat, prives, blocages,
-# signalements, moderation, hotel des ventes.
+# signalements, moderation, hotel des ventes, boss collectif, echanges.
 #
 # Il faut un serveur PostgreSQL local, par exemple :
 #   initdb -D /tmp/pgtest/data -A trust
@@ -98,4 +98,32 @@ out,err=sql(f"insert into ventes (objet,prix) values ('{obj}',60);", A); test("l
 out,err=sql("select count(*) from ventes where statut='en_vente';", C); test("annonces visibles par tous", out=="4", out+err)
 out,err=sql(f"select retirer_vente((select id from ventes where statut='en_vente' limit 1));", B); test("impossible de retirer l'annonce d'un autre", "indisponible" in err, err)
 out,err=sql(f"select retirer_vente((select id from ventes where statut='en_vente' limit 1));", A); test("retirer son annonce rend l'objet", "baton-disciple" in out, out+err)
+# boss collectif
+out,err=sql("select semaine_serveur();"); sem=int(out.split()[-1]) if out else 0
+out,err=sql("insert into boss_collectif (joueur,semaine,degats) values (auth.uid(), 1, 99999999);", A); test("pas d'ecriture directe au boss collectif", "row-level security" in err or "permission" in err, err)
+out,err=sql(f"select contribuer_boss({sem}, 500000);", A); test("contribution au boss collectif", '"total": 500000' in out, out+err)
+out,err=sql(f"select contribuer_boss({sem}, 300000);", B); test("les degats s'additionnent", '"total": 800000' in out and '"joueurs": 2' in out, out+err)
+out,err=sql(f"select contribuer_boss({sem}, 99000000);", A); test("degats impossibles refuses", "degats refuses" in err, err)
+out,err=sql(f"select contribuer_boss({sem} + 5, 1000);", A); test("semaine lointaine refusee", "semaine refusee" in err, err)
+sql(f"select contribuer_boss({sem}, 1);", A); sql(f"select contribuer_boss({sem}, 1);", A)
+out,err=sql(f"select contribuer_boss({sem}, 1);", A); test("3 tentatives par jour au plus", "limite tentatives" in err, err)
+out,err=sql(f"set role anon; select total_boss({sem});"); test("total lisible sans compte", "800002" in out, out+err)
+# echanges
+out,err=sql("insert into echanges (donne,veut) values ('naruto','luffy') returning id, pseudo;", A)
+eid = out.split("|")[0] if out else "0"
+test("offre d'echange (meme rarete)", not err and "Alice" in out, out+err)
+out,err=sql("insert into echanges (donne,veut) values ('naruto','goku');", A); test("raretes differentes refusees", "raretes differentes" in err, err)
+out,err=sql("insert into echanges (donne,veut) values ('naruto','inconnu');", A); test("perso inconnu refuse", "perso inconnu" in err, err)
+out,err=sql(f"update echanges set veut='sasuke' where id={eid} returning id;", A); test("offre non modifiable directement", out=="", out+err)
+out,err=sql(f"select accepter_echange({eid});", A); test("impossible d'accepter sa propre offre", "indisponible" in err, err)
+out,err=sql(f"select accepter_echange({eid});", B); test("echange accepte", '"donne": "naruto"' in out, out+err)
+out,err=sql(f"select accepter_echange({eid});", C); test("pas de double acceptation", "indisponible" in err, err)
+out,err=sql(f"select annuler_echange({eid});", A); test("impossible d'annuler une offre acceptee", "indisponible" in err, err)
+out,err=sql("select recuperer_echanges();", A); test("l'auteur recupere la carte voulue", '"veut": "luffy"' in out and "Bob" in out, out+err)
+out,err=sql("select recuperer_echanges();", A); test("pas de double recuperation", out=="[]", out+err)
+out,err=sql("insert into echanges (donne,veut) values ('luffy','naruto') returning id;", B); e2 = out.split("|")[0] if out else "0"
+out,err=sql(f"select annuler_echange({e2});", A); test("impossible d'annuler l'offre d'un autre", "indisponible" in err, err)
+out,err=sql(f"select annuler_echange({e2});", B); test("annuler son offre rend la carte", out=="luffy", out+err)
+for i in range(5): sql("insert into echanges (donne,veut) values ('luffy','naruto');", C)
+out,err=sql("insert into echanges (donne,veut) values ('luffy','naruto');", C); test("5 offres ouvertes au plus", "limite echanges ouverts" in err, err)
 print(f"\n{ok} OK, {ko} echec(s)")

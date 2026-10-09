@@ -19,6 +19,7 @@ import {
   cadreActuel, etatSaison, reclamerSaisonPrecedente, nouveautes, etatGuide, reclamerGuide,
   emplacementsExpedition, lancerExpeditionCiblee, recupererExpeditionCiblee, DUREES_EXPEDITION, zoneOuverte,
   titreActuel, noterJourJoue, verifierTampons, tamponsNouveaux,
+  etatPasse, reclamerPasse,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, htmlObi, htmlEtoiles, iconeRole, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
@@ -78,6 +79,7 @@ export function afficherQg(conteneur, { naviguer }) {
       <div class="quoi-de-neuf" id="quoi-de-neuf"></div>
       <div id="bandeau-compte"></div>
       <div id="guide"></div>
+      <div id="passe"></div>
       <div class="planche">
 
         ${star ? `
@@ -314,6 +316,32 @@ export function afficherQg(conteneur, { naviguer }) {
       </section>`;
   }
 
+  // Le passe de saison : la barre, les 5 prochains paliers, et tout reclamer d'un coup
+  function textePasse(r) {
+    const noms = { chance: "de chance", bordure: "de bordure", vitesse: "de vitesse", lune: "de lune" };
+    return [r.encre && `${r.encre} encre`, r.invocations && `${r.invocations} invocations`, r.tickets && `${r.tickets} tickets`, r.ticketsDores && `${r.ticketsDores} booster${r.ticketsDores > 1 ? "s" : ""} doré${r.ticketsDores > 1 ? "s" : ""}`,
+      ...Object.entries(r.potions ?? {}).filter(([, n]) => n).map(([id, n]) => `${n} potion${n > 1 ? "s" : ""} ${noms[id]}`)].filter(Boolean).join(", ");
+  }
+  function rendrePasse(message = "") {
+    const p = etatPasse();
+    const v = p.atteints >= p.total ? 1 : (p.xp % p.xpParPalier) / p.xpParPalier;
+    const debut = Math.max(0, Math.min(p.total - 5, p.atteints - 1));
+    $("#passe").innerHTML = `
+      <section class="passe" aria-labelledby="titre-passe">
+        <div class="passe__tete">
+          <p class="passe__titre" id="titre-passe">Passe de ${nomSaison(p.saison).replace("Saison de ", "")} <b>${p.atteints} / ${p.total}</b></p>
+          ${p.aReclamer ? `<button type="button" class="bouton bouton--obi-petit" data-action="passe">Réclamer ${p.aReclamer} palier${p.aReclamer > 1 ? "s" : ""}</button>` : ""}
+        </div>
+        <span class="autel__jauge"><span style="--v: ${v}"></span></span>
+        <p class="passe__aide">${p.atteints >= p.total ? "Passe complet ! Il repart à zéro le mois prochain." : `${p.xp % p.xpParPalier} / ${p.xpParPalier} XP vers le palier ${p.atteints + 1}`} · XP : 1 par invocation, 5 par victoire, 40 par mission du jour.</p>
+        <ol class="passe__paliers">${p.paliers.slice(debut, debut + 5).map((x, k) => `
+          <li class="passe__palier ${x.reclame ? "passe__palier--pris" : x.atteint ? "passe__palier--pret" : ""} ${(debut + k + 1) % 10 === 0 ? "passe__palier--gros" : ""}">
+            <b>${debut + k + 1}</b><span>${textePasse(x.recompense)}</span>
+          </li>`).join("")}</ol>
+        ${message ? `<p class="case__message" role="status">${message}</p>` : ""}
+      </section>`;
+  }
+
   function rendreMissions(message = "") {
     const m = missionsDuJour();
     const toutes = m.liste.every((x) => x.reclamee);
@@ -463,6 +491,12 @@ export function afficherQg(conteneur, { naviguer }) {
     }
     if (action === "ouvrir-compte") return ouvrirCompte();
     if (action === "masquer-bandeau-compte") { ecrireReglage("bandeau-compte-masque", true); return rendreBandeauCompte(); }
+    if (action === "passe") {
+      const t = reclamerPasse();
+      rendrePasse(t ? `Reçu : ${textePasse(t)}.` : "");
+      majNavigation?.();
+      return;
+    }
     if (action === "guide") {
       const o = reclamerGuide();
       if (o) {
@@ -503,6 +537,7 @@ export function afficherQg(conteneur, { naviguer }) {
   rendreExpedition();
   rendreBandeauCompte();
   rendreGuide();
+  rendrePasse();
   rendreMissions();
   const surCompte = () => { if (conteneur.isConnected) rendreBandeauCompte(); else window.removeEventListener("crossover:compte", surCompte); };
   window.addEventListener("crossover:compte", surCompte);

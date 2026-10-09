@@ -55,10 +55,23 @@ export const BOSS_ARENE = MONDES.flatMap((monde, m) => bossDuMonde(monde.edition
 export const BOSS_ARENE_PAR_ID = Object.fromEntries(BOSS_ARENE.map((b) => [b.id, b]));
 export const bossDe = (edition) => BOSS_ARENE.filter((b) => b.monde === edition);
 
+// ---------- Difficultes ----------
+// Les 8 boss d'un monde battus dans une difficulte ouvrent la suivante, pour ce monde.
+// mult : PV et ATQ du boss ; niveau : niveaux en plus.
+export const DIFFICULTES = [
+  { id: "normal", nom: "Normal", mult: 1, niveau: 0, gains: 1 },
+  { id: "difficile", nom: "Difficile", mult: 1.6, niveau: 6, gains: 1.8 },
+  { id: "cauchemar", nom: "Cauchemar", mult: 2.5, niveau: 12, gains: 3 },
+  { id: "celeste", nom: "Céleste", mult: 4, niveau: 18, gains: 5 },
+];
+export const DIFFICULTES_PAR_ID = Object.fromEntries(DIFFICULTES.map((d) => [d.id, d]));
+// La cle d'un boss battu : l'id seul en Normal (compatible avec les anciennes parties), « id@difficulte » sinon
+export const cleBoss = (id, diff = "normal") => (diff === "normal" ? id : `${id}@${diff}`);
+
 // ---------- Recompenses ----------
-// Premier KO : la carte Boss, des invocations, une potion et de l'encre
-export const recompensePremierKo = (b) => ({ encre: 120 + 40 * b.rang + 150 * b.indexMonde, invocations: 10, potion: true });
+// Premier KO : la carte Boss (en Normal ; un doublon ensuite), des invocations, une potion et de l'encre
+export const recompensePremierKo = (b, d = DIFFICULTES[0]) => ({ encre: Math.round((120 + 40 * b.rang + 150 * b.indexMonde) * d.gains), invocations: Math.round(10 * Math.sqrt(d.gains)), potion: true });
 // Les KO suivants (coutent de l'energie) : un peu d'encre, des invocations, parfois une carte Boss en double
-export const recompenseKo = (b) => ({ encre: 15 + 4 * b.rang + 10 * b.indexMonde, invocations: 2 });
+export const recompenseKo = (b, d = DIFFICULTES[0]) => ({ encre: Math.round((15 + 4 * b.rang + 10 * b.indexMonde) * d.gains), invocations: d.gains >= 3 ? 3 : 2 });
 export const CHANCE_CARTE_BOSS_REJOUE = 0.08;
 export const CHANCE_POTION_REJOUE = 0.25;

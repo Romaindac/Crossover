@@ -15,6 +15,7 @@ import { htmlCarte, rafraichirPortrait } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { brancherChat } from "../ui/chat.js";
 import { afficherHotel } from "../ui/hotel.js";
+import { afficherEchanges } from "../ui/echanges.js";
 import { ouvrirCompte } from "../ui/compte.js";
 
 const echapper = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -50,6 +51,7 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
       <h1 class="equipe__titre">Social</h1>
       <div class="choix-segmente choix-segmente--gauche social__onglets" role="tablist" aria-label="Social">
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="chat">Chat</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="echanges">Échanges</button>
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="hotel">Hôtel des ventes</button>
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="classements">Classements</button>
         <button type="button" role="tab" class="choix-segmente__option" data-action="onglet-social" data-onglet="vitrine">Ma vitrine</button>
@@ -58,6 +60,10 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
 
       <section class="carte-reglage social__chat" data-panneau="chat" aria-label="Chat">
         <div id="chat"></div>
+      </section>
+
+      <section class="social__hotel" data-panneau="echanges" aria-label="Échanges de cartes">
+        <div id="echanges"></div>
       </section>
 
       <section class="social__hotel" data-panneau="hotel" aria-label="Hôtel des ventes">
@@ -221,9 +227,10 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
       b.setAttribute("aria-checked", String(b.dataset.onglet === nom));
     });
     conteneur.querySelectorAll("[data-panneau]").forEach((s) => { s.hidden = s.dataset.panneau !== nom; });
-    $(".social").classList.toggle("social--large", nom === "chat" || nom === "hotel");
+    $(".social").classList.toggle("social--large", nom === "chat" || nom === "hotel" || nom === "echanges");
     if (nom === "chat") rendreChat(); else { arreterChat?.(); arreterChat = null; }
     if (nom === "hotel") afficherHotel($("#hotel"), { naviguer, apresChangement: majNavigation });
+    if (nom === "echanges") afficherEchanges($("#echanges"), { apresChangement: majNavigation });
     if (nom === "classements") { if (enLigneDisponible()) chargerClassement(); else rendreClassement(); }
   }
 

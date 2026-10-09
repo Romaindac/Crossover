@@ -12,12 +12,13 @@ import { MONDES, POTIONS_PAR_ID } from "../donnees/invocations.js";
 import { CHAPITRES } from "../donnees/campagne.js";
 import {
   bossDe, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE, BOSS_ARENE,
+  DIFFICULTES, DIFFICULTES_PAR_ID,
 } from "../donnees/arene.js";
 import { creerCombat, avancer } from "../moteur/simulation.js";
 import { tauxVictoire, libelleChances } from "../moteur/estimation.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import {
-  equipeSauvee, entreeCombat, mondeOuvert, bossAreneBattu, bossAreneOuvert, appliquerResultatArene,
+  equipeSauvee, entreeCombat, mondeOuvert, bossAreneBattu, bossAreneOuvert, appliquerResultatArene, difficulteOuverte,
   combatGratuit, coutEnergie, assezDEnergie, payerEnergie, progressionDe, verifierTampons,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
@@ -34,15 +35,18 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
   const premierOuvert = () => MONDES.find((m) => mondeOuvert(m.edition) && bossDe(m.edition).some((b) => !bossAreneBattu(b.id)))?.edition ?? MONDES[0].edition;
   let monde = premierOuvert();
   let choisi = null;
+  let diff = "normal";
+  const def = () => DIFFICULTES_PAR_ID[diff];
   let combat = null;
   const $ = (s) => zone.querySelector(s);
 
-  const prochainBoss = () => bossDe(monde).find((b) => bossAreneOuvert(b.id) && !bossAreneBattu(b.id)) ?? bossDe(monde).filter((b) => bossAreneOuvert(b.id)).at(-1) ?? bossDe(monde)[0];
+  const prochainBoss = () => bossDe(monde).find((b) => bossAreneOuvert(b.id, diff) && !bossAreneBattu(b.id, diff)) ?? bossDe(monde).filter((b) => bossAreneOuvert(b.id, diff)).at(-1) ?? bossDe(monde)[0];
 
   zone.innerHTML = `
     <section class="arene">
-      <p class="arene__intro">Ton deck, c'est ton équipe de 5. Bats les 8 boss de chaque monde dans l'ordre : le premier KO te donne la <b>carte Boss</b> du perso (bordure Boss, introuvable ailleurs), des invocations et une potion.</p>
+      <p class="arene__intro">Ton deck, c'est ton équipe de 5. Bats les 8 boss de chaque monde dans l'ordre : le premier KO te donne la <b>carte Boss</b> du perso (bordure Boss, introuvable ailleurs), des invocations et une potion. Un monde fini ouvre la difficulté suivante : Difficile, Cauchemar, puis Céleste.</p>
       <div class="autel__mondes arene__mondes" role="radiogroup" aria-label="Choisir le monde"></div>
+      <div class="arene__difficultes" role="radiogroup" aria-label="Difficulté"></div>
       <div class="arene__echelle" role="list"></div>
       <div class="arene__detail"></div>
     </section>
@@ -52,7 +56,7 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     $(".arene__mondes").innerHTML = MONDES.map((m) => {
       const ed = EDITIONS_PAR_ID[m.edition];
       const ouvert = mondeOuvert(m.edition);
-      const n = bossDe(m.edition).filter((b) => bossAreneBattu(b.id)).length;
+      const n = bossDe(m.edition).filter((b) => bossAreneBattu(b.id, diff)).length;
       return `
         <button type="button" role="radio" class="autel__monde" data-arene="monde" data-edition="${m.edition}" aria-checked="${monde === m.edition}" ${ouvert ? "" : "disabled"}
           style="--p1: ${ed.couleurs[0]}; --p2: ${ed.couleurs[1]}; --p3: ${ed.couleurs[2]}">
@@ -60,21 +64,27 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
           <span class="autel__monde-info">${ouvert ? `${n} / 8 boss vaincus` : `Fin du chapitre ${m.chapitre} : ${CHAPITRES[m.chapitre - 1]?.nom ?? ""}`}</span>
         </button>`;
     }).join("");
+    $(".arene__difficultes").innerHTML = DIFFICULTES.map((d, i) => {
+      const ouverte = difficulteOuverte(monde, d.id);
+      const finie = bossDe(monde).every((b) => bossAreneBattu(b.id, d.id));
+      return `<button type="button" role="radio" class="arene__difficulte arene__difficulte--${d.id}" data-arene="difficulte" data-diff="${d.id}" aria-checked="${diff === d.id}" ${ouverte ? "" : "disabled"}
+        title="${ouverte ? `Boss ×${String(d.mult).replace(".", ",")}, +${d.niveau} niveaux, gains ×${String(d.gains).replace(".", ",")}` : `Bats les 8 boss en ${DIFFICULTES[i - 1]?.nom} pour l'ouvrir`}">${d.nom}${finie ? " ✓" : ""}</button>`;
+    }).join("");
   }
 
   function rendreEchelle() {
     const liste = bossDe(monde);
     $(".arene__echelle").innerHTML = liste.map((b) => {
       const p = PERSOS_PAR_ID[b.perso];
-      const battu = bossAreneBattu(b.id);
-      const ouvert = bossAreneOuvert(b.id);
+      const battu = bossAreneBattu(b.id, diff);
+      const ouvert = bossAreneOuvert(b.id, diff);
       return `
         <button type="button" role="listitem" class="arene__boss ${battu ? "arene__boss--battu" : ""} ${choisi?.id === b.id ? "arene__boss--choisi" : ""}" data-arene="boss" data-boss="${b.id}" ${ouvert ? "" : "disabled"}
-          aria-label="${p.nom}, boss ${b.rang + 1} sur 8, niveau ${b.niveau}${battu ? ", vaincu" : ouvert ? "" : ", verrouillé"}">
+          aria-label="${p.nom}, boss ${b.rang + 1} sur 8, niveau ${b.niveau + def().niveau}${battu ? ", vaincu" : ouvert ? "" : ", verrouillé"}">
           <span class="arene__boss-portrait">${ouvert ? htmlPortrait(p) : '<span class="arene__cadenas" aria-hidden="true">?</span>'}</span>
           <span class="arene__boss-rang">${b.rang + 1}</span>
           <span class="arene__boss-nom">${ouvert ? p.nom : "???"}</span>
-          <span class="arene__boss-niveau">Niv. ${b.niveau}</span>
+          <span class="arene__boss-niveau">Niv. ${b.niveau + def().niveau}</span>
           ${battu ? '<span class="arene__boss-ko">KO</span>' : ""}
         </button>`;
     }).join("");
@@ -85,12 +95,14 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     const p = PERSOS_PAR_ID[b.perso];
     const equipe = equipeSauvee();
     const ids = equipe.filter(Boolean);
-    const battu = bossAreneBattu(b.id);
-    const gratuit = combatGratuit({ arene: b.id });
+    const d = def();
+    const niveau = b.niveau + d.niveau;
+    const battu = bossAreneBattu(b.id, diff);
+    const gratuit = combatGratuit({ arene: b.id, difficulte: diff });
     const cout = coutEnergie("arene");
-    const stats = calculerStatsFinales(PERSOS_PAR_ID[b.id], { niveau: b.niveau });
-    const chances = ids.length ? libelleChances(tauxVictoire(equipe.map((id, i) => (id ? entreeCombat(id, i, equipe) : null)).filter(Boolean), { equipe: [b.id], niveau: b.niveau, multiplicateur: 1 }, 12)) : null;
-    const rec = battu ? recompenseKo(b) : recompensePremierKo(b);
+    const stats = calculerStatsFinales(PERSOS_PAR_ID[b.id], { niveau, multiplicateur: d.mult });
+    const chances = ids.length ? libelleChances(tauxVictoire(equipe.map((id, i) => (id ? entreeCombat(id, i, equipe) : null)).filter(Boolean), { equipe: [b.id], niveau, multiplicateur: d.mult }, 12)) : null;
+    const rec = battu ? recompenseKo(b, d) : recompensePremierKo(b, d);
     const carte = htmlCarteStatique(p, { progression: { ...progressionDe(b.perso), variantes: ["boss"] } });
     zone.querySelector(".arene__detail").innerHTML = `
       <article class="arene__fiche" style="--p1: ${EDITIONS_PAR_ID[b.monde].couleurs[0]}">
@@ -99,7 +111,7 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
           <span class="arene__affiche-titre">${RANGS[b.rang]}</span>
         </div>
         <div class="arene__infos">
-          <h2 class="arene__nom">${p.nom} <small>Niv. ${b.niveau}</small></h2>
+          <h2 class="arene__nom">${p.nom} <small>Niv. ${niveau}${diff !== "normal" ? ` · ${d.nom}` : ""}</small></h2>
           <p class="arene__stats"><span><b>${nombre(stats.pv)}</b> PV</span><span><b>${nombre(stats.atq)}</b> ATQ</span><span>Ultime : <b>${p.ultime.nom}</b></span></p>
           <p class="arene__ultime">${p.ultime.description}</p>
           ${chances ? `<p class="arene__chances">Tes chances : <span class="chances chances--${chances.classe}">${chances.mot}</span></p>` : ""}
@@ -140,21 +152,22 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     const b = choisi;
     const equipe = equipeSauvee();
     const ids = equipe.filter(Boolean);
-    const gratuit = combatGratuit({ arene: b.id });
+    const d = def();
+    const gratuit = combatGratuit({ arene: b.id, difficulte: diff });
     if (!gratuit && !assezDEnergie("arene")) {
       $(".arene__actions").insertAdjacentHTML("afterbegin", `<p class="arene__alerte">Pas assez d'énergie (${coutEnergie("arene")} pour un KO). Elle remonte toute seule, ou recharge-la à l'encre au QG.</p>`);
       return;
     }
     const entrees = equipe.map((id, i) => (id ? entreeCombat(id, i, equipe) : null)).filter(Boolean);
-    const etat = creerCombat({ equipeA: entrees, equipeB: [b.id], niveauB: b.niveau, graine: Math.floor(Math.random() * 2147483647), journal: false });
+    const etat = creerCombat({ equipeA: entrees, equipeB: [b.id], niveauB: b.niveau + d.niveau, multiplicateurB: d.mult, graine: Math.floor(Math.random() * 2147483647), journal: false });
     const bossU = etat.equipes[1][0];
     const p = PERSOS_PAR_ID[b.perso];
-    combat = { etat, b, ids, gratuit, vitesse: 2, minuteur: null, fini: false, ultimesManuels: 0 };
+    combat = { etat, b, diff, ids, gratuit, vitesse: 2, minuteur: null, fini: false, ultimesManuels: 0 };
     const ed = EDITIONS_PAR_ID[b.monde];
     $(".arene__combat-zone").innerHTML = `
       <div class="arene-combat" role="dialog" aria-modal="true" aria-label="Combat contre ${p.nom}" style="--p1: ${ed.couleurs[0]}; --p3: ${ed.couleurs[2]}">
         <header class="arene-combat__haut">
-          <p class="arene-combat__nom">${p.nom} <small>${RANGS[b.rang]} · Niv. ${b.niveau}</small></p>
+          <p class="arene-combat__nom">${p.nom} <small>${RANGS[b.rang]} · Niv. ${b.niveau + d.niveau}${diff !== "normal" ? ` · ${d.nom}` : ""}</small></p>
           <div class="arene-combat__pv"><span class="arene-combat__pv-retard"></span><span class="arene-combat__pv-plein"></span><span class="arene-combat__pv-texte"></span></div>
           <p class="arene-combat__chrono"></p>
         </header>
@@ -272,7 +285,7 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     const degats = c.bossU.pvMax - Math.max(0, c.bossU.pv);
     const koAllies = etat.equipes[0].filter((u) => u.pv <= 0).length;
     if (victoire && !c.gratuit) payerEnergie("arene");
-    const r = appliquerResultatArene({ bossId: c.b.id, victoire, ids: c.ids, duree: etat.t / 10, koAllies, degats });
+    const r = appliquerResultatArene({ bossId: c.b.id, difficulte: c.diff, victoire, ids: c.ids, duree: etat.t / 10, koAllies, degats });
     const p = PERSOS_PAR_ID[c.b.perso];
     const suivant = BOSS_ARENE.find((x) => x.monde === c.b.monde && x.rang === c.b.rang + 1);
     const carte = r.carte ? `
@@ -317,7 +330,8 @@ export function afficherArene(zone, { conteneur, naviguer, majNavigation }) {
     const b = e.target.closest("[data-arene]");
     if (!b || b.disabled) return;
     const a = b.dataset.arene;
-    if (a === "monde") { monde = b.dataset.edition; choisi = null; rendre(); }
+    if (a === "monde") { monde = b.dataset.edition; choisi = null; if (!difficulteOuverte(monde, diff)) diff = "normal"; rendre(); }
+    if (a === "difficulte") { diff = b.dataset.diff; choisi = null; rendre(); }
     if (a === "boss") { choisi = BOSS_ARENE.find((x) => x.id === b.dataset.boss); rendreEchelle(); rendreDetail(); }
     if (a === "lancer") lancer();
     if (a === "equipe") naviguer("equipe");
