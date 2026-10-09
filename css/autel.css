@@ -811,3 +811,270 @@
     padding-inline: 0.4rem;
   }
 }
+
+/* ==========================================================
+   BULLE DE CHAT (en bas a droite, sur tous les ecrans sauf le combat)
+   ========================================================== */
+
+.bulle-chat {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.bulle-chat[hidden] {
+  display: none;
+}
+
+.bulle-chat > * {
+  pointer-events: auto;
+}
+
+.bulle-chat__bouton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  padding: 0;
+  color: var(--obi);
+  background: var(--encre);
+  border: 3px solid var(--obi);
+  border-radius: 50%;
+  box-shadow: 3px 4px 0 rgb(0 0 0 / 0.35);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.bulle-chat__bouton:hover {
+  transform: scale(1.06) rotate(-4deg);
+}
+
+.bulle-chat__bouton svg {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.bulle-chat--ouverte .bulle-chat__bouton {
+  color: var(--encre);
+  background: var(--obi);
+  border-color: var(--encre);
+}
+
+.bulle-chat__pastille {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.4rem;
+  text-align: center;
+  color: #fff;
+  background: var(--sceau);
+  border: 2px solid var(--papier);
+  border-radius: 99px;
+  animation: bulle-pastille 1.8s ease-in-out infinite;
+}
+
+.bulle-chat__pastille[hidden] {
+  display: none;
+}
+
+@keyframes bulle-pastille {
+  50% { transform: scale(1.15); }
+}
+
+.bulle-chat__apercu {
+  max-width: 16rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--encre);
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 12px 12px 2px 12px;
+  box-shadow: 3px 3px 0 var(--encre);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.bulle-chat__apercu[hidden] {
+  display: none;
+}
+
+.bulle-chat__apercu--sort {
+  animation: bulle-apercu 0.3s ease both;
+}
+
+@keyframes bulle-apercu {
+  from { transform: translateY(10px) scale(0.9); opacity: 0; }
+}
+
+.bulle-chat__panneau {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(24rem, calc(100vw - 2rem));
+  height: min(36rem, calc(100vh - 7rem));
+  height: min(36rem, calc(100dvh - 7rem));
+  overflow: hidden;
+  background: var(--papier);
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 var(--encre);
+  animation: bulle-panneau 0.2s ease both;
+  transform-origin: bottom right;
+}
+
+.bulle-chat__panneau[hidden] {
+  display: none;
+}
+
+@keyframes bulle-panneau {
+  from { transform: scale(0.85); opacity: 0; }
+}
+
+.bulle-chat__entete {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem 0.5rem 0.9rem;
+  color: var(--papier);
+  background: var(--encre);
+  border-bottom: 3px solid var(--obi);
+}
+
+.bulle-chat__titre {
+  flex: 1;
+  font-family: var(--police-titre);
+  font-size: 1.05rem;
+}
+
+.bulle-chat__agrandir {
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--papier);
+  background: transparent;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bulle-chat__fermer {
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--encre);
+  background: var(--obi);
+  border: 2px solid var(--papier);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.bulle-chat__corps {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.bulle-chat__chat {
+  height: 100%;
+}
+
+.bulle-chat__invite {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+  padding: 1.2rem;
+}
+
+.bulle-chat__invite p {
+  margin: 0;
+}
+
+/* Dans la bulle, le chat prend toujours sa forme de telephone : la liste, puis la conversation */
+.bulle-chat .chat {
+  grid-template-columns: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.bulle-chat .chat__fil {
+  display: none;
+}
+
+.bulle-chat .chat--fil-ouvert .chat__menu {
+  display: none;
+}
+
+.bulle-chat .chat--fil-ouvert .chat__fil {
+  display: grid;
+}
+
+.bulle-chat .chat__retour {
+  display: grid;
+  place-items: center;
+}
+
+.bulle-chat .msg {
+  max-width: 92%;
+}
+
+/* Telephone : au-dessus de la barre d'onglets du bas ; ouverte, la bulle prend l'ecran */
+@media (max-width: 40rem) {
+  .bulle-chat {
+    right: 0.7rem;
+    bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bulle-chat__bouton {
+    width: 3.1rem;
+    height: 3.1rem;
+  }
+
+  .bulle-chat--ouverte {
+    inset: 0;
+    gap: 0;
+    padding: 0;
+  }
+
+  .bulle-chat--ouverte .bulle-chat__panneau {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .bulle-chat--ouverte .bulle-chat__bouton {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulle-chat__pastille,
+  .bulle-chat__apercu--sort,
+  .bulle-chat__panneau {
+    animation: none;
+  }
+}
+
+/* Pendant une ouverture de booster ou le tutoriel, la bulle fermee s'efface */
+body:has(.revelation, .voile--tuto) .bulle-chat:not(.bulle-chat--ouverte) {
+  display: none;
+}
