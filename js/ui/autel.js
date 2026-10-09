@@ -59,7 +59,7 @@ const SCEAU = `
 
 const ICONE_POTION = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v2h-1v4.2l5.2 8.6A3.5 3.5 0 0116.2 22H7.8a3.5 3.5 0 01-3-5.2L10 8.2V4H9z" fill="var(--potion)" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 15h10" stroke="#fff" stroke-opacity=".6" stroke-width="1.4"/></svg>`;
 
-export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = false }) {
+export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = false, naviguer }) {
   let auto = false;
   let enCours = false;      // une invocation est en train de s'afficher
   let prochainPossible = 0; // horodatage du prochain tirage permis
@@ -153,6 +153,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     $("#autel-chance").innerHTML = `
       <p class="autel__panneau-titre">Chance <strong class="autel__chance">${multiplicateur(c.total)}</strong></p>
       <dl class="autel__lignes">${lignes.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join("")}</dl>
+      ${naviguer ? '<button type="button" class="bouton-texte autel__voir-index" data-autel="index">Voir l\'Index : ce qui te manque</button>' : ""}
       <p class="autel__taux-courts">${ORDRE_RARETES.slice(0, 3).map((r) => `<span class="autel__taux autel__taux--${r}">${RARETES[r].nom} ${pourcent(table[r])}</span>`).join("")}${c.bordure > 1 ? `<span class="autel__taux autel__taux--bordure">Bordures ${multiplicateur(c.bordure)}</span>` : ""}</p>`;
     $("#autel-scene").style.setProperty("--chance", String(Math.min(1, (c.total - 1) / 2)));
   }
@@ -413,6 +414,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     }
     if (a === "monde" && choisirMonde(b.dataset.edition)) { rendreMondes(); }
     if (a === "boire" && boirePotion(b.dataset.potion)) { rendrePotions(); rendrePhase(); rendreChance(); rendreReserve(); }
+    if (a === "index") { arreterAuto(); return naviguer?.("collection", { onglet: "index" }); }
     if (a === "point" && placerPointAutel(b.dataset.branche)) { rendreNiveau(); rendreChance(); }
     if (a === "redistribuer" && redistribuerPointsAutel()) { rendreNiveau(); rendreChance(); rendrePotions(); }
     if (a === "distiller" && fabriquerPotion(b.dataset.potion)) { rendrePotions(); majEncre?.(); }

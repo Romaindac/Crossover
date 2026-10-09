@@ -2148,6 +2148,32 @@ export function chanceIndex() {
   return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, total: pts.series + pts.editions + pts.bordures + pts.combats };
 }
 
+// Le detail de l'Index pour sa page de la Collection : ce qui est acquis et ce qui reste a prendre
+export function detailIndex() {
+  if (!partie) return null;
+  const toutesSeries = [...new Set(PERSOS.map((p) => p.serie))];
+  const series = toutesSeries.map((serie) => ({
+    serie, ...progressionSerie(serie),
+    manquants: PERSOS.filter((p) => p.serie === serie && !partie.collection[p.id]).map((p) => p.id),
+  }));
+  const editions = EDITIONS.map((e) => {
+    const membres = PERSOS.filter((p) => e.series.includes(p.serie));
+    return { id: e.id, nom: e.nom, n: membres.filter((p) => partie.collection[p.id]).length, total: membres.length };
+  });
+  const bordures = {};
+  for (const prog of Object.values(partie.collection)) for (const v of prog.variantes ?? []) bordures[v] = (bordures[v] ?? 0) + 1;
+  const mondes = MONDES.map((m) => {
+    const boss = BOSS_ARENE.filter((b) => b.monde === m.edition);
+    return { edition: m.edition, nom: m.nom, total: boss.length, difficultes: DIFFICULTES.map((d) => ({ id: d.id, nom: d.nom, n: boss.filter((b) => bossAreneBattu(b.id, d.id)).length })) };
+  });
+  return {
+    index: chanceIndex(), series, editions, bordures, mondes,
+    tour: partie.tour.record || 0,
+    eveils: Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0),
+    donjon: partie.donjon?.record || 0,
+  };
+}
+
 export function chanceActuelle(maintenant = Date.now()) {
   const points = partie?.invocations.points ?? { chance: 0, bordure: 0 };
   const niveau = points.chance * CHANCE_PAR_POINT;
