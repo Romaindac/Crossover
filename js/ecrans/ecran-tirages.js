@@ -324,6 +324,13 @@ export function afficherTirages(conteneur, { naviguer }) {
       if (!rapide || grosse || etat.reveles.size === etat.cartes.length) sonRarete(c.rarete);
       if (c.nouveau && !rapide) setTimeout(sonNouveau, 260);
       eclater(carte, c.rarete);
+      // Des rayons de lumiere derriere les belles cartes (les memes qu'a l'autel)
+      if ((c.rarete === "legendaire" || c.rarete === "epique") && !mouvementReduit) {
+        const rayons = document.createElement("span");
+        rayons.className = `autel__rayons autel__rayons--${c.rarete} tome__rayons`;
+        rayons.setAttribute("aria-hidden", "true");
+        carte.prepend(rayons);
+      }
       if (c.rarete === "legendaire") {
         secouer(1.4);
         const flash = document.createElement("span");

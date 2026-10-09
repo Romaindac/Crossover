@@ -110,9 +110,12 @@ export function htmlEtoiles(etoiles) {
   return `<span class="etoiles" title="${etoiles} étoile${etoiles > 1 ? "s" : ""} sur ${ETOILES_MAX}">${liste}</span>`;
 }
 
+// Les noms courts, pour la petite pastille de rarete des cartes
+const NOMS_COURTS = { commun: "Commun", peu_commun: "P. commun", rare: "Rare", epique: "Épique", legendaire: "Légende", secret: "Secret" };
+
 // L'obi : la bande de couleur qui annonce la rarete, comme sur un tome
 export function htmlObi(perso) {
-  return `<span class="obi-rarete obi-rarete--${perso.rarete}">${RARETES[perso.rarete].nom}</span>`;
+  return `<span class="obi-rarete obi-rarete--${perso.rarete}"><span class="obi-rarete__long">${RARETES[perso.rarete].nom}</span><span class="obi-rarete__court" aria-hidden="true">${NOMS_COURTS[perso.rarete] ?? RARETES[perso.rarete].nom}</span></span>`;
 }
 
 // La plus belle bordure possedee (neant > arc-en-ciel > doree > holo), ou null

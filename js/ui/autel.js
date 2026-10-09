@@ -302,6 +302,23 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     chargerPortraits((id) => rafraichirPortrait(zone, id));
     void scene.offsetWidth;
     scene.classList.add("autel__scene--jaillit");
+    // Rayons de lumiere et bandeau de rarete pour les belles cartes
+    scene.querySelectorAll(".autel__rayons, .autel__bandeau").forEach((e) => e.remove());
+    if (RARETES[meilleure.rarete].ordre >= 3 && !mouvementReduit) {
+      const rayons = document.createElement("span");
+      rayons.className = `autel__rayons autel__rayons--${meilleure.rarete}`;
+      rayons.setAttribute("aria-hidden", "true");
+      scene.prepend(rayons);
+      setTimeout(() => rayons.remove(), meilleure.rarete === "rare" ? 1400 : 3200);
+    }
+    if (RARETES[meilleure.rarete].ordre >= 4) {
+      const bandeau = document.createElement("span");
+      bandeau.className = `autel__bandeau autel__bandeau--${meilleure.rarete}`;
+      bandeau.setAttribute("aria-hidden", "true");
+      bandeau.textContent = `${RARETES[meilleure.rarete].nom} !`;
+      scene.appendChild(bandeau);
+      setTimeout(() => bandeau.remove(), 2600);
+    }
     sonCarte();
     sonRarete(meilleure.rarete);
     if (cartes.some((c) => c.nouveau)) setTimeout(sonNouveau, 220);
