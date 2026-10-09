@@ -38,10 +38,10 @@ function pages() {
       plus: pastilles([["Placement : ", "tank devant, assassins et soutiens derrière."], ["Campagne : ", "5 chapitres de 8 étapes, dans l'onglet Aventure."], ["Énergie : ", `${ENERGIE_MAX} max, +1 toutes les ${MINUTES_PAR_ENERGIE} min, payée seulement si tu gagnes. La première victoire d'une étape est gratuite.`]]),
     },
     {
-      titre: "Les boosters",
+      titre: "Invocations et boosters",
       illustration: `<div class="tuto__sachets">${EDITIONS.slice(0, 3).map((e, i) => `<span class="tuto__sachet" style="--i: ${i}">${htmlSachet(e)}</span>`).join("")}</div>`,
-      texte: `Tous les persos viennent des boosters : ${EDITIONS.length} éditions de 40 persos, ${CARTES_PAR_BOOSTER} cartes par booster.`,
-      plus: pastilles([["Gratuit : ", `un booster toutes les ${MINUTES_BOOSTER_GRATUIT} min, jusqu'à ${STOCK_GRATUIT_MAX} en réserve (${heures} h). Les chapitres et missions en donnent aussi.`], ["Doublons : ", "ils ajoutent une étoile au perso (plus de PV et d'ATQ)."], ["Atelier : ", "la poussière fabrique la carte de ton choix."]]),
+      texte: `Tous les persos s'invoquent à l'Autel (onglet Invocations), une carte à la fois, ou sortent des boosters : ${EDITIONS.length} éditions de 40 persos.`,
+      plus: pastilles([["Autel : ", "une réserve d'invocations qui se recharge seule et à chaque victoire. Invocation automatique, rapide et ×3 se débloquent en invoquant. Potions de chance, séries complètes et bordures rares rendent plus chanceux."],["Gratuit : ", `un booster toutes les ${MINUTES_BOOSTER_GRATUIT} min, jusqu'à ${STOCK_GRATUIT_MAX} en réserve (${heures} h). Les chapitres et missions en donnent aussi.`], ["Doublons : ", "ils ajoutent une étoile au perso (plus de PV et d'ATQ)."], ["Atelier : ", "la poussière fabrique la carte de ton choix."]]),
     },
     {
       titre: "Devenir plus fort",

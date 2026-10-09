@@ -4,6 +4,7 @@
 // de leur serie : c'est ce qui garde l'ensemble coherent.
 // ==========================================================
 
+import { ORDRE_BORDURES, BORDURES_PAR_ID } from "../donnees/invocations.js";
 import { ROLES, AFFINITES } from "../donnees/roles.js";
 import { RARETES } from "../donnees/raretes.js";
 import { ETOILES_MAX } from "../donnees/progression.js";
@@ -112,9 +113,10 @@ export function htmlObi(perso) {
   return `<span class="obi-rarete obi-rarete--${perso.rarete}">${RARETES[perso.rarete].nom}</span>`;
 }
 
-// La plus belle variante possedee (doree > holo), ou null
+// La plus belle bordure possedee (neant > arc-en-ciel > doree > holo), ou null
 export const meilleureVariante = (progression) =>
-  (progression?.variantes?.includes("doree") ? "doree" : progression?.variantes?.includes("holo") ? "holo" : null);
+  [...ORDRE_BORDURES].reverse().find((v) => progression?.variantes?.includes(v)) ?? null;
+export const nomBordure = (v) => BORDURES_PAR_ID[v]?.nom ?? v;
 
 export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}) {
   const variante = meilleureVariante(progression);

@@ -20,10 +20,11 @@ import {
   verifierTampons, progressionSerie,
 } from "../services/partie.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "../ui/cartes.js";
+import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from "../ui/cartes.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { htmlSachet } from "../ui/sachet.js";
 import { annoncerTampons } from "../ui/toast.js";
+import { afficherAutel } from "../ui/autel.js";
 import { sonDechirure, sonCarte, sonSuspense, sonRarete, sonNouveau, sonComplete } from "../ui/sons.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -43,7 +44,7 @@ export function afficherTirages(conteneur, { naviguer }) {
   const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const serie = serieDeLaSemaine();
   let revelation = null;     // { edition, cartes, reveles, dore }
-  let vue = "boutique";      // boutique | atelier
+  let vue = "autel";         // autel | boutique | atelier
   let filtreAtelier = "manquants";
   let messageAtelier = "";
 
@@ -51,9 +52,10 @@ export function afficherTirages(conteneur, { naviguer }) {
     ${htmlNavigation("tirages")}
     <div class="tirages">
       <header class="tirages__entete">
-        <h1 class="equipe__titre">Boosters</h1>
-        <div class="boosters__onglets" role="tablist" aria-label="Boosters">
-          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="boutique">Ouvrir des boosters</button>
+        <h1 class="equipe__titre">Invocations</h1>
+        <div class="boosters__onglets" role="tablist" aria-label="Invocations">
+          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="autel">Autel</button>
+          <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="boutique">Boosters</button>
           <button type="button" class="bouton bouton--clair" role="tab" data-action="vue" data-vue="atelier">Atelier</button>
         </div>
       </header>
@@ -181,8 +183,19 @@ export function afficherTirages(conteneur, { naviguer }) {
   }
 
   function rendre() {
-    rendreReserve();
     conteneur.querySelectorAll("[data-action='vue']").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.vue === vue)));
+    $("#reserve").hidden = vue === "autel";
+    if (vue === "autel") {
+      // L'autel se gere seul : on ne le redessine qu'en y entrant
+      if (!$("#vue-boosters .autel")) {
+        const zone = document.createElement("div");
+        $("#vue-boosters").replaceChildren(zone);
+        afficherAutel(zone, { conteneur, majEncre, mouvementReduit });
+      }
+      majEncre?.();
+      return;
+    }
+    rendreReserve();
     if (vue === "atelier") rendreAtelier();
     else rendreBoutique();
     majEncre?.();
@@ -191,7 +204,7 @@ export function afficherTirages(conteneur, { naviguer }) {
   // ---------- Revelation des cartes ----------
 
   function texteResultat(c) {
-    const variante = c.nouvelleVariante ? ` + version ${c.variante === "doree" ? "Dorée" : "Holo"} !` : "";
+    const variante = c.nouvelleVariante ? ` + version ${nomBordure(c.variante)} !` : "";
     if (c.nouveau) return `Nouveau perso${variante}`;
     if (c.poussiere) return `Déjà au maximum : +${c.poussiere} poussière${variante}`;
     if (c.etoilesApres > c.etoilesAvant) return `${c.etoilesApres}e étoile !${variante}`;
@@ -214,7 +227,7 @@ export function afficherTirages(conteneur, { naviguer }) {
           <span class="tome__face tome__face--avant">
             ${htmlCarteStatique(perso, { progression: { ...progressionDe(c.id), variantes: c.variante ? [c.variante] : [] } })}
             ${c.nouveau ? '<span class="tampon">Nouveau</span>' : ""}
-            ${c.variante ? `<span class="badge-variante badge-variante--${c.variante} tome__variante">${c.variante === "doree" ? "Dorée" : "Holo"}</span>` : ""}
+            ${c.variante ? `<span class="badge-variante badge-variante--${c.variante} tome__variante">${nomBordure(c.variante)}</span>` : ""}
           </span>
         </span>
         <span class="tome__resultat">${texteResultat(c)}</span>
@@ -489,7 +502,7 @@ export function afficherTirages(conteneur, { naviguer }) {
   let ticketsAffiches = etatBoosters().tickets;
   const minuteur = setInterval(() => {
     if (!conteneur.isConnected) return clearInterval(minuteur);
-    if (revelation) return;
+    if (revelation || vue === "autel") return;
     const tickets = etatBoosters().tickets;
     if (tickets !== ticketsAffiches) { ticketsAffiches = tickets; rendre(); }
     else rendreReserve();
