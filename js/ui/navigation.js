@@ -7,7 +7,7 @@ import { htmlDevenirFort } from "./aide.js";
 import { nonLusEnMemoire, enLigneDisponible, connecte, pseudoConnecte } from "../services/enligne.js";
 import { ouvrirCompte } from "./compte.js";
 import { ouvrirTutoriel } from "./tutoriel.js";
-import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources } from "../services/partie.js";
+import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources, etatInvocations } from "../services/partie.js";
 
 // Le lexique des ressources : a quoi sert chaque monnaie et comment l'obtenir
 function lignesLexique() {
@@ -18,6 +18,8 @@ function lignesLexique() {
   return [
     ["Énergie", `${e.valeur} / ${e.max}`, "Payée seulement quand tu gagnes un combat (campagne 6, Tour 4, chasse 3).", "+1 toutes les 3 min, missions, défi du jour, calendrier, recharge à l'encre. Première victoire d'une étape et nouveaux étages de la Tour : gratuits."],
     ["Encre", n(encre()), "Acheter des boosters (100 l'un) et recharger l'énergie.", "Chaque victoire, l'expédition, les coffres, les missions."],
+    ["Invocations", `${n(etatInvocations()?.reserve)} / ${n(etatInvocations()?.max)}`, "Invoquer une carte à l'Autel (onglet Invocations).", "+1 toutes les 3 min (réserve de 120), +1 par combat gagné, bonus des missions du jour."],
+    ["Potions", ["chance", "bordure", "vitesse"].map((id) => n(etatInvocations()?.potions[id])).join(" / "), "Chance ×1,5, bordures ×3 ou invocations 2× plus rapides pendant 5 min.", "12 % des victoires, bonus des missions du jour, ou distillées avec la poussière à l'Autel."],
     ["Tickets de booster", n(b.tickets), "Ouvrir un booster gratuitement.", "1 toutes les 30 min (réserve de 16), chapitres finis, missions, événements, guide."],
     ["Tickets dorés", n(b.dores), "Ouvrir un booster doré : 3 cartes Épiques ou Légendaires.", "Le 7e jour du calendrier, très rarement dans les boosters."],
     ["Poussière", n(b.poussiere), "Fabriquer à l'Atelier la carte de ton choix.", "Chaque booster ouvert, et surtout les doublons (plus la carte est rare, plus elle en donne)."],
@@ -68,7 +70,7 @@ const ONGLETS = [
   { ecran: "qg", nom: "QG" },
   { ecran: "aventure", nom: "Aventure" },
   { ecran: "equipe", nom: "Équipe" },
-  { ecran: "tirages", nom: "Boosters" },
+  { ecran: "tirages", nom: "Invocations" },
   { ecran: "collection", nom: "Collection" },
   { ecran: "social", nom: "Social" },
   { ecran: "reglages", nom: "Réglages" },

@@ -16,6 +16,8 @@ import { ICONE_DE_OBJET, TYPES_ICONES } from "../js/ui/icones-objets.js";
 import { readFileSync } from "node:fs";
 import { SOURCES_PORTRAITS } from "../js/donnees/portraits.js";
 import { ouvrirBooster, ouvrirBoosterDepart } from "../js/moteur/boosters.js";
+import { invoquer, tableAvecChance } from "../js/moteur/invocations.js";
+import { MONDES, PITIE_INVOCATION, BORDURES } from "../js/donnees/invocations.js";
 import { EDITIONS, PITIE_BOOSTER, CASES_BOOSTER, CARTES_PAR_BOOSTER } from "../js/donnees/boosters.js";
 import { creerHasard } from "../js/moteur/hasard.js";
 import { STYLES_SERIES } from "../js/donnees/series.js";
@@ -68,6 +70,12 @@ verifier([1, 2, 3, 4, 5].every((g) => { const c = ouvrirBoosterDepart(creerHasar
 // Chaque perso peut sortir d'un booster : son edition a des cases qui tirent sa rarete
 const raretesTirables = new Set(CASES_BOOSTER.flatMap((c) => Object.keys(c)));
 verifier(PERSOS.every((p) => raretesTirables.has(p.rarete) && EDITIONS.some((e) => e.series.includes(p.serie))), "les 160 persos peuvent sortir d'un booster");
+// Autel d'invocation : chances qui font 100 %, la chance fait monter les raretes, pitie, mondes
+verifier([1, 1.5, 3, 6].every((c) => Math.abs(Object.values(tableAvecChance(c)).reduce((a, b) => a + b, 0) - 1) < 1e-9), "les chances d'invocation font toujours 100 %");
+verifier(tableAvecChance(2).legendaire > tableAvecChance(1).legendaire && tableAvecChance(2).commun < tableAvecChance(1).commun, "la chance rend les Legendaires plus probables");
+verifier(invoquer(creerHasard(5).nombre, "vague", { pitie: PITIE_INVOCATION - 1 }).rarete === "legendaire", "la pitie de l'autel garantit un Legendaire");
+verifier(MONDES.every((m) => EDITIONS.some((e) => e.id === m.edition)) && MONDES.length === EDITIONS.length, "un autel par edition");
+verifier((() => { const h = creerHasard(11); return Array.from({ length: 300 }, () => invoquer(h.nombre, "tenebres")).every((r) => EDITIONS.find((e) => e.id === "tenebres").series.includes(PERSOS.find((p) => p.id === r.id).serie) && (r.variante === null || BORDURES.some((b) => b.id === r.variante))); })(), "les invocations restent dans leur autel, avec des bordures connues");
 verifier(OBJETS.every((o) => TYPES_ICONES.includes(ICONE_DE_OBJET[o.id])), "chaque objet a son icone");
 verifier(readFileSync(new URL("../supabase/catalogue.sql", import.meta.url), "utf8") === catalogueSql(), "supabase/catalogue.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");
 verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf8") === toutSql(), "supabase/a-coller.sql est a jour (sinon : node js/outils/catalogue-sql.mjs)");

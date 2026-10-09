@@ -16,8 +16,9 @@ import { etageTour, arcDeLaSemaine } from "../donnees/tour.js";
 import { sceneAvantEtape, MOMENTS } from "../donnees/histoire.js";
 import { jouerScene } from "../ui/scene.js";
 import { annoncerTampons } from "../ui/toast.js";
-import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres, assezDEnergie, payerEnergie, combatGratuit, coutEnergie, etatEnergie, rechargerEnergie, bonusDerniereVictoire, encre as encreJoueur } from "../services/partie.js";
+import { verifierTampons, noterBoucle, etapeDeluxe, appliquerResultatDeluxe, recyclerCommunesLibres, assezDEnergie, payerEnergie, combatGratuit, coutEnergie, etatEnergie, rechargerEnergie, bonusDerniereVictoire, recolteAutelDerniereVictoire, encre as encreJoueur } from "../services/partie.js";
 import { afficherToast } from "../ui/toast.js";
+import { POTIONS_PAR_ID } from "../donnees/invocations.js";
 import { CHAPITRES, etapeDe, nombreEtoiles, ETOILE_VICTOIRE, ETOILE_SANS_KO, ETOILE_RAPIDE, SECONDES_RAPIDE } from "../donnees/campagne.js";
 import { ZONES, MULT_SOUS_ZONE, MULT_BOSS, CHANCE_DORE, BONUS_DORE } from "../donnees/zones.js";
 import { nomPiece } from "../moteur/equipement.js";
@@ -710,7 +711,9 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
         const gains = [bonus.encre && `+${bonus.encre} encre`, bonus.poussiere && `+${bonus.poussiere} poussière`, bonus.eclats && `+${bonus.eclats} éclats`, bonus.energie && `+${bonus.energie} énergie`, bonus.tickets && "+1 booster !"].filter(Boolean);
         if (gains.length) morceaux.push(`${bonus.nom} : ${gains.join(", ")}`);
       }
-      if (!enBoucle || bonus?.tickets) afficherToast(`<span>${morceaux.join(" · ")}</span>`, { duree: 2600 });
+      const autel = recolteAutelDerniereVictoire();
+      if (autel) morceaux.push(`+${autel.invocations} invocation${autel.potion ? ` et une ${POTIONS_PAR_ID[autel.potion].nom.toLowerCase()} !` : ""}`);
+      if (!enBoucle || bonus?.tickets || autel?.potion) afficherToast(`<span>${morceaux.join(" · ")}</span>`, { duree: 2600 });
     }
 
     // Les vainqueurs encore debout sautent de joie

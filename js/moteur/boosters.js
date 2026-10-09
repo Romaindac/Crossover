@@ -12,7 +12,7 @@ import {
 
 const ORDRE = ["commun", "peu_commun", "rare", "epique", "legendaire"];
 
-function tirerDansTable(aleatoire, table) {
+export function tirerDansTable(aleatoire, table) {
   const raretes = ORDRE.filter((r) => table[r]);
   let x = aleatoire() * raretes.reduce((t, r) => t + table[r], 0);
   for (const r of raretes) {
@@ -32,7 +32,7 @@ function persosDe(edition, rarete) {
   return dansEdition;
 }
 
-function tirerPersoEdition(aleatoire, edition, rarete, serieVedette) {
+export function tirerPersoEdition(aleatoire, edition, rarete, serieVedette) {
   const liste = persosDe(edition, rarete);
   const poids = liste.map((p) => (p.serie === serieVedette ? 2 : 1));
   let x = aleatoire() * poids.reduce((a, b) => a + b, 0);

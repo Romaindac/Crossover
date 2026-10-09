@@ -51,6 +51,13 @@ import {
   EDITIONS, EDITIONS_PAR_ID, PRIX_BOOSTER, MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX, TICKETS_DEPART,
   POUSSIERE_PAR_BOOSTER, POUSSIERE_DOUBLON, COUT_FABRICATION, PITIE_BOOSTER, TICKETS_CHAPITRE,
 } from "../donnees/boosters.js";
+import { invoquer } from "../moteur/invocations.js";
+import {
+  INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_PLAFOND,
+  NIVEAUX_AUTEL, CHANCE_PAR_NIVEAU, CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE,
+  POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
+  POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
+} from "../donnees/invocations.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
 const CLE = "partie";
@@ -69,6 +76,25 @@ function validerBoosters(b) {
   };
 }
 
+// Etat de l'autel ; une ancienne sauvegarde recoit la reserve et les potions de depart
+function validerInvocations(v) {
+  const entier = (x, d = 0) => Math.max(0, Math.floor(Number(x ?? d)) || 0);
+  const potions = {};
+  const actives = {};
+  for (const id of Object.keys(POTIONS_PAR_ID)) {
+    potions[id] = entier(v?.potions?.[id], v ? 0 : POTIONS_DEPART[id]);
+    actives[id] = Number(v?.actives?.[id]) || 0;
+  }
+  return {
+    reserve: Math.min(INVOCATIONS_PLAFOND, entier(v?.reserve, INVOCATIONS_DEPART)),
+    maj: Number(v?.maj) || Date.now(),
+    total: entier(v?.total),
+    pitie: entier(v?.pitie),
+    monde: MONDES.some((m) => m.edition === v?.monde) ? v.monde : MONDES[0].edition,
+    potions, actives,
+  };
+}
+
 function valider(p) {
   if (!p || p.version !== VERSION || typeof p.encre !== "number" || typeof p.collection !== "object") return null;
   const collection = {};
@@ -78,13 +104,14 @@ function valider(p) {
   const equipe = Array.isArray(p.equipe) && p.equipe.length === 5 ? p.equipe : [null, null, null, null, null];
   const paliersBattus = Array.isArray(p.paliersBattus) ? p.paliersBattus.filter((n) => PALIERS.some((x) => x.palier === n)) : [];
   for (const prog of Object.values(collection)) {
-    prog.variantes = Array.isArray(prog.variantes) ? prog.variantes.filter((v) => v === "holo" || v === "doree") : [];
+    prog.variantes = Array.isArray(prog.variantes) ? prog.variantes.filter((v) => ORDRE_BORDURES.includes(v)) : [];
   }
   return {
     version: VERSION,
     encre: Math.max(0, Math.floor(p.encre)),
     collection,
     boosters: validerBoosters(p.boosters),
+    invocations: validerInvocations(p.invocations),
     energie: {
       valeur: Math.min(ENERGIE_PLAFOND, Math.max(0, Number(p.energie?.valeur ?? ENERGIE_MAX) || 0)),
       maj: Number(p.energie?.maj) || Date.now(),
@@ -314,14 +341,14 @@ export function appliquerResultatCombat({ palier, victoire, ids, duree = 90, ult
 // Ajoute un perso tire a la collection, ou le compte comme doublon
 // Une carte obtenue : nouveau perso, ou doublon (etoiles, puis poussiere au-dela de 5 etoiles).
 // Une variante holo ou doree s'ajoute a la collection du perso (purement cosmetique).
-function ajouterCarte({ id, rarete, variante = null }) {
+function ajouterCarte({ id, rarete, variante = null }, tablePoussiere = POUSSIERE_DOUBLON) {
   let resultat;
   if (!partie.collection[id]) {
     partie.collection[id] = { ...nouvelleProgression(), variantes: [] };
     resultat = { id, rarete, variante, nouveau: true };
   } else {
     const doublon = ajouterDoublon(partie.collection[id]);
-    const poussiere = doublon.encreRendue ? POUSSIERE_DOUBLON[rarete] : 0;
+    const poussiere = doublon.encreRendue ? tablePoussiere[rarete] : 0;
     partie.boosters.poussiere += poussiere;
     resultat = { id, rarete, variante, nouveau: false, ...doublon, encreRendue: 0, poussiere };
   }
@@ -497,6 +524,8 @@ function donnerRecompense(r) {
   if (r.encre) partie.encre += r.encre;
   if (r.poussiere) partie.boosters.poussiere += r.poussiere;
   if (r.eclats) partie.equipement.eclats += r.eclats;
+  if (r.invocations) donnerInvocations(r.invocations);
+  for (const [id, n] of Object.entries(r.potions ?? {})) if (partie.invocations.potions[id] !== undefined) partie.invocations.potions[id] += n;
 }
 
 function assurerEvenements() {
@@ -707,6 +736,8 @@ export function reclamerBonusMissions() {
   partie.encre += BONUS_TOUTES_MISSIONS;
   donnerTickets(1);   // + un booster gratuit
   donnerEnergie(ENERGIE_BONUS_MISSIONS);
+  partie.invocations.potions.chance += 1;
+  donnerInvocations(20);
   sauver();
   return BONUS_TOUTES_MISSIONS;
 }
@@ -1426,6 +1457,7 @@ export const victoiresLien = (cle) => partie?.liens[cle] ?? 0;
 function noterInsolites(ids, duree, koAllies, mode) {
   if (koAllies === 0) signaler("victoire-sans-ko");
   dernierBonus = noterVictoireEvenements(ids);
+  gainsVictoireAutel();
   const ins = (partie.stats.insolites = partie.stats.insolites ?? {});
   const persos = ids.map((id) => PERSOS_PAR_ID[id]).filter(Boolean);
   if (new Set(persos.map((p) => p.serie)).size >= 5) ins.cinqSeries = true;
@@ -1947,3 +1979,167 @@ function verifierCompletions() {
 }
 
 export const completionFaite = (cle) => Boolean(partie?.completions.includes(cle));
+
+// ==========================================================
+// AUTEL D'INVOCATION
+// Une carte a la fois, tant qu'il reste des invocations en reserve.
+// La reserve remonte avec le temps (+1 toutes les 2 min, 120 max)
+// et avec les victoires. Chance = (1 + niveau d'autel + Index) x potion.
+// ==========================================================
+
+function assurerInvocations(maintenant = Date.now()) {
+  const v = partie.invocations;
+  const periode = MINUTES_PAR_INVOCATION * 60000;
+  if (v.reserve >= INVOCATIONS_MAX) { v.maj = maintenant; return v; }
+  const gagnees = Math.floor((maintenant - v.maj) / periode);
+  if (gagnees > 0) {
+    v.reserve = Math.min(INVOCATIONS_MAX, v.reserve + gagnees);
+    v.maj = v.reserve >= INVOCATIONS_MAX ? maintenant : v.maj + gagnees * periode;
+  }
+  return v;
+}
+
+function donnerInvocations(n) {
+  const v = assurerInvocations();
+  v.reserve = Math.min(INVOCATIONS_PLAFOND, v.reserve + n);
+}
+
+// A chaque victoire : des invocations, et parfois une potion
+let derniereRecolteAutel = null;
+function gainsVictoireAutel() {
+  donnerInvocations(INVOCATIONS_VICTOIRE);
+  const r = { invocations: INVOCATIONS_VICTOIRE };
+  if (Math.random() < CHANCE_POTION_VICTOIRE) {
+    const ids = Object.keys(POTIONS_PAR_ID);
+    const id = ids[Math.floor(Math.random() * ids.length)];
+    partie.invocations.potions[id] += 1;
+    r.potion = id;
+  }
+  derniereRecolteAutel = r;
+}
+// Ce que la derniere victoire a rapporte a l'autel (affiche en fin de combat)
+export const recolteAutelDerniereVictoire = () => { const r = derniereRecolteAutel; derniereRecolteAutel = null; return r; };
+
+export function niveauAutel(total = partie?.invocations.total ?? 0) {
+  let n = 0;
+  while (n + 1 < NIVEAUX_AUTEL.length && total >= NIVEAUX_AUTEL[n + 1].invocations) n += 1;
+  return n;
+}
+export const pouvoirAutel = (pouvoir) => {
+  const i = NIVEAUX_AUTEL.findIndex((x) => x.pouvoir === pouvoir);
+  return i >= 0 && niveauAutel() >= i;
+};
+
+const potionActive = (id, maintenant = Date.now()) => (partie?.invocations.actives[id] ?? 0) > maintenant;
+
+// L'Index : series et editions completes, bordures obtenues
+export function chanceIndex() {
+  if (!partie) return { series: 0, editions: 0, bordures: 0, total: 0 };
+  const series = [...new Set(PERSOS.map((p) => p.serie))].filter((x) => { const { n, total } = progressionSerie(x); return n === total; }).length;
+  const editions = EDITIONS.filter((e) => PERSOS.filter((p) => e.series.includes(p.serie)).every((p) => partie.collection[p.id])).length;
+  let bordures = 0;
+  for (const prog of Object.values(partie.collection)) for (const v of prog.variantes ?? []) bordures += CHANCE_PAR_BORDURE[v] ?? 0;
+  const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures };
+  return { ...pts, nbSeries: series, nbEditions: editions, total: pts.series + pts.editions + pts.bordures };
+}
+
+export function chanceActuelle(maintenant = Date.now()) {
+  const niveau = niveauAutel() * CHANCE_PAR_NIVEAU;
+  const index = chanceIndex();
+  const potion = potionActive("chance", maintenant) ? MULT_POTION_CHANCE : 1;
+  return {
+    niveau, index, potion,
+    total: (1 + niveau + index.total) * potion,
+    bordure: potionActive("bordure", maintenant) ? MULT_POTION_BORDURE : 1,
+  };
+}
+
+export const mondeOuvert = (edition) => {
+  const m = MONDES.find((x) => x.edition === edition);
+  return Boolean(m) && (m.chapitre === 0 || chapitreTermine(m.chapitre));
+};
+
+export function etatInvocations(maintenant = Date.now()) {
+  if (!partie) return null;
+  const v = assurerInvocations(maintenant);
+  const niveau = niveauAutel();
+  const prochain = NIVEAUX_AUTEL[niveau + 1] ?? null;
+  const vitesse = potionActive("vitesse", maintenant);
+  const delai = (pouvoirAutel("rapide") ? DELAI_RAPIDE_MS : DELAI_TIRAGE_MS) * (vitesse ? FACTEUR_POTION_VITESSE : 1);
+  return {
+    reserve: v.reserve, max: INVOCATIONS_MAX,
+    prochaine: v.reserve >= INVOCATIONS_MAX ? null : v.maj + MINUTES_PAR_INVOCATION * 60000,
+    total: v.total, niveau, prochainNiveau: prochain,
+    seuilNiveau: NIVEAUX_AUTEL[niveau].invocations,
+    avantLegendaire: PITIE_INVOCATION - v.pitie,
+    monde: v.monde, delai,
+    pouvoirs: { auto: pouvoirAutel("auto"), rapide: pouvoirAutel("rapide"), triple: pouvoirAutel("triple") },
+    chance: chanceActuelle(maintenant),
+    potions: { ...v.potions },
+    actives: Object.fromEntries(Object.keys(v.actives).map((id) => [id, v.actives[id] > maintenant ? v.actives[id] : 0])),
+    poussiere: partie.boosters.poussiere,
+  };
+}
+
+export function choisirMonde(edition) {
+  if (!partie || !mondeOuvert(edition)) return false;
+  partie.invocations.monde = edition;
+  sauver();
+  return true;
+}
+
+// Invoque "nombre" cartes (1, ou 3 avec le pouvoir x3) dans le monde choisi.
+// Renvoie null s'il ne reste pas assez d'invocations.
+export function invoquerJoueur(nombre = 1) {
+  if (!partie) return null;
+  const v = assurerInvocations();
+  if (nombre === 3 && !pouvoirAutel("triple")) nombre = 1;
+  if (v.reserve < nombre || !mondeOuvert(v.monde)) return null;
+  const niveauAvant = niveauAutel();
+  const avant = idsPossedes().length;
+  const chance = chanceActuelle();
+  const cartes = [];
+  for (let k = 0; k < nombre; k++) {
+    const r = invoquer(Math.random, v.monde, { chance: chance.total, multBordure: chance.bordure, pitie: v.pitie, serieVedette: serieDeLaSemaine() });
+    v.pitie = r.pitie;
+    v.reserve -= 1;
+    v.total += 1;
+    cartes.push(ajouterCarte(r, POUSSIERE_DOUBLON_INVOCATION));
+  }
+  partie.stats.tirages += cartes.length;
+  partie.stats.invocations = (partie.stats.invocations ?? 0) + cartes.length;
+  partie.stats.legendaires += cartes.filter((c) => c.rarete === "legendaire").length;
+  signaler("invocation", cartes.length);
+  signalerSemaine("invocation", cartes.length);
+  const completions = verifierCompletions();
+  const niveau = niveauAutel();
+  sauver();
+  return {
+    cartes, completions, avant,
+    niveauGagne: niveau > niveauAvant ? { niveau, ...NIVEAUX_AUTEL[niveau] } : null,
+  };
+}
+
+// Boire une potion : elle agit tout de suite (ou rallonge celle en cours)
+export function boirePotion(id) {
+  const def = POTIONS_PAR_ID[id];
+  if (!partie || !def || partie.invocations.potions[id] <= 0) return false;
+  const maintenant = Date.now();
+  const depart = Math.max(maintenant, partie.invocations.actives[id] || 0);
+  const fin = Math.min(maintenant + MINUTES_POTION_MAX * 60000, depart + def.minutes * 60000);
+  if (fin <= depart) return false;
+  partie.invocations.potions[id] -= 1;
+  partie.invocations.actives[id] = fin;
+  sauver();
+  return true;
+}
+
+// Distiller une potion avec de la poussiere
+export function fabriquerPotion(id) {
+  const def = POTIONS_PAR_ID[id];
+  if (!partie || !def || partie.boosters.poussiere < def.poussiere) return false;
+  partie.boosters.poussiere -= def.poussiere;
+  partie.invocations.potions[id] += 1;
+  sauver();
+  return true;
+}

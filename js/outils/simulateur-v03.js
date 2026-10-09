@@ -22,17 +22,21 @@ import { EDITIONS, PRIX_BOOSTER, TICKETS_DEPART, TICKETS_CHAPITRE, STOCK_GRATUIT
 const TICKETS_GRATUITS_PAR_JOUR = 2 * STOCK_GRATUIT_MAX;
 import { creerHasard } from "../moteur/hasard.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
+import { invoquer } from "../moteur/invocations.js";
+import { INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_MAX, MONDES, NIVEAUX_AUTEL, CHANCE_PAR_NIVEAU } from "../donnees/invocations.js";
 import { composerEquipe } from "../moteur/composition.js";
 import { calculerStatsFinales } from "../moteur/stats.js";
 import { creerPiece, tirerButin, objetAuHasard, scorePiece, coutAmelioration, bonusEquipement } from "../moteur/equipement.js";
 
 const ECLATS_RECYCLAGE = { commun: 5, peu_commun: 10, rare: 20, epique: 40, legendaire: 80 };
 
-export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour = 45, jours = 30 } = {}) {
+// visitesAutel : combien de fois par jour le joueur vide sa reserve d'invocations (120 chacune)
+export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour = 45, jours = 30, visitesAutel = 2 } = {}) {
   const h = creerHasard(graine);
   const j = {
     collection: {}, encre: ENCRE_DE_DEPART, pitie: 0, eclats: 0, tickets: TICKETS_DEPART, boosters: 0,
     pieces: [], uid: 1, battues: new Set(), bossChasse: new Set(), echecs: 0,
+    invocations: INVOCATIONS_DEPART, totalInvocations: 0, pitieAutel: 0,
   };
   // Le booster de depart offert (heros n'est plus utilise : garde pour la compatibilite)
   for (const c of ouvrirBoosterDepart(h.nombre).cartes) j.collection[c.id] = nouvelleProgression();
@@ -55,6 +59,21 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
         if (!j.collection[c.id]) j.collection[c.id] = nouvelleProgression();
         else ajouterDoublon(j.collection[c.id]);   // au-dela de 5 etoiles : poussiere (non modelisee ici)
       }
+    }
+  };
+
+  // Vide la reserve d'invocations, en tournant entre les autels ouverts (chance : niveau d'autel seulement)
+  const invoquerTout = () => {
+    const mondes = MONDES.filter((m) => m.chapitre === 0 || j.battues.has(m.chapitre * 8));
+    while (j.invocations > 0) {
+      j.invocations -= 1;
+      let niveau = 0;
+      while (niveau + 1 < NIVEAUX_AUTEL.length && j.totalInvocations >= NIVEAUX_AUTEL[niveau + 1].invocations) niveau += 1;
+      const monde = mondes[j.totalInvocations++ % mondes.length];
+      const r = invoquer(h.nombre, monde.edition, { chance: 1 + niveau * CHANCE_PAR_NIVEAU, pitie: j.pitieAutel });
+      j.pitieAutel = r.pitie;
+      if (!j.collection[r.id]) j.collection[r.id] = nouvelleProgression();
+      else ajouterDoublon(j.collection[r.id]);
     }
   };
 
@@ -131,6 +150,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     const r = combat(equipe, et);
     const victoire = r.vainqueur === 0;
     const premiere = victoire && !j.battues.has(et.global);
+    if (victoire) j.invocations += INVOCATIONS_VICTOIRE;
     j.encre += victoire ? encreEtape(et, premiere) : 1;
     donnerXp(equipe, xpEtape(et, victoire));
     if (premiere) {
@@ -147,6 +167,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
       }
     }
     tirer();
+    if (j.invocations >= 40) invoquerTout();
     optimiser(equipe);
     return { victoire, secondes: r.duree / 2 + 10 };
   };
@@ -168,6 +189,7 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
     donnerXp(equipe, xpChasse(choix.sz.niveau, victoire));
     j.eclats += eclatsChasse(choix.sz.niveau, victoire, false);
     if (victoire) {
+      j.invocations += INVOCATIONS_VICTOIRE;
       const butinPct = equipe.reduce((s, id) => s + bonusEquipement(piecesDe(id)).butin, 0);
       ajouterObjets(tirerButin(h.nombre, tableButin(choix.zone, choix.index), { butinPct }));
     }
@@ -177,10 +199,12 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
 
   // ---------- Les jours ----------
   tirer();
+  invoquerTout();
   for (jour = 1; jour <= jours && prochaineEtape(); jour++) {
     // L'expedition pendant l'absence
     const etapeExp = meilleureEtape();
-    if (jour > 1) j.tickets += TICKETS_GRATUITS_PAR_JOUR;   // un ticket toutes les 30 min, reserve de 16 (8 h) : un joueur qui passe matin et soir
+    if (jour > 1) j.tickets += TICKETS_GRATUITS_PAR_JOUR;
+    if (jour > 1) { j.invocations += visitesAutel * INVOCATIONS_MAX; invoquerTout(); }   // un ticket toutes les 30 min, reserve de 16 (8 h) : un joueur qui passe matin et soir
     if (jour > 1 && etapeExp) {
       const combats = Math.floor(Math.min(24 - minutesParJour / 60, EXPEDITION_HEURES_MAX) * EXPEDITION_COMBATS_PAR_HEURE);
       j.encre += combats * encreEtape(etapeExp, false);
@@ -218,7 +242,9 @@ export function simulerJoueurV03({ graine = 1, heros = "naruto", minutesParJour 
       eclats: j.eclats,
     });
   }
-  return { jalons, bilans, fini: !prochaineEtape() };
+  const collectionParRarete = {};
+  for (const id of Object.keys(j.collection)) collectionParRarete[PERSOS_PAR_ID[id].rarete] = (collectionParRarete[PERSOS_PAR_ID[id].rarete] ?? 0) + 1;
+  return { jalons, bilans, fini: !prochaineEtape(), collectionParRarete, encreFin: j.encre, boosters: j.boosters, invocations: j.totalInvocations };
 }
 
 export const mediane = (liste) => {

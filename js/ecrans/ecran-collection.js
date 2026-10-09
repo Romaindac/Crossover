@@ -19,7 +19,7 @@ import {
 } from "../services/partie.js";
 import { NOMS_STATS } from "../donnees/equipement.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { htmlPortrait, rafraichirPortrait, htmlCarteStatique } from "../ui/cartes.js";
+import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from "../ui/cartes.js";
 import { varsSerie, motifSerie, styleSerie } from "../donnees/series.js";
 import { editionDeSerie } from "../donnees/boosters.js";
 import { htmlFiche } from "../ui/fiche.js";
@@ -83,7 +83,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
       <button type="button" class="carte-collection" data-action="fiche" data-perso="${p.id}" aria-label="${p.nom}, niveau ${prog.niveau}, ${prog.etoiles} étoiles${variantes.length ? `, versions : ${variantes.join(", ")}` : ""}. Voir sa fiche.">
         ${carte}
         ${prog.eveil ? `<span class="badge-eveil carte-collection__eveil">覚醒 ${["", "I", "II", "III", "IV"][prog.eveil]}</span>` : ""}
-        ${variantes.length ? `<span class="carte-collection__variantes">${variantes.map((v) => `<span class="badge-variante badge-variante--${v}">${v === "doree" ? "Dorée" : "Holo"}</span>`).join("")}</span>` : ""}
+        ${variantes.length ? `<span class="carte-collection__variantes">${variantes.map((v) => `<span class="badge-variante badge-variante--${v}">${nomBordure(v)}</span>`).join("")}</span>` : ""}
       </button>`;
   }
 

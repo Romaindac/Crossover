@@ -1,0 +1,813 @@
+/* ==========================================================
+   AUTEL D'INVOCATION (charge en dernier)
+   La scene est en encre (le sceau, la carte qui jaillit) ;
+   la reserve, la chance, les potions et l'historique sont des
+   documents en papier. Bordures Arc-en-ciel et Neant.
+   ========================================================== */
+
+.boosters__reserve[hidden] {
+  display: none;
+}
+
+.autel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  max-width: 62rem;
+  margin: 0 auto;
+}
+
+/* ---------- Les mondes (un autel par edition) ---------- */
+
+.autel__mondes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.autel__monde {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  color: var(--papier);
+  background:
+    linear-gradient(120deg, rgb(255 255 255 / 0.18), transparent 45%),
+    linear-gradient(160deg, var(--p1), var(--p2));
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--encre);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.autel__monde:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.autel__monde[aria-checked="true"] {
+  outline: 3px solid var(--obi);
+  outline-offset: 2px;
+}
+
+.autel__monde:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.85) brightness(0.75);
+}
+
+.autel__monde-nom {
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  text-shadow: 0 1px 0 rgb(0 0 0 / 0.45);
+}
+
+.autel__monde-info {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.92;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- La scene : le sceau et la carte ---------- */
+
+.autel__scene {
+  --chance: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 25rem;
+  padding: 1.2rem 1rem 3.2rem;
+  overflow: hidden;
+  color: var(--papier);
+  background:
+    repeating-conic-gradient(from 0deg at 50% 46%, color-mix(in srgb, var(--papier) 6%, transparent) 0deg 0.6deg, transparent 0.6deg 4.5deg),
+    radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--p1, #f08a1c) 30%, #2a2d4a), var(--encre) 72%);
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 var(--encre);
+}
+
+.autel__halo {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 22rem;
+  height: 22rem;
+  translate: -50% -54%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--p3, #fde68a) calc(30% + var(--chance) * 40%), transparent), transparent 65%);
+  opacity: calc(0.45 + var(--chance) * 0.4);
+  pointer-events: none;
+  transition: background 0.4s;
+}
+
+.autel__sceau {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: min(21rem, 86%);
+  translate: -50% -54%;
+  color: color-mix(in srgb, var(--p3, #fde68a) 70%, transparent);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.autel__anneau {
+  transform-origin: 100px 100px;
+  animation: autel-tourne 40s linear infinite;
+}
+
+.autel__anneau--int {
+  animation-duration: 28s;
+  animation-direction: reverse;
+}
+
+@keyframes autel-tourne {
+  to { transform: rotate(360deg); }
+}
+
+/* Avant une grosse carte, le sceau s'emballe et prend sa couleur */
+.autel__scene--suspense .autel__anneau { animation-duration: 1.4s; }
+.autel__scene--suspense .autel__anneau--int { animation-duration: 0.9s; }
+.autel__scene--suspense[data-rarete="epique"] .autel__sceau { color: #c9a6ff; opacity: 1; filter: drop-shadow(0 0 10px #b38cff); }
+.autel__scene--suspense[data-rarete="legendaire"] .autel__sceau { color: #ffd23f; opacity: 1; filter: drop-shadow(0 0 16px #ffb21f); }
+.autel__scene--suspense .autel__carte { animation: autel-tremble 0.12s linear infinite; }
+
+@keyframes autel-tremble {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -2px 1px; }
+  75% { translate: 2px -1px; }
+}
+
+.autel__carte {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 17rem;
+}
+
+.autel__invite {
+  max-width: 16rem;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.autel__sortie {
+  position: relative;
+  display: block;
+  width: 11.5rem;
+  border-radius: 12px;
+}
+
+.autel__carte--trois .autel__sortie {
+  width: 9rem;
+}
+
+.autel__sortie .carte {
+  width: 100%;
+  color: var(--encre);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 0.5);
+}
+
+.autel__sortie .tampon {
+  position: absolute;
+  top: 22%;
+  bottom: auto;
+  right: -0.4rem;
+  z-index: 3;
+  rotate: 12deg;
+}
+
+.autel__badge {
+  position: absolute;
+  left: 50%;
+  bottom: -0.65rem;
+  z-index: 3;
+  translate: -50% 0;
+  white-space: nowrap;
+}
+
+/* La lueur de rarete autour de la carte */
+.autel__sortie--rare { box-shadow: 0 0 22px 4px rgb(95 168 255 / 0.65); }
+.autel__sortie--epique { box-shadow: 0 0 30px 8px rgb(179 140 255 / 0.75); }
+.autel__sortie--legendaire { box-shadow: 0 0 44px 12px rgb(255 210 63 / 0.85); }
+
+/* La carte jaillit du sceau */
+.autel__scene--jaillit .autel__sortie {
+  animation: autel-jaillit 0.42s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.autel__scene--jaillit .autel__sortie:nth-child(2) { animation-delay: 0.08s; }
+.autel__scene--jaillit .autel__sortie:nth-child(3) { animation-delay: 0.16s; }
+
+@keyframes autel-jaillit {
+  0% { transform: translateY(26px) scale(0.35) rotate(-6deg); opacity: 0; filter: brightness(3); }
+  60% { opacity: 1; filter: brightness(1.4); }
+  100% { transform: none; opacity: 1; filter: none; }
+}
+
+.autel__resultat {
+  position: absolute;
+  left: 0.8rem;
+  right: 0.8rem;
+  bottom: 0.7rem;
+  z-index: 3;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.autel__nom-rare { color: #8cc2ff; }
+.autel__nom-epique { color: #cfb4ff; }
+.autel__nom-legendaire { color: #ffd23f; }
+
+.autel__eclats {
+  left: 50%;
+  top: 46%;
+}
+
+.autel__onomatopee {
+  left: 22%;
+  top: 22%;
+  z-index: 4;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  animation: autel-ono 1.6s ease-out both;
+}
+
+@keyframes autel-ono {
+  0% { transform: scale(2.2) rotate(-8deg); opacity: 0; }
+  15% { transform: scale(1) rotate(-6deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: scale(1.05) rotate(-6deg) translateY(-12px); opacity: 0; }
+}
+
+.autel__annonce {
+  position: absolute;
+  top: 0.7rem;
+  left: 50%;
+  z-index: 4;
+  max-width: calc(100% - 1.4rem);
+  margin: 0;
+  padding: 0.35rem 0.8rem;
+  translate: -50% 0;
+  color: var(--encre);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-align: center;
+  background: var(--obi);
+  border: 2px solid var(--encre);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--encre);
+  animation: autel-annonce 3.2s ease both;
+}
+
+@keyframes autel-annonce {
+  0% { transform: translateY(-30px); opacity: 0; }
+  10%, 85% { transform: none; opacity: 1; }
+  100% { transform: translateY(-10px); opacity: 0; }
+}
+
+/* ---------- Commandes ---------- */
+
+.autel__commandes {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.autel__invoquer {
+  position: relative;
+  overflow: hidden;
+  min-width: 13rem;
+  padding: 0.85rem 1.6rem;
+  font-family: var(--police-titre);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--encre);
+  background: linear-gradient(180deg, #ffe17a, var(--obi));
+  border: 3px solid var(--encre);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--encre);
+}
+
+.autel__invoquer:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--encre);
+}
+
+.autel__invoquer:disabled {
+  filter: grayscale(0.7);
+  opacity: 0.7;
+}
+
+.autel__invoquer-texte {
+  position: relative;
+  z-index: 1;
+}
+
+/* La recharge entre deux invocations : une bande qui se vide */
+.autel__recharge {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 5px;
+  background: var(--encre);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.autel__invoquer--recharge .autel__recharge {
+  animation: autel-recharge var(--delai, 2s) linear both;
+}
+
+@keyframes autel-recharge {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.autel__triple,
+.autel__auto {
+  min-width: 5.5rem;
+  font-weight: 800;
+}
+
+.autel__auto small {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.autel__auto[aria-pressed="true"] {
+  color: var(--papier);
+  background: var(--sceau);
+  animation: autel-auto 1.2s ease-in-out infinite;
+}
+
+@keyframes autel-auto {
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--sceau) 35%, transparent); }
+}
+
+/* ---------- Reserve ---------- */
+
+.autel__reserve {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.autel__reserve-chiffre {
+  font-size: 0.95rem;
+}
+
+.autel__reserve-chiffre strong {
+  font-family: var(--police-titre);
+  font-size: 1.3rem;
+}
+
+.autel__reserve-aide {
+  color: var(--encre-douce);
+  font-size: 0.8rem;
+}
+
+.autel__jauge {
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--encre) 12%, var(--papier));
+  border: 1.5px solid var(--encre);
+  border-radius: 99px;
+}
+
+.autel__jauge > span {
+  display: block;
+  height: 100%;
+  width: calc(var(--v) * 100%);
+  background: linear-gradient(90deg, var(--obi), #ffe17a);
+  transition: width 0.3s;
+}
+
+.autel__jauge--niveau > span {
+  background: linear-gradient(90deg, #7a5cff, #c4b5fd);
+}
+
+/* ---------- Chance et niveau ---------- */
+
+.autel__panneaux {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.autel__panneau {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.7rem 0.8rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.autel__panneau-titre {
+  margin: 0;
+  font-family: var(--police-mincho);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.autel__panneau-titre strong {
+  font-family: var(--police-titre);
+  font-size: 1.25rem;
+}
+
+.autel__chance {
+  color: #1f8a4c;
+}
+
+.autel__lignes {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.autel__lignes div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px dotted color-mix(in srgb, var(--encre) 25%, transparent);
+}
+
+.autel__lignes dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.autel__taux-courts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.autel__taux {
+  padding: 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border: 1.5px solid var(--encre);
+  border-radius: 3px;
+}
+
+.autel__taux--rare { background: #cfe4ff; }
+.autel__taux--epique { background: #e6d9ff; }
+.autel__taux--legendaire { background: #ffe8a3; }
+.autel__taux--bordure { background: linear-gradient(100deg, #ffd1d1, #fff1b8, #c9f7df, #c9dcff, #ecd1ff); }
+
+.autel__aide {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--encre-douce);
+}
+
+.autel__pouvoirs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.autel__pouvoirs li {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+  border: 1.5px dashed color-mix(in srgb, var(--encre) 40%, transparent);
+  border-radius: 3px;
+}
+
+.autel__pouvoirs .autel__pouvoir--ok {
+  color: var(--encre);
+  background: color-mix(in srgb, var(--vert) 20%, var(--papier));
+  border-style: solid;
+  border-color: var(--encre);
+}
+
+/* ---------- Potions ---------- */
+
+.autel__titre-section {
+  margin: 0.3rem 0 -0.3rem;
+  font-family: var(--police-mincho);
+  font-size: 1.1rem;
+}
+
+.autel__potions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.potion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.6rem;
+  align-items: center;
+  padding: 0.6rem 0.7rem;
+  background: var(--papier);
+  border: 2px solid var(--encre);
+  border-radius: 8px;
+}
+
+.potion--active {
+  background: color-mix(in srgb, var(--potion) 16%, var(--papier));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--potion) 45%, transparent);
+}
+
+.potion__icone {
+  position: relative;
+  width: 2.6rem;
+  height: 2.6rem;
+}
+
+.potion__icone svg {
+  width: 100%;
+  height: 100%;
+  color: var(--encre);
+}
+
+.potion--active .potion__icone svg {
+  animation: potion-bulle 1.6s ease-in-out infinite;
+}
+
+@keyframes potion-bulle {
+  50% { transform: translateY(-2px) rotate(-4deg); }
+}
+
+.potion__stock {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.2rem;
+  min-width: 1.3rem;
+  padding: 0 0.25rem;
+  font-family: var(--police-titre);
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--papier);
+  background: var(--encre);
+  border-radius: 99px;
+}
+
+.potion__texte {
+  display: grid;
+  min-width: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.potion__texte b {
+  font-size: 0.88rem;
+}
+
+.potion__minuteur {
+  font-weight: 800;
+  color: color-mix(in srgb, var(--potion) 60%, var(--encre));
+}
+
+.potion__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.7rem;
+}
+
+.potion__actions .bouton-texte {
+  font-size: 0.75rem;
+}
+
+/* ---------- Historique ---------- */
+
+.autel__seance {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.autel__historique {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 1.6rem;
+}
+
+.autel__trace {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 11rem;
+  padding: 0.1rem 0.45rem 0.1rem 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--papier);
+  border: 1.5px solid var(--encre);
+  border-radius: 99px;
+  animation: autel-trace 0.3s ease both;
+}
+
+.autel__trace:first-child {
+  outline: 2px solid var(--obi);
+}
+
+@keyframes autel-trace {
+  from { transform: scale(0.6); opacity: 0; }
+}
+
+.autel__trace b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.2rem;
+  padding: 0 0.2rem;
+  font-size: 0.55rem;
+  color: #fff;
+  background: var(--s1, var(--encre));
+  border-radius: 99px;
+}
+
+.autel__trace span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autel__trace i {
+  font-style: normal;
+  font-size: 0.6rem;
+  color: var(--papier);
+  background: var(--sceau);
+  padding: 0 0.25rem;
+  border-radius: 2px;
+}
+
+.autel__trace--rare { background: #dcebff; }
+.autel__trace--epique { background: #ece2ff; }
+.autel__trace--legendaire { background: #ffe9a6; box-shadow: 0 0 8px rgb(255 190 40 / 0.8); }
+.autel__trace--arcenciel,
+.autel__trace--neant { border-width: 2.5px; border-color: #b36bff; }
+
+/* ---------- Bordures Arc-en-ciel et Neant ---------- */
+
+.carte--arcenciel[data-motif],
+.tome--arcenciel [data-motif] {
+  --cadre-metal:
+    conic-gradient(from var(--angle-arc, 0deg), #ff5f6d, #ffc371, #f9f871, #5ff59a, #4cc9ff, #7a6cff, #ff6ad5, #ff5f6d);
+  animation: bordure-arc 6s linear infinite;
+}
+
+@property --angle-arc {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes bordure-arc {
+  to { --angle-arc: 360deg; }
+}
+
+.carte--arcenciel .portrait::before,
+.tome--arcenciel .portrait::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgb(255 95 109 / 0.35), rgb(249 248 113 / 0.35), rgb(95 245 154 / 0.35), rgb(76 201 255 / 0.35), rgb(255 106 213 / 0.35));
+  background-size: 300% 300%;
+  background-position: var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: color-dodge;
+}
+
+.carte--neant[data-motif],
+.tome--neant [data-motif] {
+  --cadre-metal:
+    radial-gradient(circle at 30% 20%, rgb(190 120 255 / 0.9), transparent 35%),
+    radial-gradient(circle at 75% 85%, rgb(80 200 255 / 0.7), transparent 40%),
+    linear-gradient(160deg, #1a0f2e, #05030c 50%, #1a0f2e);
+  border-color: #b36bff;
+  box-shadow: 0 0 14px rgb(179 107 255 / 0.7);
+}
+
+.carte--neant .portrait::before,
+.tome--neant .portrait::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 1px, transparent 1.5px) 0 0 / 23px 23px,
+    radial-gradient(circle at 70% 60%, #e9d5ff 0 1px, transparent 1.5px) 0 0 / 31px 31px,
+    radial-gradient(circle, transparent 40%, rgb(40 10 80 / 0.55));
+  mix-blend-mode: screen;
+}
+
+.carte--neant .carte__nom {
+  color: var(--encre);
+}
+
+.badge-variante--arcenciel {
+  background: linear-gradient(100deg, #ff9aa2, #ffe29a, #b5f5c8, #9ad8ff, #d3a6ff);
+}
+
+.badge-variante--neant {
+  color: #f3e8ff;
+  background: linear-gradient(100deg, #2a1150, #0b0618, #2a1150);
+  border-color: #b36bff;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 44rem) {
+  .autel__mondes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .autel__scene {
+    min-height: 21rem;
+  }
+
+  .autel__sortie {
+    width: 9.5rem;
+  }
+
+  .autel__carte--trois {
+    gap: 0.4rem;
+  }
+
+  .autel__carte--trois .autel__sortie {
+    width: calc((100% - 0.8rem) / 3);
+  }
+
+  .autel__commandes {
+    flex-wrap: wrap;
+  }
+
+  .autel__invoquer {
+    min-width: 0;
+    flex: 1 1 100%;
+    padding: 0.8rem 0.6rem;
+  }
+
+  .autel__triple,
+  .autel__auto {
+    flex: 1 1 0;
+    padding: 0.55rem;
+  }
+
+  .autel__panneaux,
+  .autel__potions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autel__anneau,
+  .autel__scene--jaillit .autel__sortie,
+  .autel__auto[aria-pressed="true"],
+  .potion--active .potion__icone svg,
+  .carte--arcenciel[data-motif],
+  .tome--arcenciel [data-motif] {
+    animation: none;
+  }
+}
+
+/* Les trois onglets (Autel, Boosters, Atelier) tiennent sur une ligne */
+@media (max-width: 44rem) {
+  .boosters__onglets {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .boosters__onglets .bouton {
+    min-width: 0;
+    padding-inline: 0.4rem;
+  }
+}
