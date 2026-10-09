@@ -1922,6 +1922,13 @@ function objectifAtteint(si) {
     case "raid": return (partie.stats.raids ?? 0) >= 1;
     case "chapitre3": return chapitreTermine(3);
     case "calendrier": return ev.calendrier.case >= 0;
+    case "invoquer10": return partie.invocations.total >= 10;
+    case "arene1": return partie.arene.battus.length >= 1;
+    case "point-autel": return Object.values(partie.invocations.points).some((n) => n > 0);
+    case "exploration": return (partie.stats.explorationsLancees ?? 0) >= 1 || partie.explorations.length > 0;
+    case "potion": return (partie.stats.potions ?? 0) >= 1;
+    case "donjon5": return (partie.donjon?.record ?? 0) >= 5;
+    case "passe": return (partie.passe?.reclames?.length ?? 0) >= 1;
     default: return false;
   }
 }
@@ -1937,10 +1944,7 @@ export function etatGuide() {
 export function reclamerGuide() {
   const e = etatGuide();
   if (!e?.atteint) return null;
-  const r = e.objectif.recompense;
-  partie.encre += r.encre ?? 0;
-  if (r.tickets) donnerTickets(r.tickets);
-  if (r.energie) donnerEnergie(r.energie);
+  donnerRecompense(e.objectif.recompense);
   partie.guide.push(e.objectif.id);
   sauver();
   return e.objectif;
@@ -2238,6 +2242,7 @@ export function boirePotion(id) {
   const maintenant = Date.now();
   if (id === "lune") {
     partie.invocations.potions.lune -= 1;
+    partie.stats.potions = (partie.stats.potions ?? 0) + 1;
     partie.invocations.phaseForcee = phaseRelancee(Math.random, phaseAutel(maintenant).fenetre);
     sauver();
     return true;
@@ -2248,6 +2253,7 @@ export function boirePotion(id) {
   if (fin <= depart) return false;
   partie.invocations.potions[id] -= 1;
   partie.invocations.actives[id] = fin;
+  partie.stats.potions = (partie.stats.potions ?? 0) + 1;
   sauver();
   return true;
 }
@@ -2734,6 +2740,7 @@ export function lancerExploration(missionId) {
   const serie = serieDuJourExploration(missionId);
   const bonus = ids.filter((id) => PERSOS_PAR_ID[id].serie === serie).length >= PERSOS_SERIE_BONUS;
   partie.explorations.push({ mission: missionId, ids, debut: Date.now(), bonus });
+  partie.stats.explorationsLancees = (partie.stats.explorationsLancees ?? 0) + 1;
   sauver();
   return { ids, bonus };
 }
