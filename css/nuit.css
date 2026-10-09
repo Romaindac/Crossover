@@ -734,3 +734,223 @@ button:where(
 .detail__puissance { margin: 0.4rem 0 0; justify-self: start; }
 .qg-puissance { font-family: var(--police-titre); color: #c98a00; }
 .place__puissance { color: var(--obi); font-weight: 800; }
+
+/* ==========================================================
+   TIRAGE A L'AUTEL : rayons de lumiere et bandeau de rarete
+   ========================================================== */
+.autel__rayons {
+  --c: 120 170 255;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgb(var(--c) / 0.55) 0%, rgb(var(--c) / 0.18) 22%, transparent 48%),
+    repeating-conic-gradient(from 0deg, rgb(var(--c) / 0.32) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0 30%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 0 30%, transparent 62%);
+  animation: rayons-tour 6s linear infinite, rayons-entree 0.5s ease-out both;
+}
+
+.autel__rayons--epique { --c: 180 130 255; }
+.autel__rayons--legendaire { --c: 255 205 70; }
+.autel__rayons--secret { --c: 255 40 70; }
+
+@keyframes rayons-tour { to { rotate: 360deg; } }
+@keyframes rayons-entree { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1; } }
+
+.autel__carte { position: relative; z-index: 2; }
+
+.autel__bandeau {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  z-index: 5;
+  padding: 0.2rem 1.4rem 0.3rem;
+  font-family: var(--police-titre);
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0.05em 0.05em 0 var(--encre);
+  background: linear-gradient(100deg, transparent, rgb(120 80 220 / 0.9) 15%, rgb(170 120 255 / 0.95) 50%, rgb(120 80 220 / 0.9) 85%, transparent);
+  translate: -50% 0;
+  pointer-events: none;
+  animation: bandeau-claque 2.6s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.autel__bandeau--legendaire {
+  color: var(--encre);
+  text-shadow: 0.04em 0.04em 0 #fff6c2;
+  background: linear-gradient(100deg, transparent, rgb(233 170 20 / 0.92) 15%, rgb(255 225 110 / 0.98) 50%, rgb(233 170 20 / 0.92) 85%, transparent);
+}
+
+.autel__bandeau--secret { display: none; }   /* le Secret a sa propre revelation */
+
+@keyframes bandeau-claque {
+  0% { opacity: 0; transform: scale(2.4) rotate(-4deg); }
+  12% { opacity: 1; transform: scale(1) rotate(-3deg); }
+  80% { opacity: 1; transform: scale(1) rotate(-3deg); }
+  100% { opacity: 0; transform: scale(0.96) rotate(-3deg) translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autel__rayons { animation: none; }
+  .autel__bandeau { animation: none; }
+}
+
+/* Les rayons derriere une carte revelee d'un booster */
+.tome { position: relative; }
+.tome__rayons { z-index: -1; width: 260%; }
+
+/* ==========================================================
+   ECRANS DE RESULTAT : un bandeau qui tombe comme un tampon,
+   des rayons dores derriere une victoire, des etoiles et des
+   lignes qui arrivent une a une
+   ========================================================== */
+.voile:has(.resultat__titre--victoire)::before {
+  content: "";
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 160vmax;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgb(255 205 70 / 0.35) 0%, transparent 35%),
+    repeating-conic-gradient(from 0deg, rgb(255 205 70 / 0.14) 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0 20%, transparent 55%);
+  mask-image: radial-gradient(circle, #000 0 20%, transparent 55%);
+  animation: rayons-tour 14s linear infinite, nuit-fondu 0.6s ease-out both;
+}
+
+.resultat--combat {
+  animation: resultat-entree 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+@keyframes resultat-entree {
+  from { opacity: 0; transform: translateY(24px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+
+.resultat--combat .resultat__titre {
+  animation: titre-tampon 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) 0.15s both;
+}
+
+@keyframes titre-tampon {
+  0% { opacity: 0; transform: scale(1.8) rotate(-3deg); filter: brightness(2); }
+  70% { opacity: 1; transform: scale(0.98); filter: none; }
+  100% { transform: none; }
+}
+
+.resultat--combat .gains,
+.resultat--combat .gains__butin,
+.resultat--combat .gains__deblocage {
+  animation: nuit-entree 0.4s ease-out 0.45s both;
+}
+
+.resultat--combat .gains__encre {
+  animation: gain-pulse 0.6s ease-out 0.7s both;
+}
+
+@keyframes gain-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); color: #c98a00; }
+  100% { transform: scale(1); }
+}
+
+.resultat--combat .etoiles-victoire li { animation: nuit-entree 0.35s ease-out both; }
+.resultat--combat .etoiles-victoire li:nth-child(1) { animation-delay: 0.6s; }
+.resultat--combat .etoiles-victoire li:nth-child(2) { animation-delay: 0.8s; }
+.resultat--combat .etoiles-victoire li:nth-child(3) { animation-delay: 1s; }
+.resultat--combat .etoiles-victoire li.obtenue svg { filter: drop-shadow(0 0 4px rgb(239 189 43 / 0.9)); }
+
+.resultat--combat .tableau-fin tbody tr { animation: nuit-entree 0.3s ease-out both; }
+.resultat--combat .tableau-fin tbody tr:nth-child(1) { animation-delay: 0.7s; }
+.resultat--combat .tableau-fin tbody tr:nth-child(2) { animation-delay: 0.78s; }
+.resultat--combat .tableau-fin tbody tr:nth-child(3) { animation-delay: 0.86s; }
+.resultat--combat .tableau-fin tbody tr:nth-child(4) { animation-delay: 0.94s; }
+.resultat--combat .tableau-fin tbody tr:nth-child(5) { animation-delay: 1.02s; }
+
+.resultat--combat .montee {
+  animation: gain-pulse 0.7s ease-out 1.3s both;
+}
+
+/* L'Arene : meme entree pour la fin de combat contre un boss */
+.arene-fin {
+  animation: resultat-entree 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+.arene-fin__titre {
+  animation: titre-tampon 0.55s cubic-bezier(0.2, 1.5, 0.4, 1) 0.1s both;
+}
+
+.arene-fin__gains li { animation: nuit-entree 0.3s ease-out both; }
+.arene-fin__gains li:nth-child(1) { animation-delay: 0.45s; }
+.arene-fin__gains li:nth-child(2) { animation-delay: 0.55s; }
+.arene-fin__gains li:nth-child(3) { animation-delay: 0.65s; }
+.arene-fin__gains li:nth-child(4) { animation-delay: 0.75s; }
+
+.arene-fin__carte { animation: titre-tampon 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) 0.5s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .voile:has(.resultat__titre--victoire)::before,
+  .resultat--combat, .resultat--combat *, .arene-fin, .arene-fin * { animation: none !important; }
+}
+
+/* ==========================================================
+   CARTES PLEINE ILLUSTRATION : le nom, la puissance et les stats
+   remontent sur le bas de l'image, dans un degrade d'encre
+   ========================================================== */
+.carte[data-motif] .carte__infos {
+  margin-top: -2.6rem;
+  padding-top: 1.6rem;
+  background:
+    linear-gradient(180deg, transparent 0%, rgb(12 13 32 / 0.78) 1.4rem, color-mix(in srgb, var(--s1) 30%, #12142c) 3.2rem, #0e1028 100%);
+  border-radius: 0 0 7px 7px;
+  box-shadow: none;
+}
+
+/* Le ruban de rarete passe en petite pastille en haut de l'image, a cote du role (le coin droit est aux badges d'eveil) */
+.carte[data-motif] .obi-rarete {
+  top: 0.62rem;
+  left: 2.55rem;
+  right: auto;
+  bottom: auto;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.55rem;
+  border: 1.5px solid var(--encre);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+/* Le medaillon de serie reste a cheval, plus haut */
+.carte[data-motif] .carte__serie { top: -0.2rem; }
+
+/* L'image va jusqu'en bas de la carte */
+.carte[data-motif] .carte__visuel {
+  border-radius: 7px;
+}
+
+.carte[data-motif] .obi-rarete { white-space: nowrap; }
+
+/* Le badge d'eveil descend d'un cran : la ligne du haut est au role et a la rarete */
+.carte-collection__eveil { top: 2.4rem; }
+.carte-collection__variantes { top: 2.4rem; }
+.carte[data-motif] .obi-rarete {
+  max-width: calc(100% - 3rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.5rem;
+  letter-spacing: 0.02em;
+}
+.obi-rarete__court { display: none; }
+.carte[data-motif] .obi-rarete__long { display: none; }
+.carte[data-motif] .obi-rarete__court { display: inline; }
+.carte[data-motif] .obi-rarete { max-width: none; overflow: visible; }
