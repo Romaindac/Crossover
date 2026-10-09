@@ -1,190 +1,20 @@
 // ==========================================================
 // LES SECRETS : la rarete au-dessus de Legendaire
-// Un par manga : LE heros de la serie, dans sa forme ultime.
-// Leur identite reste cachee dans la Collection (silhouette « ??? »)
-// tant qu'on ne les a pas invoques. Ils ne servent jamais d'ennemis
-// et ne comptent pas dans les series (8 / 8) ni les editions.
-//   base : le perso dont on reprend le portrait
-// Ajouter un Secret = ajouter une entree ici (puis node js/outils/calibrer.mjs secrets).
+// Un par manga. Leur identite reste cachee dans la Collection (silhouette
+// « ??? ») tant qu'on ne les a pas invoques. Ils ne servent jamais
+// d'ennemis et ne comptent pas dans les series (8 / 8) ni les editions.
+// Les fiches sont codees pour ne pas etre lues dans le code du site :
+// pour les voir ou les modifier, node js/outils/secrets.mjs (lire / ecrire).
+// Apres une modification : node js/outils/calibrer.mjs secrets
 // ==========================================================
 
-export const PERSOS_SECRETS = [
-  {
-    id: "goku_ui", base: "goku", nom: "Goku Ultra Instinct", serie: "Dragon Ball", role: "assassin", affinite: "vitesse", rarete: "secret",
-    mods: { vit: 1.1 },
-    passif: { nom: "Ultra Instinct", description: "30 % de chance d'esquiver une attaque de base", type: "esquiveBase", chance: 0.3 },
-    ultime: { nom: "Kamehameha divin", description: "130 % à tous les ennemis, puis Accélération 3 s", actions: [
-      { type: "degats", cible: "tous", mult: 1.3 },
-      { type: "effet", cible: "soi", effet: "acceleration", duree: 3 },
-    ] },
-  },
-  {
-    id: "naruto_baryon", base: "naruto", nom: "Naruto mode Baryon", serie: "Naruto", role: "attaquant", affinite: "esprit", rarete: "secret",
-    mods: { pv: 1.05 },
-    passif: { nom: "Volonté du Hokage", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
-    ultime: { nom: "Mode Baryon", description: "Coûte 10 % de ses PV : 450 % au perso ennemi qui a la plus forte ATQ", actions: [
-      { type: "coutPv", pourcent: 0.1 },
-      { type: "degats", cible: "plus-forte-atq", mult: 4.5 },
-    ] },
-  },
-  {
-    id: "luffy_gear5", base: "luffy", nom: "Luffy Gear 5", serie: "One Piece", role: "tank", affinite: "chaos", rarete: "secret",
-    mods: { pv: 1.05 },
-    passif: { nom: "Corps de Nika", description: "-25 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.25 },
-    ultime: { nom: "Bajrang Gun", description: "140 % et Étourdi 1 s à tous les ennemis, puis Provocation 3 s", actions: [
-      { type: "degats", cible: "tous", mult: 1.4, effet: { type: "etourdi", duree: 1 } },
-      { type: "effet", cible: "soi", effet: "provocation", duree: 3 },
-    ] },
-  },
-  {
-    id: "pikachu_sacha", base: "pikachu", nom: "Pikachu de Sacha", serie: "Pokémon", role: "controle", affinite: "vitesse", rarete: "secret",
-    mods: {},
-    passif: { nom: "Statik", description: "30 % de chance d'étourdir 1 s celui qui le frappe d'une attaque de base", type: "etourdirAttaquant", chance: 0.3, duree: 1 },
-    ultime: { nom: "Fatal-Foudre", description: "140 % et Étourdi 2 s à tous les ennemis", actions: [
-      { type: "degats", cible: "tous", mult: 1.4, effet: { type: "etourdi", duree: 2 } },
-    ] },
-  },
-  {
-    id: "guts_berserker", base: "guts", nom: "Guts, armure du Berserker", serie: "Berserk", role: "attaquant", affinite: "chaos", rarete: "secret",
-    mods: { pv: 1.05 },
-    passif: { nom: "Armure du Berserker", description: "ATQ +6 % par tranche de 10 % de PV perdus", type: "atqSelonPvPerdus", ratio: 0.6 },
-    ultime: { nom: "Dragon Slayer", description: "Coûte 8 % de ses PV : 340 % à la cible en face et au perso derrière elle", actions: [
-      { type: "coutPv", pourcent: 0.08 },
-      { type: "degats", cible: "face+derriere", mult: 3.4 },
-    ] },
-  },
-  {
-    id: "gojo_vide", base: "gojo", nom: "Gojo, Vide infini", serie: "Jujutsu Kaisen", role: "controle", affinite: "esprit", rarete: "secret",
-    mods: {},
-    passif: { nom: "Infini", description: "Ignore la première attaque reçue toutes les 5 s", type: "annuleAttaquePeriodique", periode: 5 },
-    ultime: { nom: "Extension du territoire : Vide infini", description: "100 % et Étourdi 2 s à tous les ennemis", actions: [
-      { type: "degats", cible: "tous", mult: 1.0, effet: { type: "etourdi", duree: 2 } },
-    ] },
-  },
-  {
-    id: "tanjiro_hinokami", base: "tanjiro", nom: "Tanjiro, Danse du dieu du feu", serie: "Demon Slayer", role: "attaquant", affinite: "technique", rarete: "secret",
-    mods: {},
-    passif: { nom: "Marque du pourfendeur", description: "Ses attaques de base infligent Brûlure 2 s", type: "effetSurBase", effet: "brulure", duree: 2 },
-    ultime: { nom: "Hinokami Kagura", description: "160 % et Brûlure 3 s à la ligne avant", actions: [
-      { type: "degats", cible: "ligne-avant", mult: 1.6, effet: { type: "brulure", duree: 3 } },
-    ] },
-  },
-  {
-    id: "gon_adulte", base: "gon", nom: "Gon, forme adulte", serie: "Hunter x Hunter", role: "attaquant", affinite: "puissance", rarete: "secret",
-    mods: { atq: 1.05 },
-    passif: { nom: "Serment", description: "ATQ +40 % si un allié est KO", type: "atqSiAllieKo", bonus: 0.4 },
-    ultime: { nom: "Jajanken : Pierre", description: "Coûte 15 % de ses PV : 520 % (critique garanti) à la cible en face", actions: [
-      { type: "coutPv", pourcent: 0.15 },
-      { type: "degats", cible: "face", mult: 5.2, critGaranti: true },
-    ] },
-  },
-  {
-    id: "ichigo_mugetsu", base: "ichigo", nom: "Ichigo Mugetsu", serie: "Bleach", role: "assassin", affinite: "chaos", rarete: "secret",
-    mods: {},
-    passif: { nom: "Zangetsu", description: "Ses attaques de base frappent une 2e fois pour 20 % des dégâts", type: "doubleFrappe", mult: 0.2 },
-    ultime: { nom: "Mugetsu", description: "320 % au perso ennemi qui a le moins de PV, puis 50 % à tous les ennemis", actions: [
-      { type: "degats", cible: "plus-faible", mult: 3.2 },
-      { type: "degats", cible: "tous", mult: 0.5 },
-    ] },
-  },
-  {
-    id: "deku_100", base: "deku", nom: "Deku, One For All 100 %", serie: "My Hero Academia", role: "attaquant", affinite: "puissance", rarete: "secret",
-    mods: {},
-    passif: { nom: "Full Cowl", description: "VIT +40 % sous 50 % de PV", type: "vitSousPv", seuil: 0.5, bonus: 0.4 },
-    ultime: { nom: "United States of Smash", description: "Coûte 8 % de ses PV : 360 % à la cible en face et au perso derrière elle", actions: [
-      { type: "coutPv", pourcent: 0.08 },
-      { type: "degats", cible: "face+derriere", mult: 3.6 },
-    ] },
-  },
-  {
-    id: "eren_originel", base: "eren", nom: "Eren, Titan Originel", serie: "L'Attaque des Titans", role: "tank", affinite: "chaos", rarete: "secret",
-    mods: { pv: 1.05 },
-    passif: { nom: "Régénération titanesque", description: "Récupère 3 % de ses PV max toutes les 3 s", type: "regenPeriodique", pourcent: 0.03, periode: 3 },
-    ultime: { nom: "Le Grand Terrassement", description: "150 % et Ralenti 3 s à tous les ennemis, puis Provocation 3 s", actions: [
-      { type: "degats", cible: "tous", mult: 1.5, effet: { type: "ralenti", duree: 3 } },
-      { type: "effet", cible: "soi", effet: "provocation", duree: 3 },
-    ] },
-  },
-  {
-    id: "chainsaw_man", base: "denji", nom: "Chainsaw Man", serie: "Chainsaw Man", role: "assassin", affinite: "chaos", rarete: "secret",
-    mods: {},
-    passif: { nom: "Cœur de Pochita", description: "ATQ +15 % par KO réalisé (max +45 %)", type: "atqParKo", bonus: 0.15, max: 0.45 },
-    ultime: { nom: "Tronçonnage", description: "5 frappes de 110 % sur des ennemis au hasard", actions: [
-      { type: "degats", cible: "aleatoire", mult: 1.1, coups: 5 },
-    ] },
-  },
-  {
-    id: "frieren_tueuse", base: "frieren", nom: "Frieren, la Tueuse de démons", serie: "Frieren", role: "controle", affinite: "esprit", rarete: "secret",
-    mods: {},
-    passif: { nom: "Mana dissimulé", description: "Gagne 4 d'énergie par seconde", type: "energieParSeconde", valeur: 4 },
-    ultime: { nom: "Zoltraak", description: "150 % et Vulnérabilité 4 s à tous les ennemis, puis 150 % au perso qui a la plus forte ATQ", actions: [
-      { type: "degats", cible: "tous", mult: 1.5, effet: { type: "vulnerabilite", duree: 4 } },
-      { type: "degats", cible: "plus-forte-atq", mult: 1.5 },
-    ] },
-  },
-  {
-    id: "natsu_dragon", base: "natsu", nom: "Natsu, Dragon Force", serie: "Fairy Tail", role: "attaquant", affinite: "puissance", rarete: "secret",
-    mods: {},
-    passif: { nom: "Cœur du dragon", description: "ATQ +30 % sous 50 % de PV", type: "atqSousPv", seuil: 0.5, bonus: 0.3 },
-    ultime: { nom: "Hurlement du dragon de feu", description: "160 % et Brûlure 3 s à tous les ennemis", actions: [
-      { type: "degats", cible: "tous", mult: 1.6, effet: { type: "brulure", duree: 3 } },
-    ] },
-  },
-  {
-    id: "seiya_divin", base: "seiya", nom: "Seiya, armure divine", serie: "Saint Seiya", role: "tank", affinite: "esprit", rarete: "secret",
-    mods: { def: 1.05 },
-    passif: { nom: "Cosmos ultime", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
-    ultime: { nom: "Météores de Pégase", description: "6 frappes de 80 % sur des ennemis au hasard, puis Bouclier de 20 % de ses PV et Provocation 3 s", actions: [
-      { type: "degats", cible: "aleatoire", mult: 0.8, coups: 6 },
-      { type: "effet", cible: "soi", effet: "bouclier", duree: 6, pourcentPv: 0.2 },
-      { type: "effet", cible: "soi", effet: "provocation", duree: 3 },
-    ] },
-  },
-  {
-    id: "asta_diable", base: "asta", nom: "Asta, forme du Diable", serie: "Black Clover", role: "assassin", affinite: "chaos", rarete: "secret",
-    mods: {},
-    passif: { nom: "Anti-magie", description: "-35 % de dégâts subis des ultimes", type: "reductionUltime", pourcent: 0.35 },
-    ultime: { nom: "Black Divider", description: "380 % et Vulnérabilité 4 s à un perso de la ligne arrière", actions: [
-      { type: "degats", cible: "arriere", mult: 3.8, effet: { type: "vulnerabilite", duree: 4 } },
-    ] },
-  },
-  {
-    id: "jinwoo_monarque", base: "jinwoo", nom: "Sung Jinwoo, Monarque des Ombres", serie: "Solo Leveling", role: "attaquant", affinite: "technique", rarete: "secret",
-    mods: {},
-    passif: { nom: "Lève-toi", description: "ATQ +10 % par KO réalisé (max +40 %)", type: "atqParKo", bonus: 0.1, max: 0.4 },
-    ultime: { nom: "Domaine du Monarque", description: "140 % à tous les ennemis, puis Renforcement 4 s à tous les alliés", actions: [
-      { type: "degats", cible: "tous", mult: 1.4 },
-      { type: "effet", cible: "allies", effet: "renforcement", duree: 4 },
-    ] },
-  },
-  {
-    id: "edward_acier", base: "edward", nom: "Edward, l'Alchimiste d'acier", serie: "Fullmetal Alchemist", role: "controle", affinite: "technique", rarete: "secret",
-    mods: { def: 1.05 },
-    passif: { nom: "Bras d'acier", description: "-15 % de dégâts subis des attaques de base", type: "reductionBase", pourcent: 0.15 },
-    ultime: { nom: "Transmutation sans cercle", description: "160 % et Étourdi 2 s à la ligne avant, puis Bouclier de 8 % des PV aux alliés", actions: [
-      { type: "degats", cible: "ligne-avant", mult: 1.6, effet: { type: "etourdi", duree: 2 } },
-      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.08 },
-    ] },
-  },
-  {
-    id: "kaneki_roi", base: "kaneki", nom: "Kaneki, Roi borgne", serie: "Tokyo Ghoul", role: "assassin", affinite: "chaos", rarete: "secret",
-    mods: {},
-    passif: { nom: "Kagune mille-pattes", description: "ATQ +5 % par tranche de 10 % de PV perdus", type: "atqSelonPvPerdus", ratio: 0.5 },
-    ultime: { nom: "Kakuja", description: "300 % au perso ennemi qui a le moins de PV, puis récupère 12 % de ses PV", actions: [
-      { type: "degats", cible: "plus-faible", mult: 3.0 },
-      { type: "soin", cible: "soi", pourcent: 0.12 },
-    ] },
-  },
-  {
-    id: "jotaro_monde", base: "jotaro", nom: "Jotaro, Star Platinum The World", serie: "JoJo", role: "attaquant", affinite: "puissance", rarete: "secret",
-    mods: {},
-    passif: { nom: "Arrêt du temps", description: "Sa première attaque est un coup critique", type: "premierCoupCritique" },
-    ultime: { nom: "ORA ORA ORA", description: "Étourdit tous les ennemis 1 s, puis 5 frappes de 70 % sur des ennemis au hasard", actions: [
-      { type: "degats", cible: "tous", mult: 0.2, effet: { type: "etourdi", duree: 1 } },
-      { type: "degats", cible: "aleatoire", mult: 0.7, coups: 5 },
-    ] },
-  },
-];
+import { decoder } from "./secrets-code.js";
 
+const CODE = "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";
+// Les identifiants de la premiere version, convertis a la lecture des sauvegardes
+const ANCIENS_IDS = "=0nIwIDdlJ3YlNnI6ISZk52bt91byFGdvpmIsISOxQXZyNWZzJiOik2by9VarVmbhtmIsICOxQXZyNWZzJiOiIXZpNWYfRmchdHZlJCLicTM0VmcjV2ciojIlVXcyFmbv12Xv92dulmaiwiI2EDdlJ3YlNnI6ISZsJWYpR2XhR3chJCLiUTM0VmcjV2ciojIulmdpR2XhlXalNnIsICNxQXZyNWZzJiOi42bnFmck9VdzRXYuJCLiMTM0VmcjV2ciojIlNXdlVHdf5WZyVWayZmIsIiMxQXZyNWZzJiOi4WYt91dhNnbpFGajJCLiETM0VmcjV2ciojIsVmbpdWay92XuVmclJCLiATM0VmcjV2ciojIwATMfV3alRmIsISOwQXZyNWZzJiOiU3c0V2Z112XvdWaoNWaiwiI4ADdlJ3YlNnI6ISZ0xWdkF2Xu92ZiwiI3ADdlJ3YlNnI6ISatF2av5Wao91bylmauFGdiwiI2ADdlJ3YlNnI6ISZklmdf9mavdmIsISNwQXZyNWZzJiOiIXZrJXZzJXZi91c0V3ZiwiI0ADdlJ3YlNnI6ISYoNWYz9VdoNWYrlGciwiIzADdlJ3YlNnI6ISNyFWZn9VemZWdsJCLiIDM0VmcjV2ciojIu9WeyFmYf9Gd1JXYuJCLiEDM0VmcjV2ciojIpV3X1t2bnJye";
+
+export const PERSOS_SECRETS = decoder(CODE);
 export const IDS_SECRETS = new Set(PERSOS_SECRETS.map((p) => p.id));
 export const estSecret = (id) => IDS_SECRETS.has(id);
+export const ANCIENS_IDS_SECRETS = decoder(ANCIENS_IDS);
