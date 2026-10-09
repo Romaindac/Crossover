@@ -70,9 +70,11 @@ export const DIFFICULTES_PAR_ID = Object.fromEntries(DIFFICULTES.map((d) => [d.i
 export const cleBoss = (id, diff = "normal") => (diff === "normal" ? id : `${id}@${diff}`);
 
 // ---------- Recompenses ----------
-// Premier KO : la carte Boss (en Normal ; un doublon ensuite), des invocations, une potion et de l'encre
+// Premier KO : la bordure Boss du perso (seulement s'il est deja possede, sinon elle attend), des invocations, une potion et de l'encre
 export const recompensePremierKo = (b, d = DIFFICULTES[0]) => ({ encre: Math.round((120 + 40 * b.rang + 150 * b.indexMonde) * d.gains), invocations: Math.round(10 * Math.sqrt(d.gains)), potion: true });
 // Les KO suivants (coutent de l'energie) : un peu d'encre, des invocations, parfois une carte Boss en double
 export const recompenseKo = (b, d = DIFFICULTES[0]) => ({ encre: Math.round((15 + 4 * b.rang + 10 * b.indexMonde) * d.gains), invocations: d.gains >= 3 ? 3 : 2 });
 export const CHANCE_CARTE_BOSS_REJOUE = 0.08;
+// Le boss ne donne jamais le perso : sans lui, la bordure Boss attend (posee a l'invocation) et ces invocations compensent
+export const INVOCATIONS_SANS_PERSO_BOSS = 10;
 export const CHANCE_POTION_REJOUE = 0.25;

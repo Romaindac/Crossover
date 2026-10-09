@@ -414,6 +414,7 @@ begin
   select rarete into r2 from public.persos_catalogue where id = new.veut;
   if r1 is null or r2 is null then raise exception 'perso inconnu'; end if;
   if r1 <> r2 then raise exception 'raretes differentes'; end if;
+  if r1 = 'secret' then raise exception 'secret non echangeable'; end if;
   if (select count(*) from public.echanges where auteur = auth.uid() and cree > now() - interval '1 day') >= 10 then
     raise exception 'limite echanges jour';
   end if;

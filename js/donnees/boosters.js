@@ -75,7 +75,7 @@ export const TICKETS_CHAPITRE = 3;                 // offerts a chaque chapitre 
 // Poussiere : chaque booster en donne un peu, et un doublon d'un perso deja a 5 etoiles
 // se change en poussiere. Elle sert a fabriquer la carte de son choix a l'atelier.
 export const POUSSIERE_PAR_BOOSTER = 2;
-export const POUSSIERE_DOUBLON = { commun: 20, peu_commun: 40, rare: 80, epique: 160, legendaire: 320 };
+export const POUSSIERE_DOUBLON = { commun: 20, peu_commun: 40, rare: 80, epique: 160, legendaire: 320, secret: 640 };
 export const COUT_FABRICATION = { commun: 150, peu_commun: 300, rare: 600, epique: 1200, legendaire: 2400 };
 
 // Le booster de depart, offert une fois au debut (voir ouvrirBoosterDepart)

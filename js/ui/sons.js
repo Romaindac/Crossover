@@ -89,6 +89,7 @@ const GAMMES = {
   rare: [523, 659, 784],
   epique: [523, 659, 784, 1047],
   legendaire: [523, 659, 784, 1047, 1319, 1568],
+  secret: [196, 233, 294, 392, 466, 587, 784, 932],
 };
 
 export function sonRarete(rarete) {
@@ -96,6 +97,13 @@ export function sonRarete(rarete) {
   const gamme = GAMMES[rarete] ?? GAMMES.commun;
   const ecart = rarete === "legendaire" ? 0.07 : 0.06;
   gamme.forEach((f, i) => note(c, f, i * ecart, rarete === "commun" ? 0.12 : 0.35, rarete === "commun" ? 0.08 : 0.14));
+  if (rarete === "secret") {
+    // Un accord sombre qui monte, un coup de gong, puis une pluie claire
+    note(c, 98, 0, 1.6, 0.18, "sawtooth");
+    bruit(c, 0, 1.2, { volume: 0.12, de: 400, a: 120, q: 1 });
+    [1175, 1397, 1760, 2349].forEach((f, i) => note(c, f, 0.7 + i * 0.09, 1.4, 0.06, "sine"));
+    return;
+  }
   if (rarete === "legendaire") {
     [1047, 1319, 1568, 2093].forEach((f) => note(c, f, gamme.length * ecart, 1.2, 0.07, "sine"));
     bruit(c, 0, 0.6, { volume: 0.08, de: 6000, a: 3000, q: 0.5 });

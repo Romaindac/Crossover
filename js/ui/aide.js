@@ -5,7 +5,7 @@
 // les regle.
 // ==========================================================
 
-import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
+import { RARETES, ORDRE_RARETES, ORDRE_RARETES_PERSOS } from "../donnees/raretes.js";
 import { AFFINITES, BONUS_AFFINITE } from "../donnees/roles.js";
 import { BONUS_NIVEAU, BONUS_ETOILE, NIVEAU_MAX, ETOILES_MAX } from "../donnees/progression.js";
 import { BONUS_EVEIL, EVEILS } from "../donnees/eveil.js";
@@ -60,7 +60,7 @@ export function htmlDevenirFort() {
       <section class="aide__section">
         <h3 class="aide__titre">Monter un perso</h3>
         <div class="aide__tuiles">
-          ${tuile("×2", "Rareté", `à niveau égal, une Légendaire a 2 fois les PV et l'ATQ d'une Commune (${ORDRE_RARETES.slice().reverse().map((r) => `${RARETES[r].nom} ×${String(1 + RARETES[r].bonus).replace(".", ",")}`).join(", ")}).`)}
+          ${tuile("×2", "Rareté", `à niveau égal, une Légendaire a 2 fois les PV et l'ATQ d'une Commune (${ORDRE_RARETES_PERSOS.slice().reverse().map((r) => `${RARETES[r].nom} ×${String(1 + RARETES[r].bonus).replace(".", ",")}`).join(", ")}).`)}
           ${tuile(`+${pct(BONUS_NIVEAU)} %`, `Niveau 1 à ${NIVEAU_MAX}`, "par niveau, en PV et ATQ. Chaque combat donne de l'XP, l'expédition aussi.")}
           ${tuile(`+${pct(BONUS_ETOILE)} %`, `Étoiles 1 à ${ETOILES_MAX}`, "par étoile. Les doublons de l'autel et des boosters, ou l'Atelier avec la poussière.")}
           ${tuile(`+${pct(BONUS_EVEIL)} %`, `Éveil I à ${["", "I", "II", "III", "IV"][EVEILS.length]}`, `par palier, sur toutes les stats, jusqu'au niveau ${eveilMax.niveauMax}, avec un talent au choix. Fragments et éclats.`)}

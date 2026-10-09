@@ -2,7 +2,9 @@
 // COLLECTION : l'etagere des persos et l'inventaire d'equipement
 // ==========================================================
 
-import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID, PERSOS_SECRETS } from "../donnees/persos.js";
+import { EDITIONS } from "../donnees/boosters.js";
+import { MONDES } from "../donnees/invocations.js";
 import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { EMPLACEMENTS, ORDRE_EMPLACEMENTS, NIVEAU_MAX_PIECE } from "../donnees/equipement.js";
 import { PANOPLIES } from "../donnees/panoplies.js";
@@ -15,11 +17,11 @@ import {
   basculerVerrou, equiperPiece, retirerPiece, gainRecyclage, objetsDecouverts,
   retoucherLigne, retouchePendante, choisirRetouche, sublimerLigne, ressources, eveiller, choisirTalent, victoiresLien,
   verifierTampons, tamponsObtenus, tamponsNouveaux, marquerTamponsVus, titresObtenus, titreActuel, choisirTitre,
-  cadresObtenus, cadreActuel, choisirCadre, detailIndex, chanceActuelle,
+  cadresObtenus, cadreActuel, choisirCadre, detailIndex, chanceActuelle, nbPersosCollection,
 } from "../services/partie.js";
 import {
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE, CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE,
-  CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX, BORDURES_PAR_ID, ORDRE_BORDURES,
+  CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX, BORDURES_PAR_ID, ORDRE_BORDURES, CHANCE_PAR_SECRET,
 } from "../donnees/invocations.js";
 import { CHANCE_PAR_10_ETAGES_DONJON, CHANCE_DONJON_MAX } from "../donnees/donjon.js";
 import { NOMS_STATS } from "../donnees/equipement.js";
@@ -50,7 +52,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     <div class="collection">
       ${htmlEntete({
         titre: "Collection", kanji: "蒐集", theme: "collection", classe: "collection__entete",
-        accroche: `${idsPossedes().length} persos sur ${PERSOS.length}, ton équipement, tes liens et ton carnet.`,
+        accroche: `${nbPersosCollection()} persos sur ${PERSOS.length}, ton équipement, tes liens et ton carnet.`,
         onglets: [["persos", "Persos"], ["index", "Index"], ["equipement", "Équipement"], ["hotel", "Hôtel des ventes"], ["encyclopedie", "Encyclopédie"], ["liens", "Liens"], ["carnet", "Carnet"]]
           .map(([id, nom]) => htmlOnglet(nom, { classe: "onglet-collection", donnees: `data-action="onglet" data-onglet="${id}"` })).join(""),
       })}
@@ -101,8 +103,37 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
       </header>`;
   }
 
+  // Les Secrets : silhouettes tant qu'on ne les a pas invoques (seul l'autel ou ils sortent est dit)
+  function htmlSecret(p, i) {
+    if (possede(p.id)) return htmlTome(p);
+    const edition = EDITIONS.find((e) => e.series.includes(p.serie));
+    const monde = MONDES.find((m) => m.edition === edition?.id);
+    return `
+      <div class="carte-secrete" aria-label="Perso secret, encore inconnu">
+        <span class="carte-secrete__visuel">
+          <span class="carte-secrete__silhouette" aria-hidden="true">?</span>
+          <span class="obi-rarete obi-rarete--secret">Secret</span>
+        </span>
+        <span class="carte-secrete__nom">??? n° ${i + 1}</span>
+        <span class="carte-secrete__info">${monde ? monde.nom : "Autel"}</span>
+      </div>`;
+  }
+
+  function htmlSecrets() {
+    const n = PERSOS_SECRETS.filter((p) => possede(p.id)).length;
+    return `
+      <section class="etagere etagere--secrets" aria-label="Secrets">
+        <header class="entete-secrets">
+          <span class="entete-secrets__kanji" aria-hidden="true">秘密</span>
+          <span class="entete-secrets__titre"><h2 class="etagere__serie">Secrets</h2><span>Un par manga. Personne ne sait qui ils sont avant de les avoir invoqués à l'autel (0,02 % par invocation).</span></span>
+          <span class="entete-secrets__compte"><strong>${n}</strong> / ${PERSOS_SECRETS.length}</span>
+        </header>
+        <div class="etagere__rang etagere__rang--cartes">${PERSOS_SECRETS.map(htmlSecret).join("")}</div>
+      </section>`;
+  }
+
   function rendrePersos() {
-    const obtenus = idsPossedes().length;
+    const obtenus = nbPersosCollection();
     $("#contenu").innerHTML = `
       <div class="collection__progression">
         <p><strong>${obtenus} sur ${total}</strong> persos obtenus</p>
@@ -114,6 +145,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
             ${htmlEnteteSerie(serie)}
             <div class="etagere__rang etagere__rang--cartes">${PERSOS.filter((p) => p.serie === serie).map(htmlTome).join("")}</div>
           </section>`).join("")}
+        ${htmlSecrets()}
       </div>`;
   }
 
@@ -359,6 +391,8 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
 
     // Une source : ce qu'elle donne, son maximum, et le prochain pas
     const sources = [
+      { nom: "Secrets", compte: `${d.secrets.n} / ${d.secrets.total}`, gain: ix.secrets, max: d.secrets.total * CHANCE_PAR_SECRET,
+        pas: `+${pct(CHANCE_PAR_SECRET)} par perso Secret invoqué` },
       { nom: "Séries complètes", compte: `${ix.nbSeries} / ${d.series.length}`, gain: ix.series, max: d.series.length * CHANCE_SERIE_COMPLETE,
         pas: `+${pct(CHANCE_SERIE_COMPLETE)} par série de 8 persos au complet` },
       { nom: "Éditions complètes", compte: `${ix.nbEditions} / ${d.editions.length}`, gain: ix.editions, max: d.editions.length * CHANCE_EDITION_COMPLETE,

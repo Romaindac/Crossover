@@ -6,7 +6,8 @@
 // sauvegardes lors des futures mises a jour.
 // ==========================================================
 
-import { PERSOS, PERSOS_PAR_ID } from "../donnees/persos.js";
+import { PERSOS, PERSOS_PAR_ID, PERSOS_SECRETS } from "../donnees/persos.js";
+import { estSecret } from "../donnees/persos-secrets.js";
 import { PALIERS } from "../donnees/ennemis.js";
 import {
   ENCRE_DE_DEPART,
@@ -59,12 +60,12 @@ import {
   NIVEAUX_AUTEL, INVOCATIONS_PAR_NIVEAU_EN_PLUS, POINTS_PAR_NIVEAU, BRANCHES_AUTEL, CHANCE_PAR_POINT, VITESSE_PAR_POINT,
   POTIONS_PAR_POINT, BORDURE_PAR_POINT, COUT_REDISTRIBUTION, FUSION,
   CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE, CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX,
-  CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE,
+  CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE, CHANCE_PAR_SECRET,
   POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
   POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
 } from "../donnees/invocations.js";
 import {
-  BOSS_ARENE, BOSS_ARENE_PAR_ID, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE,
+  BOSS_ARENE, BOSS_ARENE_PAR_ID, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE, INVOCATIONS_SANS_PERSO_BOSS,
   DIFFICULTES, DIFFICULTES_PAR_ID, cleBoss,
 } from "../donnees/arene.js";
 import { PALIERS_PASSE, XP_PAR_PALIER, XP_INVOCATION, XP_VICTOIRE, XP_MISSION } from "../donnees/passe.js";
@@ -152,6 +153,8 @@ function valider(p) {
     arene: {
       battus: Array.isArray(p.arene?.battus) ? p.arene.battus.filter((cle) => { const [id, diff = "normal"] = String(cle).split("@"); return BOSS_ARENE_PAR_ID[id] && DIFFICULTES_PAR_ID[diff]; }) : [],
       kos: Math.max(0, Math.floor(Number(p.arene?.kos) || 0)),
+      // Les bordures Boss gagnees sur un perso pas encore possede : posees le jour ou on l'obtient
+      bordures: Array.isArray(p.arene?.bordures) ? [...new Set(p.arene.bordures.filter((id) => PERSOS_PAR_ID[id]))] : [],
     },
     energie: {
       valeur: Math.min(ENERGIE_PLAFOND, Math.max(0, Number(p.energie?.valeur ?? ENERGIE_MAX) || 0)),
@@ -262,6 +265,9 @@ export const aUnePartie = () => partie !== null;
 export const encre = () => partie?.encre ?? 0;
 export const possede = (id) => Boolean(partie?.collection[id]);
 export const idsPossedes = () => Object.keys(partie?.collection ?? {});
+// Le compteur de la collection (« 142 sur 160 ») : les Secrets sont comptes a part
+export const nbPersosCollection = () => idsPossedes().filter((id) => !estSecret(id)).length;
+export const secretsPossedes = () => PERSOS_SECRETS.filter((p) => partie?.collection[p.id]).map((p) => p.id);
 export const progressionDe = (id) => partie?.collection[id] ?? nouvelleProgression();
 export const equipeSauvee = () => [...(partie?.equipe ?? [null, null, null, null, null])];
 export const palierSauve = () => partie?.palier ?? 1;
@@ -396,6 +402,13 @@ function ajouterCarte({ id, rarete, variante = null }, tablePoussiere = POUSSIER
   if (!partie.collection[id]) {
     partie.collection[id] = { ...nouvelleProgression(), variantes: [] };
     resultat = { id, rarete, variante, nouveau: true };
+    // Une bordure Boss gagnee a l'Arene avant d'avoir le perso
+    const attente = partie.arene?.bordures ?? [];
+    if (attente.includes(id)) {
+      partie.collection[id].variantes.push("boss");
+      partie.arene.bordures = attente.filter((x) => x !== id);
+      resultat.bordureBoss = true;
+    }
   } else {
     const doublon = ajouterDoublon(partie.collection[id]);
     const poussiere = doublon.encreRendue ? tablePoussiere[rarete] : 0;
@@ -1539,10 +1552,11 @@ function contexteTampons() {
     dores: partie.stats.dores ?? 0,
     victoiresChasse: partie.stats.victoiresChasse ?? 0,
     boucleMax: partie.stats.boucleMax ?? 0,
-    collection: ids.length,
+    collection: ids.filter((id) => !estSecret(id)).length,
     cinqEtoiles: progs.some((p) => p.etoiles >= 5),
     serieComplete: [...new Set(PERSOS.map((p) => p.serie))].some((serie) => PERSOS.filter((p) => p.serie === serie).every((p) => possede(p.id))),
     legendaires: PERSOS.filter((p) => p.rarete === "legendaire" && possede(p.id)).length,
+    secrets: PERSOS_SECRETS.filter((p) => possede(p.id)).length,
     tirages: partie.stats.tirages ?? 0,
     boosters: partie.stats.boosters ?? 0,
     dorees: Object.values(partie.collection).filter((p) => p.variantes?.includes("doree")).length,
@@ -2131,7 +2145,7 @@ export function phaseActuelle(maintenant = Date.now()) {
 
 // L'Index : la collection (series, editions, bordures) et les combats (arene, Tour, eveils)
 export function chanceIndex() {
-  if (!partie) return { series: 0, editions: 0, bordures: 0, combats: 0, total: 0, nbSeries: 0, nbEditions: 0 };
+  if (!partie) return { series: 0, editions: 0, bordures: 0, combats: 0, secrets: 0, total: 0, nbSeries: 0, nbEditions: 0, nbSecrets: 0 };
   const series = [...new Set(PERSOS.map((p) => p.serie))].filter((x) => { const { n, total } = progressionSerie(x); return n === total; }).length;
   const editions = EDITIONS.filter((e) => PERSOS.filter((p) => e.series.includes(p.serie)).every((p) => partie.collection[p.id])).length;
   let bordures = 0;
@@ -2143,9 +2157,10 @@ export function chanceIndex() {
   const tour = Math.min(CHANCE_TOUR_MAX, Math.floor((partie.tour.record || 0) / 10) * CHANCE_PAR_10_ETAGES);
   const eveils = Math.min(CHANCE_EVEIL_MAX, Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0) * CHANCE_PAR_EVEIL);
   const donjon = Math.min(CHANCE_DONJON_MAX, Math.floor((partie.donjon?.record || 0) / 10) * CHANCE_PAR_10_ETAGES_DONJON);
+  const nbSecrets = PERSOS_SECRETS.filter((p) => partie.collection[p.id]).length;
   const combats = boss * CHANCE_BOSS_ARENE + mondesFinis * CHANCE_MONDE_FINI + mondesDifficiles * CHANCE_MONDE_DIFFICILE + tour + eveils + donjon;
-  const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures, combats };
-  return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, total: pts.series + pts.editions + pts.bordures + pts.combats };
+  const pts = { series: series * CHANCE_SERIE_COMPLETE, editions: editions * CHANCE_EDITION_COMPLETE, bordures, combats, secrets: nbSecrets * CHANCE_PAR_SECRET };
+  return { ...pts, nbSeries: series, nbEditions: editions, nbBoss: boss, nbMondes: mondesFinis, nbSecrets, total: pts.series + pts.editions + pts.bordures + pts.combats + pts.secrets };
 }
 
 // Le detail de l'Index pour sa page de la Collection : ce qui est acquis et ce qui reste a prendre
@@ -2168,6 +2183,7 @@ export function detailIndex() {
   });
   return {
     index: chanceIndex(), series, editions, bordures, mondes,
+    secrets: { n: PERSOS_SECRETS.filter((p) => partie.collection[p.id]).length, total: PERSOS_SECRETS.length },
     tour: partie.tour.record || 0,
     eveils: Object.values(partie.collection).reduce((t, p) => t + (p.eveil || 0), 0),
     donjon: partie.donjon?.record || 0,
@@ -2251,6 +2267,7 @@ export function invoquerJoueur(nombre = 1) {
   partie.stats.tirages += cartes.length;
   partie.stats.invocations = (partie.stats.invocations ?? 0) + cartes.length;
   partie.stats.legendaires += cartes.filter((c) => c.rarete === "legendaire").length;
+  partie.stats.secrets = (partie.stats.secrets ?? 0) + cartes.filter((c) => c.rarete === "secret").length;
   signaler("invocation", cartes.length);
   gagnerXpPasse(XP_INVOCATION * cartes.length);
   signalerSemaine("invocation", cartes.length);
@@ -2400,9 +2417,16 @@ export function appliquerResultatArene({ bossId, difficulte = "normal", victoire
       r.potion = potionAuHasard();
       partie.invocations.potions[r.potion] += 1;
     }
-    if (premier || Math.random() < CHANCE_CARTE_BOSS_REJOUE) {
-      const perso = PERSOS_PAR_ID[b.perso];
-      r.carte = ajouterCarte({ id: perso.id, rarete: perso.rarete, variante: "boss" });
+    // Le boss ne donne jamais le perso : seulement sa bordure Boss (et une etoile si on l'a deja).
+    // Pas encore possede : la bordure attend, et quelques invocations compensent.
+    const perso = PERSOS_PAR_ID[b.perso];
+    if (possede(perso.id)) {
+      if (premier || Math.random() < CHANCE_CARTE_BOSS_REJOUE) r.carte = ajouterCarte({ id: perso.id, rarete: perso.rarete, variante: "boss" });
+    } else if (premier) {
+      if (!partie.arene.bordures.includes(perso.id)) partie.arene.bordures.push(perso.id);
+      r.bordureEnAttente = perso.id;
+      r.invocations += INVOCATIONS_SANS_PERSO_BOSS;
+      donnerInvocations(INVOCATIONS_SANS_PERSO_BOSS);
     }
     if (premier) partie.arene.battus.push(cleBoss(bossId, difficulte));
     partie.arene.kos += 1;
@@ -2503,7 +2527,7 @@ export function reclamerPalierCollectif(index, total) {
 
 export function copiesEnTrop(id) {
   const prog = partie?.collection[id];
-  if (!prog) return 0;
+  if (!prog || estSecret(id)) return 0;   // un Secret ne s'echange pas
   let n = (prog.surplus ?? 0) + (prog.doublons ?? 0);
   for (let e = 1; e < (prog.etoiles ?? 1); e++) n += doublonsPourEtoile(e);
   return n;
@@ -2739,7 +2763,7 @@ export function recompenserDuel(victoire) {
 // EXPLORATIONS : des persos en mission, meme jeu ferme
 // ==========================================================
 
-const ORDRE_RARETE = { commun: 1, peu_commun: 2, rare: 3, epique: 4, legendaire: 5 };
+const ORDRE_RARETE = { commun: 1, peu_commun: 2, rare: 3, epique: 4, legendaire: 5, secret: 6 };
 const MS_HEURE = 3600000;
 
 // La serie du jour de chaque mission (la meme pour tous, change chaque jour)

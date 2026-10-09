@@ -5,7 +5,7 @@
 // ==========================================================
 
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
-import { ORDRE_RARETES } from "../donnees/raretes.js";
+import { ORDRE_RARETES_PERSOS } from "../donnees/raretes.js";
 import { idsPossedes, progressionDe, resumeJoueur } from "./partie.js";
 import { lire, ecrire } from "./sauvegarde.js";
 
@@ -18,7 +18,7 @@ const varianteDe = (prog) => ["boss", "neant", "arcenciel", "doree", "holo"].fin
 function note(id) {
   const prog = progressionDe(id);
   const v = varianteDe(prog);
-  return (ORDRE_RARETES.length - ORDRE_RARETES.indexOf(PERSOS_PAR_ID[id].rarete)) * 1000 + ({ boss: 950, neant: 900, arcenciel: 800, doree: 600, holo: 300 }[v] ?? 0)
+  return (ORDRE_RARETES_PERSOS.length - ORDRE_RARETES_PERSOS.indexOf(PERSOS_PAR_ID[id].rarete)) * 1000 + ({ boss: 950, neant: 900, arcenciel: 800, doree: 600, holo: 300 }[v] ?? 0)
     + (prog.etoiles ?? 1) * 40 + (prog.niveau ?? 1);
 }
 

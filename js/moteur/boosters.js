@@ -4,13 +4,13 @@
 // jeu, un hasard reproductible dans les tests et les simulateurs.
 // ==========================================================
 
-import { PERSOS } from "../donnees/persos.js";
+import { PERSOS, PERSOS_SECRETS } from "../donnees/persos.js";
 import {
   EDITIONS_PAR_ID, CASES_BOOSTER, CHANCE_BOOSTER_DORE, CASE_DOREE, PITIE_BOOSTER,
   CHANCE_HOLO, CHANCE_DOREE,
 } from "../donnees/boosters.js";
 
-const ORDRE = ["commun", "peu_commun", "rare", "epique", "legendaire"];
+const ORDRE = ["commun", "peu_commun", "rare", "epique", "legendaire", "secret"];
 
 export function tirerDansTable(aleatoire, table) {
   const raretes = ORDRE.filter((r) => table[r]);
@@ -24,6 +24,11 @@ export function tirerDansTable(aleatoire, table) {
 
 // Les persos d'une edition dans une rarete (si l'edition n'en a aucun, on prend la rarete voisine)
 function persosDe(edition, rarete) {
+  if (rarete === "secret") {
+    const secrets = PERSOS_SECRETS.filter((p) => edition.series.includes(p.serie));
+    if (secrets.length) return secrets;
+    rarete = "legendaire";
+  }
   const dansEdition = PERSOS.filter((p) => edition.series.includes(p.serie));
   for (let i = ORDRE.indexOf(rarete); i >= 0; i--) {
     const liste = dansEdition.filter((p) => p.rarete === ORDRE[i]);

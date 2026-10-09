@@ -68,12 +68,13 @@ export function htmlPortrait(perso) {
   if (PORTRAITS_ORIGINAUX[perso.id]) {
     return `<span class="portrait portrait--rature" data-portrait="${perso.id}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}">${PORTRAITS_ORIGINAUX[perso.id]}</span>`;
   }
-  const url = portraitDe(perso.id);
-  const classe = estPokemon(perso.id) ? "portrait portrait--pokemon" : "portrait";
-  const cadrage = SOURCES_PORTRAITS[perso.id]?.cadrage;
-  const zoom = SOURCES_PORTRAITS[perso.id]?.zoom;   // Pokemon : agrandissement propre a l'illustration
+  const pid = perso.base ?? perso.id;   // un Secret reprend le portrait de son heros de base
+  const url = portraitDe(pid);
+  const classe = estPokemon(pid) ? "portrait portrait--pokemon" : "portrait";
+  const cadrage = SOURCES_PORTRAITS[pid]?.cadrage;
+  const zoom = SOURCES_PORTRAITS[pid]?.zoom;   // Pokemon : agrandissement propre a l'illustration
   return `
-    <span class="${classe}" data-portrait="${perso.id}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}${cadrage ? `; --cadrage: ${cadrage}` : ""}${zoom ? `; --zoom: ${zoom}` : ""}">
+    <span class="${classe}" data-portrait="${pid}" style="--aff: ${COULEURS_AFFINITE[perso.affinite]}${cadrage ? `; --cadrage: ${cadrage}` : ""}${zoom ? `; --zoom: ${zoom}` : ""}">
       <span class="portrait__initiales" aria-hidden="true">${initiales(perso.nom)}</span>
       ${url ? `<img src="${url}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
     </span>
