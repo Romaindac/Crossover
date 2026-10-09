@@ -407,7 +407,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
     const annonces = [];
     if (r.niveauGagne) annonces.push(`Niveau d'autel ${r.niveauGagne.niveau} : +${r.niveauGagne.points} points à placer${r.niveauGagne.texte ? `, ${r.niveauGagne.texte} débloquée !` : ""}`);
     annoncerDansLeChat(r.cartes);
-    for (const x of r.completions) annonces.push(`${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.dores} booster${x.recompense.dores > 1 ? "s" : ""} doré${x.recompense.dores > 1 ? "s" : ""}, +${x.recompense.encre} d'encre`);
+    for (const x of r.completions) annonces.push(`${x.type === "edition" ? "Édition" : "Série"} complète : ${x.nom} ! +${x.recompense.invocations} invocations, +${x.recompense.encre} d'encre`);
     for (const c of r.cartes.filter((x) => x.nouveau)) {
       const { n, total } = progressionSerie(PERSOS_PAR_ID[c.id].serie);
       if (n === total) continue;

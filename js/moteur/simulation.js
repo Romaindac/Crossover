@@ -23,7 +23,7 @@ function lireEntree(entree) {
 }
 
 function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
-  const { id, niveau, etoiles, equipement = [], eveil = 0, talents = [], bonusPct = 0 } = lireEntree(entree);
+  const { id, niveau, etoiles, equipement = [], eveil = 0, talents = [], bonusPct = 0, ascension = 0 } = lireEntree(entree);
   const perso = PERSOS_PAR_ID[id];
   if (!perso) throw new Error(`Perso inconnu : ${id}`);
   const stats = calculerStatsFinales(perso, {
@@ -36,6 +36,7 @@ function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
     eveil,
     talents,
     bonusPct,
+    ascension,
   });
 
   return {

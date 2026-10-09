@@ -60,7 +60,7 @@ const CONTENU = [
 ];
 
 // Difficulte des etapes normales de chaque chapitre (calibree au simulateur V0.3)
-export const MULT_PAR_CHAPITRE = [0.88, 1.17, 1.32, 1.48, 1.48];   // recale au simulateur (raretes x2, etoiles +12 %) : fin vers le jour 17
+export const MULT_PAR_CHAPITRE = [0.88, 1.1, 1.24, 1.38, 1.38];   // recale au simulateur (moins de Legendaires gratuits) : fin vers le jour 19
 export const MULT_ETAPE = MULT_PAR_CHAPITRE[0];
 const TYPES = ["normal", "normal", "normal", "elite", "normal", "normal", "normal", "boss"];
 const BONUS_TYPE = { normal: { niveau: 0, mult: 1, encre: 1 }, elite: { niveau: 1, mult: 1.12, encre: 1.5 }, boss: { niveau: 1, mult: 1.25, encre: 2 } };

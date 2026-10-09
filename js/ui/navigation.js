@@ -22,7 +22,7 @@ function lignesLexique() {
     ["Invocations", `${n(etatInvocations()?.reserve)} / ${n(etatInvocations()?.max)}`, "Invoquer une carte à l'Autel (onglet Invocations).", "+1 toutes les 3 min (réserve de 120), +1 par combat gagné, bonus des missions du jour."],
     ["Potions", ["chance", "bordure", "vitesse"].map((id) => n(etatInvocations()?.potions[id])).join(" / "), "Chance ×1,5, bordures ×3 ou invocations 2× plus rapides pendant 5 min.", "12 % des victoires, bonus des missions du jour, ou distillées avec la poussière à l'Autel."],
     ["Tickets de booster", n(b.tickets), "Ouvrir un booster gratuitement.", "1 toutes les 30 min (réserve de 16), chapitres finis, missions, événements, guide."],
-    ["Tickets dorés", n(b.dores), "Ouvrir un booster doré : 3 cartes Épiques ou Légendaires.", "Le 7e jour du calendrier, très rarement dans les boosters."],
+    ["Tickets dorés", n(b.dores), "Ouvrir un booster doré : 3 cartes Épiques ou Légendaires.", "Très rarement dans un booster (0,3 %). Ils ne s'obtiennent plus en récompense."],
     ["Poussière", n(b.poussiere), "Fabriquer à l'Atelier la carte de ton choix.", "Chaque booster ouvert, et surtout les doublons (plus la carte est rare, plus elle en donne)."],
     ["Cristaux du donjon", n(partie_cristaux()), "Acheter les maîtrises permanentes du Donjon d'encre.", "Chaque étage gagné dans le donjon (gardés en entier si tu sors, à moitié si tu tombes)."],
     ["Éclats", n(eclats()), "Améliorer et retoucher les objets d'équipement.", "Recycler les objets, la Tour, la chasse."],

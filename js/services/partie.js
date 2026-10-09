@@ -15,7 +15,7 @@ import {
   EXPEDITION_COMBATS_PAR_HEURE, EXPEDITION_HEURES_MAX, MISSIONS_PAR_JOUR, BONUS_TOUTES_MISSIONS,
 } from "../donnees/progression.js";
 import { nouvelleProgression, ajouterXp, ajouterDoublon } from "../moteur/progression.js";
-import { doublonsPourEtoile } from "../donnees/progression.js";
+import { doublonsPourEtoile, ASCENSION_MAX, coutAscension } from "../donnees/progression.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { MISSIONS, MISSIONS_PAR_ID } from "../donnees/missions.js";
 import { creerPiece, objetAuHasard, tirerButin, coutAmelioration, eclatsInvestis, scorePiece, bonusEquipement, coutRetouche, nouveauJet, peutSublimer, fourchetteLigne, BONUS_SUBLIMAGE } from "../moteur/equipement.js";
@@ -56,7 +56,7 @@ import {
 import { invoquer, phaseAutel, phaseRelancee, definitionPhase } from "../moteur/invocations.js";
 import { CODES_CADEAUX } from "../donnees/codes.js";
 import {
-  INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, INVOCATIONS_PLAFOND,
+  INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_DEPART, INVOCATIONS_VICTOIRE, CHANCE_INVOCATION_VICTOIRE, INVOCATIONS_PLAFOND,
   NIVEAUX_AUTEL, INVOCATIONS_PAR_NIVEAU_EN_PLUS, POINTS_PAR_NIVEAU, BRANCHES_AUTEL, CHANCE_PAR_POINT, VITESSE_PAR_POINT,
   POTIONS_PAR_POINT, BORDURE_PAR_POINT, COUT_REDISTRIBUTION, FUSION,
   CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE, CHANCE_PAR_10_ETAGES, CHANCE_TOUR_MAX, CHANCE_PAR_EVEIL, CHANCE_EVEIL_MAX,
@@ -898,7 +898,7 @@ export const formulePuissance = (s) => Math.round(s.atq * 4 + s.pv / 3 + s.def *
 
 export function statsCarte(perso, prog = progressionDe(perso.id)) {
   const s = calculerStatsFinales(perso, {
-    niveau: prog?.niveau ?? 1, etoiles: prog?.etoiles ?? 1, eveil: prog?.eveil ?? 0, talents: prog?.talents ?? [],
+    niveau: prog?.niveau ?? 1, etoiles: prog?.etoiles ?? 1, eveil: prog?.eveil ?? 0, talents: prog?.talents ?? [], ascension: prog?.ascension ?? 0,
     equipement: possede(perso.id) ? piecesDe(perso.id) : [],
   });
   return { puissance: formulePuissance(s), pv: s.pv, atq: s.atq, def: s.def, vit: s.vit };
@@ -1413,6 +1413,37 @@ export function sublimerLigne(uid, index) {
   partie.stats.sublimages = (partie.stats.sublimages ?? 0) + 1;
   sauver();
   return { ok: true };
+}
+
+// ---------- Ascension : les etoiles rouges, au-dela de 5 etoiles ----------
+
+export function prochaineAscension(id) {
+  const prog = partie?.collection[id];
+  const perso = PERSOS_PAR_ID[id];
+  if (!prog || !perso) return null;
+  const palier = prog.ascension ?? 0;
+  if (palier >= ASCENSION_MAX) return { palier, max: true };
+  const cout = coutAscension(perso.rarete, palier);
+  return {
+    palier, max: false, cout,
+    surplus: prog.surplus ?? 0, poussiere: partie.boosters.poussiere,
+    etoilesOk: prog.etoiles >= 5,
+    pret: prog.etoiles >= 5 && (prog.surplus ?? 0) >= cout.doublons && partie.boosters.poussiere >= cout.poussiere,
+  };
+}
+
+export function ascensionner(id) {
+  const a = prochaineAscension(id);
+  if (!a || a.max) return { ok: false, erreur: "Ascension déjà complète." };
+  if (!a.etoilesOk) return { ok: false, erreur: "Il faut d'abord 5 étoiles." };
+  if (!a.pret) return { ok: false, erreur: "Il manque des doublons ou de la poussière." };
+  const prog = partie.collection[id];
+  prog.surplus -= a.cout.doublons;
+  partie.boosters.poussiere -= a.cout.poussiere;
+  prog.ascension = a.palier + 1;
+  partie.stats.ascensions = (partie.stats.ascensions ?? 0) + 1;
+  sauver();
+  return { ok: true, palier: prog.ascension };
 }
 
 // ---------- Eveil ----------
@@ -2049,8 +2080,9 @@ export function gagnerEncre(n) {
 
 // ---------- Collection : series et editions completes ----------
 
-export const RECOMPENSE_SERIE = { dores: 1, encre: 300 };
-export const RECOMPENSE_EDITION = { dores: 3, encre: 1000 };
+// (plus de boosters dores ici : ils donnaient des dizaines de Legendaires gratuits)
+export const RECOMPENSE_SERIE = { invocations: 30, encre: 300 };
+export const RECOMPENSE_EDITION = { invocations: 100, encre: 1000 };
 
 export function progressionSerie(serie) {
   const membres = PERSOS.filter((p) => p.serie === serie);
@@ -2063,7 +2095,7 @@ function verifierCompletions() {
   const donner = (cle, nom, type, r) => {
     if (partie.completions.includes(cle)) return;
     partie.completions.push(cle);
-    partie.boosters.dores += r.dores;
+    donnerInvocations(r.invocations);
     partie.encre += r.encre;
     nouvelles.push({ type, nom, recompense: r });
   };
@@ -2107,8 +2139,9 @@ function donnerInvocations(n) {
 // A chaque victoire : des invocations, et parfois une potion
 let derniereRecolteAutel = null;
 function gainsVictoireAutel() {
-  donnerInvocations(INVOCATIONS_VICTOIRE);
-  const r = { invocations: INVOCATIONS_VICTOIRE };
+  const gagne = Math.random() < CHANCE_INVOCATION_VICTOIRE ? INVOCATIONS_VICTOIRE : 0;
+  if (gagne) donnerInvocations(gagne);
+  const r = { invocations: gagne };
   if (Math.random() < CHANCE_POTION_VICTOIRE) {
     const ids = Object.keys(POTIONS_PAR_ID);
     const id = ids[Math.floor(Math.random() * ids.length)];
@@ -2752,7 +2785,7 @@ export const RECOMPENSE_DUEL = { encre: 25, invocations: 2 };
 export function equipeDuel(ids = equipeSauvee()) {
   return ids.filter((id) => id && partie?.collection[id]).map((id) => {
     const p = partie.collection[id];
-    return { id, niveau: p.niveau, etoiles: p.etoiles, eveil: p.eveil ?? 0 };
+    return { id, niveau: p.niveau, etoiles: p.etoiles, eveil: p.eveil ?? 0, ascension: p.ascension ?? 0 };
   });
 }
 export const puissanceEquipe = (equipe) => equipe.reduce((t, e) => t + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).atq * 4 + calculerStatsFinales(PERSOS_PAR_ID[e.id], e).pv / 3, 0);

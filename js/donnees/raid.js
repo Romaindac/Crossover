@@ -16,8 +16,8 @@ export const bossDeLaSemaine = (maintenant = Date.now()) => BOSS_RAID[numeroSema
 export const PALIERS_COLLECTIFS = [
   { total: 5000000, recompense: { invocations: 20, potions: { chance: 1 } } },
   { total: 18000000, recompense: { invocations: 30, potions: { bordure: 1, lune: 1 } } },
-  { total: 45000000, recompense: { ticketsDores: 1, potions: { chance: 2 } } },
-  { total: 90000000, recompense: { ticketsDores: 1, invocations: 50, potions: { lune: 2, bordure: 2 } } },
+  { total: 45000000, recompense: { invocations: 40, potions: { chance: 2 } } },
+  { total: 90000000, recompense: { invocations: 90, potions: { lune: 2, bordure: 2 } } },
 ];
 
 // Paliers de recompense selon le meilleur score de la semaine

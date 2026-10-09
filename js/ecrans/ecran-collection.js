@@ -17,7 +17,7 @@ import {
   basculerVerrou, equiperPiece, retirerPiece, gainRecyclage, objetsDecouverts,
   retoucherLigne, retouchePendante, choisirRetouche, sublimerLigne, ressources, eveiller, choisirTalent, victoiresLien,
   verifierTampons, tamponsObtenus, tamponsNouveaux, marquerTamponsVus, titresObtenus, titreActuel, choisirTitre,
-  cadresObtenus, cadreActuel, choisirCadre, detailIndex, chanceActuelle, nbPersosCollection,
+  cadresObtenus, cadreActuel, choisirCadre, detailIndex, chanceActuelle, nbPersosCollection, ascensionner,
 } from "../services/partie.js";
 import {
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE, CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, CHANCE_MONDE_DIFFICILE,
@@ -30,7 +30,7 @@ import { htmlPortrait, rafraichirPortrait, htmlCarteStatique, nomBordure } from 
 import { varsSerie, motifSerie, styleSerie } from "../donnees/series.js";
 import { editionDeSerie } from "../donnees/boosters.js";
 import { htmlFiche } from "../ui/fiche.js";
-import { jouerEveil } from "../ui/eveil.js";
+import { jouerEveil, jouerAscension } from "../ui/eveil.js";
 import { jouerScene } from "../ui/scene.js";
 import { annoncerTampons } from "../ui/toast.js";
 import { TAMPONS, PAGES } from "../donnees/tampons.js";
@@ -565,6 +565,12 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
     if (action === "equiper-meilleur") {
       equiperMeilleur(cible.dataset.perso);
       return ouvrirFiche(cible.dataset.perso);
+    }
+    if (action === "ascension") {
+      const id = cible.dataset.perso;
+      const r = ascensionner(id);
+      if (r.ok) jouerAscension(conteneur, PERSOS_PAR_ID[id], r.palier).then(() => ouvrirFiche(id));
+      return;
     }
     if (action === "eveiller") {
       const id = cible.dataset.perso;

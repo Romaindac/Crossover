@@ -7,7 +7,7 @@
 
 import { ROLES } from "../donnees/roles.js";
 import { RARETES } from "../donnees/raretes.js";
-import { BONUS_NIVEAU, BONUS_ETOILE } from "../donnees/progression.js";
+import { BONUS_NIVEAU, BONUS_ETOILE, BONUS_ASCENSION } from "../donnees/progression.js";
 import { bonusEquipement } from "./equipement.js";
 import { BONUS_EVEIL, TALENTS } from "../donnees/eveil.js";
 import { CALIBRAGE } from "../donnees/calibrage.js";
@@ -26,19 +26,19 @@ export function bonusSerie(perso, persosEquipe) {
 }
 
 // Rarete x niveau x etoiles (s'applique aux PV et a l'ATQ)
-export function facteurProgression(perso, { niveau = 1, etoiles = 1, avecRarete = true } = {}) {
+export function facteurProgression(perso, { niveau = 1, etoiles = 1, avecRarete = true, ascension = 0 } = {}) {
   const rarete = avecRarete ? RARETES[perso.rarete]?.bonus ?? 0 : 0;
-  return (1 + rarete) * (1 + BONUS_NIVEAU * (niveau - 1)) * (1 + BONUS_ETOILE * (etoiles - 1));
+  return (1 + rarete) * (1 + BONUS_NIVEAU * (niveau - 1)) * (1 + BONUS_ETOILE * (etoiles - 1)) * (1 + BONUS_ASCENSION * ascension);
 }
 
 // eveil : palier d'eveil (0 a 4) ; talents : choix "a"/"b" par palier ;
 // bonusPct : bonus de lien et de la semaine (en %, sur PV et ATQ)
-export function calculerStatsFinales(perso, { equipe = [], multiplicateur = 1, niveau = 1, etoiles = 1, avecRarete = true, equipement = [], eveil = 0, talents = [], bonusPct = 0 } = {}) {
+export function calculerStatsFinales(perso, { equipe = [], multiplicateur = 1, niveau = 1, etoiles = 1, avecRarete = true, equipement = [], eveil = 0, talents = [], bonusPct = 0, ascension = 0 } = {}) {
   const base = ROLES[perso.role];
   const mods = perso.mods ?? {};
   const cal = CALIBRAGE[perso.id] ?? 1;   // coefficient du calibrage automatique (PV et ATQ)
   const serie = bonusSerie(perso, equipe);
-  const progression = facteurProgression(perso, { niveau, etoiles, avecRarete }) * (1 + BONUS_EVEIL * eveil) * (1 + bonusPct / 100);
+  const progression = facteurProgression(perso, { niveau, etoiles, avecRarete, ascension: Math.max(0, Math.min(5, Number(ascension) || 0)) }) * (1 + BONUS_EVEIL * eveil) * (1 + bonusPct / 100);
   const e = bonusEquipement(equipement);
   // Les talents d'eveil s'ajoutent comme des bonus d'equipement
   for (const choix of talents.slice(0, eveil)) {
