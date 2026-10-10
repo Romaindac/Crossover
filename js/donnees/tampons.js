@@ -59,6 +59,8 @@ export const TAMPONS = [
   // ---------- Tour ----------
   ...[10, 25, 50, 100, 150].map((n) => t(`tour-${n}`, "tour", `Étage ${n}`, `Atteindre l'étage ${n} de la Tour`, (x) => x.tour >= n, { encre: n * 2, fragments: Math.floor(n / 25) })),
   t("coffre-semaine", "tour", "Semaine bien remplie", "Ouvrir un coffre de la semaine", (x) => x.coffresSemaine >= 1, { encre: 40 }),
+  t("encrier-acte", "tour", "Premier encrier", "Battre le boss du premier acte de l'Encrier", (x) => x.encrierActe >= 2, { encre: 60 }),
+  t("encrier-victoire", "tour", "Maître de l'Encrier", "Gagner une partie de l'Encrier", (x) => x.encrierVictoires >= 1, { encre: 150, fragments: 3 }),
 
   // ---------- Legendes : boss de la semaine, liens, eveil ----------
   t("raid-1", "legendes", "Premier affrontement", "Tenter le boss de la semaine", (x) => x.raids >= 1, { encre: 30 }),

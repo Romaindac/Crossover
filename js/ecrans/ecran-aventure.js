@@ -34,6 +34,7 @@ import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { creerHasard } from "../moteur/hasard.js";
 import { afficherArene } from "../ui/arene.js";
 import { afficherDonjon } from "../ui/donjon.js";
+import { afficherEncrier } from "../ui/encrier.js";
 import { afficherDuels } from "../ui/duels.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
 
@@ -63,8 +64,8 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
     <div class="aventure">
       ${htmlEntete({
         titre: "Aventure", kanji: "冒険", theme: "aventure", classe: "aventure__entete",
-        accroche: "Boss de l'Arène, campagne, Tour, donjon ou duels : choisis ton combat.",
-        onglets: [["arene", "Arène"], ["campagne", "Campagne"], ["chasse", "Chasse"], ["tour", "Tour"], ["raid", "Raid"], ["donjon", "Donjon"], ["duels", "Duels"]]
+        accroche: "Boss de l'Arène, campagne, Tour, donjon, Encrier ou duels : choisis ton combat.",
+        onglets: [["arene", "Arène"], ["campagne", "Campagne"], ["chasse", "Chasse"], ["tour", "Tour"], ["raid", "Raid"], ["donjon", "Donjon"], ["encrier", "Encrier"], ["duels", "Duels"]]
           .map(([id, nom]) => htmlOnglet(nom, { classe: "onglet-collection", donnees: `data-action="vue" data-vue="${id}"` })).join(""),
       })}
       <div id="vue" class="aventure__vue"></div>
@@ -566,6 +567,11 @@ export function afficherAventure(conteneur, { naviguer, onglet = null, chapitre 
       const zone = document.createElement("div");
       $("#vue").replaceChildren(zone);
       return afficherDonjon(zone, { naviguer, majNavigation });
+    }
+    if (vue === "encrier") {
+      const zone = document.createElement("div");
+      $("#vue").replaceChildren(zone);
+      return afficherEncrier(zone, { naviguer, majNavigation });
     }
     if (vue === "arene") {
       const zone = document.createElement("div");

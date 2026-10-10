@@ -75,6 +75,15 @@ import {
 } from "../donnees/donjon.js";
 import { adversaireEtage, bonusDescente, facteurRarete } from "../moteur/donjon.js";
 import {
+  ACTES, RANGS_PAR_ACTE, ETOILES_MAX_PARTIE, TERRAIN_MAX, RESERVE_MAX, OR_DEPART, OFFRE_DEPART, CHOIX_DEPART,
+  RECRUES_PROPOSEES, OR_SI_ON_PASSE, PV_APRES_KO, SOIN_APRES_COMBAT, SOIN_REPOS, SOIN_BOSS, PARTIES_RECOMPENSEES_PAR_JOUR,
+  orCombat, PRIX_PERSOS, PRIX_RELIQUES, PRIX_SOIN, PRIX_ENTRAINEMENT, SOIN_BOUTIQUE, RECOMPENSES,
+  RELIQUES_PAR_ID, EVENEMENTS_PAR_ID,
+} from "../donnees/encrier.js";
+import {
+  genererCarte, caseDe, offrePersos, hasardDe, adversaireCase, tirerReliques, effetsReliques, tirerEvenement, reussite, equipeDeCombat, persoExiste,
+} from "../moteur/encrier.js";
+import {
   EQUIPES_EXPLORATION, BONUS_SERIE_EXPLORATION, PERSOS_SERIE_BONUS, MISSIONS_EXPLORATION, MISSIONS_EXPLORATION_PAR_ID,
 } from "../donnees/explorations.js";
 import { ETAPES_QUETE } from "../donnees/quetes.js";
@@ -131,6 +140,57 @@ function validerDonjon(d) {
     journal: Array.isArray(r.journal) ? r.journal.slice(-30) : [],
   } : null;
   return { record: entier(d?.record), cristaux: entier(d?.cristaux), maitrises, jour: d?.jour ?? null, descentes: entier(d?.descentes), run };
+}
+
+// Une fenetre de l'Encrier en cours : on ne garde que ce qui est complet
+function offreValide(o) {
+  if (!o || typeof o !== "object") return false;
+  const ids = (l) => Array.isArray(l) && l.length > 0 && l.every((x) => typeof x === "string");
+  switch (o.type) {
+    case "depart": case "recrue": return ids(o.persos) && o.persos.every(persoExiste);
+    case "combat": return typeof o.caseId === "string" && ["combat", "elite", "boss"].includes(o.typeCase);
+    case "tresor": case "relique": return ids(o.reliques) && o.reliques.every((id) => RELIQUES_PAR_ID[id]);
+    case "evenement": return Boolean(EVENEMENTS_PAR_ID[o.id]) && typeof o.caseId === "string";
+    case "boutique": return Array.isArray(o.persos) && Array.isArray(o.reliques) && Array.isArray(o.achetes) && o.persos.every((x) => persoExiste(x?.id)) && o.reliques.every((x) => RELIQUES_PAR_ID[x?.id]);
+    case "repos": return true;
+    default: return false;
+  }
+}
+
+// L'Encrier (roguelite) : record, parties du jour, partie en cours
+function validerEncrier(e) {
+  const entier = (x) => Math.max(0, Math.floor(Number(x) || 0));
+  const r = e?.run;
+  let run = null;
+  if (r && typeof r === "object" && r.persos && typeof r.persos === "object") {
+    const persos = {};
+    for (const [id, v] of Object.entries(r.persos)) {
+      if (persoExiste(id)) persos[id] = { etoiles: Math.max(1, Math.min(ETOILES_MAX_PARTIE, entier(v?.etoiles) || 1)), pv: Math.max(0, Math.min(1, Number(v?.pv) || 0)) };
+    }
+    const ids = (l) => (Array.isArray(l) ? l.filter((id) => persos[id]) : []);
+    const terrain = ids(r.terrain).slice(0, TERRAIN_MAX);
+    const reserve = ids(r.reserve).filter((id) => !terrain.includes(id)).slice(0, RESERVE_MAX);
+    run = {
+      graine: entier(r.graine), acte: Math.max(1, Math.min(ACTES, entier(r.acte) || 1)),
+      position: typeof r.position === "string" ? r.position : null,
+      visitees: Array.isArray(r.visitees) ? r.visitees.filter((x) => typeof x === "string") : [],
+      persos, terrain, reserve, or: entier(r.or),
+      reliques: Array.isArray(r.reliques) ? r.reliques.filter((id) => RELIQUES_PAR_ID[id]) : [],
+      malus: Math.max(1, Math.min(2, Number(r.malus) || 1)),
+      evenementsVus: Array.isArray(r.evenementsVus) ? r.evenementsVus.filter((id) => EVENEMENTS_PAR_ID[id]) : [],
+      offre: offreValide(r.offre) ? r.offre : null,
+      bilan: { combats: entier(r.bilan?.combats), elites: entier(r.bilan?.elites), boss: entier(r.bilan?.boss) },
+      recompensee: Boolean(r.recompensee),
+      dernier: r.dernier ?? null,
+    };
+    // Une partie sans perso (sauf au moment du draft) n'a pas de sens : on l'abandonne
+    if (!terrain.length && run.offre?.type !== "depart") run = null;
+  }
+  return {
+    record: { acte: entier(e?.record?.acte), victoires: entier(e?.record?.victoires), parties: entier(e?.record?.parties) },
+    jour: e?.jour ?? null, partiesJour: entier(e?.partiesJour), run,
+    dernierBilan: e?.dernierBilan && typeof e.dernierBilan === "object" ? e.dernierBilan : null,
+  };
 }
 
 // Les Secrets de la premiere version avaient des identifiants parlants : on les convertit partout
@@ -196,6 +256,7 @@ function valider(p) {
     completions: Array.isArray(p.completions) ? p.completions : [],
     codes: Array.isArray(p.codes) ? p.codes.filter((c) => typeof c === "string") : [],
     donjon: validerDonjon(p.donjon),
+    encrier: validerEncrier(p.encrier),
     quetes: p.quetes && typeof p.quetes === "object" ? p.quetes : {},
     explorations: Array.isArray(p.explorations)
       ? p.explorations.filter((x) => x && MISSIONS_EXPLORATION_PAR_ID[x.mission] && Array.isArray(x.ids) && Number(x.debut)).slice(0, EQUIPES_EXPLORATION)
@@ -1627,6 +1688,8 @@ function contexteTampons() {
     retouches: partie.stats.retouches ?? 0,
     tour: partie.tour.record,
     coffresSemaine: partie.stats.coffresSemaine ?? 0,
+    encrierActe: partie.encrier?.record?.acte ?? 0,
+    encrierVictoires: partie.encrier?.record?.victoires ?? 0,
     raids: partie.stats.raids ?? 0,
     raidRecord: Math.max(0, ...Object.values(partie.raid?.records ?? {})),
     liens: LIENS.filter((x) => niveauLien(partie.liens[x.cle] ?? 0) >= 1).length,
@@ -2770,6 +2833,408 @@ export function acheterMaitrise(id) {
   partie.donjon.maitrises[id] = n + 1;
   sauver();
   return true;
+}
+
+// ==========================================================
+// L'ENCRIER (roguelite en draft)
+// Tout le monde part a egalite : on recrute en route, les PV restent
+// d'un combat a l'autre, perdre un combat termine la partie. Les
+// recompenses (encre, invocations, poussiere) ne comptent que pour les
+// premieres parties du jour.
+// ==========================================================
+
+function assurerEncrier() {
+  if (!partie.encrier) partie.encrier = validerEncrier(null);
+  const e = partie.encrier;
+  const jour = aujourdhui();
+  if (e.jour !== jour) { e.jour = jour; e.partiesJour = 0; }
+  return e;
+}
+
+const runEncrier = () => (partie ? assurerEncrier().run : null);
+const carteDuRun = (run) => genererCarte(run.graine, run.acte);
+const tousLesPersosDuRun = (run) => [...run.terrain, ...run.reserve];
+
+// Les cases ou l'on peut aller maintenant
+function casesAccessibles(run) {
+  if (run.offre) return [];
+  const carte = carteDuRun(run);
+  if (!run.position) return carte.rangs[0].map((c) => c.id);
+  return caseDe(carte, run.position)?.liens ?? [];
+}
+
+export function etatEncrier() {
+  if (!partie) return null;
+  const e = assurerEncrier();
+  const run = e.run;
+  const base = {
+    record: { ...e.record },
+    partiesRecompensees: Math.max(0, PARTIES_RECOMPENSEES_PAR_JOUR - e.partiesJour),
+    bilan: e.dernierBilan ?? null,
+  };
+  if (!run) return { ...base, run: null };
+  const effets = effetsReliques(run.reliques, run.malus);
+  const carte = carteDuRun(run);
+  return {
+    ...base,
+    run: JSON.parse(JSON.stringify(run)),
+    carte,
+    accessibles: casesAccessibles(run),
+    effets,
+  };
+}
+
+export function commencerEncrier() {
+  if (!partie) return { ok: false, erreur: "Pas de partie." };
+  const e = assurerEncrier();
+  if (e.run) return { ok: false, erreur: "Une partie est déjà en cours." };
+  const graine = Math.floor(Math.random() * 2147483647);
+  const recompensee = e.partiesJour < PARTIES_RECOMPENSEES_PAR_JOUR;
+  if (recompensee) e.partiesJour += 1;
+  e.dernierBilan = null;
+  e.run = {
+    graine, acte: 1, position: null, visitees: [], persos: {}, terrain: [], reserve: [], or: OR_DEPART,
+    reliques: [], malus: 1, evenementsVus: [], bilan: { combats: 0, elites: 0, boss: 0 }, recompensee, dernier: null,
+    offre: { type: "depart", persos: offrePersos(graine, "depart", OFFRE_DEPART, 0, { garantir: ["tank", "soutien", "attaquant"] }) },
+  };
+  e.record.parties += 1;
+  sauver();
+  return { ok: true };
+}
+
+// Le draft de depart : garder CHOIX_DEPART persos parmi ceux proposes
+export function choisirDepartEncrier(ids) {
+  const run = runEncrier();
+  if (!run || run.offre?.type !== "depart") return { ok: false, erreur: "Rien à choisir." };
+  const choix = [...new Set(ids)].filter((id) => run.offre.persos.includes(id));
+  if (choix.length !== CHOIX_DEPART) return { ok: false, erreur: `Choisis ${CHOIX_DEPART} persos.` };
+  for (const id of choix) run.persos[id] = { etoiles: 1, pv: 1 };
+  run.terrain = choix;
+  run.offre = null;
+  sauver();
+  return { ok: true };
+}
+
+// Ajoute un perso a l'equipe (terrain, sinon reserve). remplacer : id a liberer si tout est plein.
+function ajouterPersoRun(run, id, remplacer = null) {
+  if (run.persos[id]) return { ok: false, erreur: "Ce perso est déjà dans l'équipe." };
+  if (run.terrain.length >= TERRAIN_MAX && run.reserve.length >= RESERVE_MAX) {
+    if (!remplacer || !run.persos[remplacer]) return { ok: false, erreur: "Équipe pleine : choisis qui laisser partir." };
+    libererDuRun(run, remplacer);
+  }
+  run.persos[id] = { etoiles: 1, pv: 1 };
+  if (run.terrain.length < TERRAIN_MAX) run.terrain.push(id); else run.reserve.push(id);
+  return { ok: true };
+}
+
+function libererDuRun(run, id) {
+  delete run.persos[id];
+  run.terrain = run.terrain.filter((x) => x !== id);
+  run.reserve = run.reserve.filter((x) => x !== id);
+  if (!run.terrain.length && run.reserve.length) run.terrain.push(run.reserve.shift());
+}
+
+// Aller sur une case de la carte
+export function allerVersEncrier(caseId) {
+  const run = runEncrier();
+  if (!run) return { ok: false };
+  if (!casesAccessibles(run).includes(caseId)) return { ok: false, erreur: "Cette case n'est pas accessible." };
+  const c = caseDe(carteDuRun(run), caseId);
+  run.position = caseId;
+  run.visitees.push(caseId);
+  const g = run.graine;
+  const e = effetsReliques(run.reliques, run.malus);
+  const remise = 1 - e.remise;
+  const niveauTable = run.acte - 1;
+  if (["combat", "elite", "boss"].includes(c.type)) run.offre = { type: "combat", caseId, typeCase: c.type };
+  if (c.type === "evenement") {
+    const id = tirerEvenement(g, caseId, run.evenementsVus);
+    run.evenementsVus.push(id);
+    run.offre = { type: "evenement", id, caseId, resultat: null };
+  }
+  if (c.type === "boutique") {
+    const persos = offrePersos(g, `boutique-${caseId}`, 3, niveauTable, { exclure: Object.keys(run.persos) });
+    run.offre = {
+      type: "boutique", caseId, achetes: [],
+      persos: persos.map((id) => ({ id, prix: Math.round(PRIX_PERSOS[PERSOS_PAR_ID[id].rarete] * remise) })),
+      reliques: tirerReliques(g, `boutique-${caseId}`, 2, ["commune", "rare"], run.reliques)
+        .map((id) => ({ id, prix: Math.round(PRIX_RELIQUES[RELIQUES_PAR_ID[id].rang] * remise) })),
+      soin: Math.round(PRIX_SOIN * remise), entrainement: Math.round(PRIX_ENTRAINEMENT * remise),
+    };
+  }
+  if (c.type === "repos") run.offre = { type: "repos", caseId };
+  if (c.type === "tresor") run.offre = { type: "tresor", caseId, reliques: tirerReliques(g, `tresor-${caseId}`, 2, ["commune", "rare"], run.reliques) };
+  sauver();
+  return { ok: true, type: c.type };
+}
+
+// La configuration exacte du combat en cours (le direct rejoue exactement le combat compte)
+export function configCombatEncrier() {
+  const run = runEncrier();
+  if (!run || run.offre?.type !== "combat") return null;
+  const c = caseDe(carteDuRun(run), run.offre.caseId);
+  const e = effetsReliques(run.reliques, run.malus);
+  const adv = adversaireCase(run.graine, run.acte, c.rang, c.type, c.id, e.ennemis);
+  return {
+    equipeA: equipeDeCombat(run.terrain, run.persos, e.pct),
+    equipeB: adv.equipe, niveauB: adv.niveau, multiplicateurB: adv.multiplicateur,
+    graine: (run.graine ^ (run.visitees.length * 2654435761)) >>> 0, journal: false,
+    bonusA: { energieDepart: e.energieDepart, stats: e.stats },
+    adv, typeCase: c.type, rang: c.rang,
+  };
+}
+
+function soignerRun(run, part, revivre = false) {
+  for (const id of tousLesPersosDuRun(run)) {
+    const p = run.persos[id];
+    if (p.pv <= 0 && !revivre) continue;
+    p.pv = Math.min(1, Math.max(p.pv, 0) + part);
+  }
+}
+
+export function combattreEncrier() {
+  const run = runEncrier();
+  const config = configCombatEncrier();
+  if (!run || !config) return null;
+  const r = simulerCombat(config);
+  const victoire = r.vainqueur === 0;
+  const type = config.typeCase;
+  partie.stats.combats += 1;
+  run.dernier = { victoire, duree: r.duree, type };
+  if (!victoire) {
+    const bilan = finirEncrier(false);
+    sauver();
+    return { victoire, fin: bilan };
+  }
+  partie.stats.victoires += 1;
+  const e = effetsReliques(run.reliques, run.malus);
+  // Les blessures restent ; un perso KO revient avec un peu de PV
+  for (const u of r.unites.filter((x) => x.camp === 0)) {
+    const p = run.persos[u.id];
+    if (p) p.pv = u.pv > 0 ? u.pv / u.pvMax : Math.max(PV_APRES_KO, e.pvApresKo);
+  }
+  soignerRun(run, SOIN_APRES_COMBAT + e.soinApresCombat);
+  const or = Math.round(orCombat(run.acte, type) * (1 + e.orPct));
+  run.or += or;
+  if (type === "boss") { run.bilan.boss += 1; soignerRun(run, SOIN_BOSS, true); }
+  else if (type === "elite") run.bilan.elites += 1;
+  else run.bilan.combats += 1;
+  const caseId = run.offre.caseId;
+  const relique = type === "elite" ? tirerReliques(run.graine, `elite-${caseId}`, 1, ["commune", "rare"], run.reliques)[0] ?? null : null;
+  if (relique) run.reliques.push(relique);
+  const niveauTable = run.acte - 1 + (type === "combat" ? 0 : 1);
+  const persos = offrePersos(run.graine, `recrue-${caseId}`, RECRUES_PROPOSEES + e.recruesEnPlus, niveauTable, { exclure: Object.keys(run.persos) });
+  run.offre = { type: "recrue", caseId, typeCase: type, persos, or, relique };
+  if (type === "boss") {
+    run.offre.ensuite = run.acte >= ACTES
+      ? { type: "victoire" }
+      : { type: "relique", reliques: tirerReliques(run.graine, `boss-${caseId}`, 3, ["boss", "rare"], run.reliques) };
+  }
+  sauver();
+  return { victoire, or, relique };
+}
+
+// Apres une recrue (ou en passant), on enchaine ce qui suit (relique de boss, acte suivant, victoire)
+function apresRecrue(run) {
+  const ensuite = run.offre?.ensuite ?? null;
+  if (!ensuite) { run.offre = null; return null; }
+  if (ensuite.type === "victoire") return finirEncrier(true);
+  run.offre = ensuite;
+  return null;
+}
+
+export function recruterEncrier(id, remplacer = null) {
+  const run = runEncrier();
+  if (!run || run.offre?.type !== "recrue") return { ok: false };
+  if (id === null) {
+    run.or += OR_SI_ON_PASSE;
+  } else {
+    if (!run.offre.persos.includes(id)) return { ok: false, erreur: "Ce perso n'est pas proposé." };
+    const r = ajouterPersoRun(run, id, remplacer);
+    if (!r.ok) return r;
+  }
+  const fin = apresRecrue(run);
+  sauver();
+  return { ok: true, fin };
+}
+
+// Tresor ou relique de boss : en prendre une
+export function prendreReliqueEncrier(id) {
+  const run = runEncrier();
+  if (!run || !["tresor", "relique"].includes(run.offre?.type) || !run.offre.reliques.includes(id)) return { ok: false };
+  run.reliques.push(id);
+  if (run.offre.type === "relique") {
+    // la relique d'un boss ouvre l'acte suivant
+    run.acte += 1;
+    run.position = null;
+  }
+  run.offre = null;
+  sauver();
+  return { ok: true };
+}
+
+// Evenement : appliquer un choix
+function appliquerEffetsEncrier(run, effets, cle) {
+  const lignes = [];
+  if (effets.chance) {
+    const ok = reussite(run.graine, cle, effets.chance.p);
+    lignes.push(ok ? "Réussite !" : "Raté...");
+    return [...lignes, ...appliquerEffetsEncrier(run, ok ? effets.chance.succes : effets.chance.echec, `${cle}-suite`)];
+  }
+  if (effets.or) { run.or = Math.max(0, run.or + effets.or); lignes.push(`${effets.or > 0 ? "+" : ""}${effets.or} or`); }
+  if (effets.revivre) { soignerRun(run, 0.01, true); }
+  if (effets.soin) {
+    if (effets.soin > 0) soignerRun(run, effets.soin);
+    else for (const id of tousLesPersosDuRun(run)) { const p = run.persos[id]; if (p.pv > 0) p.pv = Math.max(0.05, p.pv + effets.soin); }
+    lignes.push(effets.soin > 0 ? `Soin de ${Math.round(effets.soin * 100)} %` : `${Math.round(effets.soin * 100)} % de PV`);
+  }
+  if (effets.relique) {
+    const id = tirerReliques(run.graine, `evt-${cle}`, 1, [effets.relique], run.reliques)[0];
+    if (id) { run.reliques.push(id); lignes.push(`Relique : ${RELIQUES_PAR_ID[id].nom}`); }
+  }
+  if (effets.etoile) {
+    const candidats = tousLesPersosDuRun(run).filter((id) => run.persos[id].etoiles < ETOILES_MAX_PARTIE);
+    if (candidats.length) {
+      const id = candidats[Math.floor(hasardDe(run.graine, `etoile-${cle}`).nombre() * candidats.length)];
+      run.persos[id].etoiles += 1;
+      lignes.push(`${PERSOS_PAR_ID[id].nom} gagne une étoile`);
+    }
+  }
+  if (effets.ennemis) { run.malus = Math.min(2, run.malus * effets.ennemis); lignes.push(`Ennemis +${Math.round((effets.ennemis - 1) * 100)} %`); }
+  if (effets.recrue) {
+    run.offre = { type: "recrue", caseId: run.offre.caseId, typeCase: "evenement", or: 0, relique: null,
+      persos: offrePersos(run.graine, `evt-recrue-${cle}`, RECRUES_PROPOSEES, run.acte, { exclure: Object.keys(run.persos), minRarete: effets.recrue }) };
+    lignes.push("Une recrue t'attend");
+  }
+  return lignes;
+}
+
+export function choisirEvenementEncrier(index) {
+  const run = runEncrier();
+  if (!run || run.offre?.type !== "evenement" || run.offre.resultat) return { ok: false };
+  const evt = EVENEMENTS_PAR_ID[run.offre.id];
+  const choix = evt?.choix[index];
+  if (!choix) return { ok: false };
+  if (choix.cout && run.or < choix.cout) return { ok: false, erreur: "Pas assez d'or." };
+  const lignes = appliquerEffetsEncrier(run, choix.effets, `${run.offre.caseId}-${index}`);
+  if (run.offre.type === "evenement") run.offre.resultat = { choix: index, lignes: lignes.length ? lignes : ["Rien ne se passe."] };
+  sauver();
+  return { ok: true, lignes };
+}
+
+// Boutique
+export function acheterEncrier(quoi, id = null, cible = null) {
+  const run = runEncrier();
+  const o = run?.offre;
+  if (!o || o.type !== "boutique") return { ok: false };
+  const payer = (prix) => { if (run.or < prix) return false; run.or -= prix; return true; };
+  if (quoi === "perso") {
+    const art = o.persos.find((x) => x.id === id);
+    if (!art || o.achetes.includes(`p-${id}`)) return { ok: false };
+    if (run.or < art.prix) return { ok: false, erreur: "Pas assez d'or." };
+    const r = ajouterPersoRun(run, id, cible);
+    if (!r.ok) return r;
+    payer(art.prix);
+    o.achetes.push(`p-${id}`);
+  } else if (quoi === "relique") {
+    const art = o.reliques.find((x) => x.id === id);
+    if (!art || o.achetes.includes(`r-${id}`)) return { ok: false };
+    if (!payer(art.prix)) return { ok: false, erreur: "Pas assez d'or." };
+    run.reliques.push(id);
+    o.achetes.push(`r-${id}`);
+  } else if (quoi === "soin") {
+    if (o.achetes.includes("soin")) return { ok: false };
+    if (!payer(o.soin)) return { ok: false, erreur: "Pas assez d'or." };
+    soignerRun(run, SOIN_BOUTIQUE);
+    o.achetes.push("soin");
+  } else if (quoi === "entrainement") {
+    const p = run.persos[id];
+    if (!p || p.etoiles >= ETOILES_MAX_PARTIE || o.achetes.includes("entrainement")) return { ok: false };
+    if (!payer(o.entrainement)) return { ok: false, erreur: "Pas assez d'or." };
+    p.etoiles += 1;
+    o.achetes.push("entrainement");
+  } else return { ok: false };
+  sauver();
+  return { ok: true };
+}
+
+// Repos : se soigner ou entrainer un perso (+1 etoile)
+export function reposerEncrier(choix, id = null) {
+  const run = runEncrier();
+  if (!run || run.offre?.type !== "repos") return { ok: false };
+  const e = effetsReliques(run.reliques, run.malus);
+  if (choix === "soin") soignerRun(run, Math.max(SOIN_REPOS, e.soinRepos));
+  else if (choix === "entrainement") {
+    const p = run.persos[id];
+    if (!p || p.etoiles >= ETOILES_MAX_PARTIE) return { ok: false };
+    p.etoiles += 1;
+  } else return { ok: false };
+  run.offre = null;
+  sauver();
+  return { ok: true };
+}
+
+// Quitter une boutique ou un evenement termine
+export function quitterCaseEncrier() {
+  const run = runEncrier();
+  if (!run || !run.offre) return false;
+  if (run.offre.type === "boutique" || (run.offre.type === "evenement" && run.offre.resultat)) {
+    run.offre = null;
+    sauver();
+    return true;
+  }
+  return false;
+}
+
+// Passer un perso du terrain a la reserve (ou l'inverse)
+export function echangerEncrier(id) {
+  const run = runEncrier();
+  if (!run?.persos[id] || run.offre?.type === "combat") return false;
+  if (run.terrain.includes(id)) {
+    if (run.terrain.length <= 1 || run.reserve.length >= RESERVE_MAX) return false;
+    run.terrain = run.terrain.filter((x) => x !== id);
+    run.reserve.push(id);
+  } else {
+    if (run.terrain.length >= TERRAIN_MAX) return false;
+    run.reserve = run.reserve.filter((x) => x !== id);
+    run.terrain.push(id);
+  }
+  sauver();
+  return true;
+}
+
+export function abandonnerEncrier() {
+  if (!runEncrier()) return null;
+  const b = finirEncrier(false, true);
+  sauver();
+  return b;
+}
+
+function finirEncrier(victoire, abandon = false) {
+  const e = partie.encrier;
+  const run = e.run;
+  const b = run.bilan;
+  const gains = { encre: 0, invocations: 0, poussiere: 0 };
+  if (run.recompensee) {
+    gains.encre = b.combats * RECOMPENSES.encreParCombat + b.elites * RECOMPENSES.encreParElite + b.boss * RECOMPENSES.encreParBoss;
+    gains.invocations = b.boss * RECOMPENSES.invocationsParBoss + (victoire ? RECOMPENSES.invocationsVictoire : 0);
+    gains.poussiere = victoire ? RECOMPENSES.poussiereVictoire : 0;
+    partie.encre += gains.encre;
+    if (gains.invocations) donnerInvocations(gains.invocations);
+    if (gains.poussiere) partie.boosters.poussiere += gains.poussiere;
+  }
+  const acteAtteint = victoire ? ACTES + 1 : run.acte;
+  const bilan = {
+    victoire, abandon, acte: run.acte, combats: b.combats, elites: b.elites, boss: b.boss, recompensee: run.recompensee, gains,
+    record: acteAtteint > e.record.acte || (victoire && e.record.victoires === 0),
+    equipe: [...run.terrain, ...run.reserve], reliques: [...run.reliques],
+  };
+  e.record.acte = Math.max(e.record.acte, acteAtteint);
+  if (victoire) e.record.victoires += 1;
+  e.dernierBilan = bilan;
+  e.run = null;
+  bilan.tampons = verifierTampons();
+  return bilan;
 }
 
 // ==========================================================
