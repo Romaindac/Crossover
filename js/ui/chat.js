@@ -21,6 +21,12 @@ const heure = (iso) => {
 };
 
 // ouvrirJoueur(profil) : affiche la vitrine d'un joueur (fourni par l'ecran Social)
+
+// Une annonce automatique de l'autel a une forme precise (voir autel.js) : un message tape a la main
+// qui commence juste par « [Autel] » ne s'affiche pas comme une annonce doree.
+export const estAnnonceAutel = (texte) =>
+  /^\[Autel\] (SECRET ! vient de percer un secret de l'autel : [^!<>]{1,40} !|vient d'invoquer [^!<>]{1,40} (Légendaire|Épique|Rare|Peu commun|Commun|Secret)(, bordure [^!<>]{1,30})? !)$/.test(texte);
+
 export function brancherChat(zone, { ouvrirJoueur }) {
   const moi = monId();
   let vue = { type: "canal", id: "general" };
@@ -123,7 +129,7 @@ export function brancherChat(zone, { ouvrirJoueur }) {
       const suite = i > 0 && messages[i - 1].auteur === m.auteur && new Date(m.cree) - new Date(messages[i - 1].cree) < 5 * 60000;
       const mien = m.auteur === moi;
       // Annonce automatique d'une invocation tres rare : une ligne dorée au milieu du fil
-      if (m.texte.startsWith("[Autel] ")) {
+      if (estAnnonceAutel(m.texte)) {
         return `<p class="msg-annonce"><b>${echapper(m.pseudo)}</b> ${echapper(m.texte.slice(8))} <time>${heure(m.cree)}</time></p>`;
       }
       return `
@@ -168,16 +174,31 @@ export function brancherChat(zone, { ouvrirJoueur }) {
   }
 
   // ---------- Chargement ----------
+  // Un seul chargement a la fois (minuterie, envoi et changement de canal pouvaient se croiser
+  // et empiler deux fois les memes messages) ; un appel pendant un chargement est rejoue apres.
+  let chargement = null;
+  let aRejouer = false;
   async function rafraichir() {
+    if (chargement) { aRejouer = true; return chargement; }
+    chargement = rafraichirUneFois();
+    try { await chargement; } finally { chargement = null; }
+    if (aRejouer && zone.isConnected) { aRejouer = false; return rafraichir(); }
+  }
+  const ajouterSansDoublon = (liste, nouveaux) => {
+    const vus = new Set(liste.map((m) => m.id));
+    for (const m of nouveaux) if (!vus.has(m.id)) { vus.add(m.id); liste.push(m); }
+  };
+
+  async function rafraichirUneFois() {
     if (!zone.isConnected) return arreter();
     try {
       if (vue.type === "canal") {
         const liste = canaux[vue.id] ?? (canaux[vue.id] = []);
         const nouveaux = await messagesCanal(vue.id, liste.at(-1)?.id ?? 0);
-        if (nouveaux.length) { liste.push(...nouveaux); canaux[vue.id] = liste.slice(-200); }
+        if (nouveaux.length) { ajouterSansDoublon(liste, nouveaux); canaux[vue.id] = liste.slice(-200); }
       }
       const nouveauxPrives = await messagesPrives(prives.at(-1)?.id ?? 0);
-      if (nouveauxPrives.length) prives.push(...nouveauxPrives);
+      if (nouveauxPrives.length) ajouterSansDoublon(prives, nouveauxPrives);
       await chargerProfils(prives.map((m) => (m.de === moi ? m.a : m.de)));
       if (vue.type === "prive" && prives.some((m) => m.de === vue.id && m.a === moi && !m.lu)) {
         await marquerLus(vue.id);

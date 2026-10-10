@@ -118,6 +118,12 @@ verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf
   verifier(secrets > 15 && secrets < 70 && bonsMondes, `Secrets a l'autel : ${secrets} sur 200 000 invocations (environ 40 attendus), chacun dans son monde`);
 }
 
+// Calibrage : chaque perso entre 0,8 et 1,2 (sinon c'est son kit qu'il faut retoucher, voir CLAUDE.md)
+{
+  const hors = Object.entries(CALIBRAGE).filter(([, c]) => c < 0.8 || c > 1.2).map(([id, c]) => `${id} ${c}`);
+  verifier(hors.length === 0, `tous les coefficients de calibrage entre 0,8 et 1,2${hors.length ? ` (hors plage : ${hors.join(", ")})` : ""}`);
+}
+
 // ---------- L'Encrier (roguelite) ----------
 {
   const { genererCarte, offrePersos, adversaireCase, effetsReliques } = await import("../js/moteur/encrier.js");

@@ -125,13 +125,8 @@ function dessiner(nom) {
     extras += [[120, 90], [300, 160], [470, 70], [640, 140], [900, 60], [1050, 130], [1450, 110], [1540, 260], [200, 300], [1000, 280]]
       .map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="${i % 3 ? 2 : 3}" fill="#f2f0ea" fill-opacity="${0.5 + (i % 3) * 0.2}"/>`).join("");
   }
-  if (a.braises) {
-    extras += [140, 330, 520, 700, 880, 1060, 1250, 1430].map((x, i) => `
-      <circle cx="${x}" cy="880" r="${3 + (i % 3)}" fill="#f08a3c">
-        <animate attributeName="cy" values="880;240" dur="${5 + (i % 4)}s" begin="${-i * 0.9}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="1;0" dur="${5 + (i % 4)}s" begin="${-i * 0.9}s" repeatCount="indefinite"/>
-      </circle>`).join("");
-  }
+  // (les braises ne sont plus animees dans le SVG : cela redessinait tout le decor a chaque image ;
+  // ce sont des petits elements HTML animes par transform et opacite, voir htmlDecor)
 
   return `
     <defs>
@@ -158,5 +153,7 @@ export function htmlDecor(nom, { crepuscule = false, centre = false } = {}) {
   return `
     <div class="decor decor--${nom}${crepuscule ? " decor--crepuscule" : ""}" aria-hidden="true">
       <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidY${centre ? "Mid" : "Max"} slice" xmlns="http://www.w3.org/2000/svg">${dessiner(nom)}</svg>
+      ${(AMBIANCES[nom] ?? AMBIANCES.terrain).braises ? `<span class="decor__braises">${[9, 21, 33, 44, 55, 66, 78, 89].map((x, i) =>
+        `<span class="braise" style="left: ${x}%; --taille: ${3 + (i % 3)}px; --duree: ${5 + (i % 4)}s; --depart: ${-i * 0.9}s"></span>`).join("")}</span>` : ""}
     </div>`;
 }

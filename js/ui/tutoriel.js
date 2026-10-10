@@ -71,7 +71,10 @@ function pages() {
   ];
 }
 
+let fermerTutorielOuvert = null;   // pour refermer proprement un tutoriel deja ouvert (et son ecouteur clavier)
+
 export function ouvrirTutoriel() {
+  fermerTutorielOuvert?.();
   document.querySelector(".voile--tuto")?.remove();
   const liste = pages();
   let i = 0;
@@ -79,7 +82,8 @@ export function ouvrirTutoriel() {
   voile.className = "voile voile--tuto";
   document.body.append(voile);
 
-  const fermer = () => { ecrire(CLE, true); voile.remove(); document.removeEventListener("keydown", clavier); };
+  const fermer = () => { ecrire(CLE, true); voile.remove(); document.removeEventListener("keydown", clavier); fermerTutorielOuvert = null; };
+  fermerTutorielOuvert = fermer;
 
   function rendre() {
     const p = liste[i];

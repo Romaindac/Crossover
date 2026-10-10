@@ -146,4 +146,23 @@ out,err=sql(f"select resultat_duel('{A}', true, 4);", B); test("3 duels par jour
 out,err=sql("insert into duels (attaquant,cible,victoire) values (auth.uid(), auth.uid(), true);", B); test("pas d'ecriture directe des duels", "row-level security" in err or "permission" in err or "violates" in err, err)
 out,err=sql("select count(*) from duels;", A); test("la defense voit les duels contre elle", out=="3", out+err)
 out,err=sql("select count(*) from duels;", C); test("duels invisibles pour un tiers", out=="0", out+err)
+# ---------- Durcissement ----------
+D="dddddddd-0000-0000-0000-000000000004"
+sql(f"insert into auth.users values ('{D}');")
+out,err=sql(f"update joueurs set pseudo='Imposteur' where id='{A}' returning pseudo;", A); test("le pseudo ne change plus apres la creation", out=="Alice", out+err)
+out,err=sql(f"insert into joueurs (id,pseudo) values ('{D}','alice');", D); test("pseudo identique aux majuscules pres refuse", "duplicate" in err or "unique" in err, err)
+out,err=sql(f"insert into joueurs (id,pseudo) values ('{D}','Modo <b>');", D); test("pseudo avec caracteres speciaux refuse", "pseudo refuse" in err, err)
+out,err=sql(f"insert into joueurs (id,pseudo) values ('{D}','Dany');", D); test("pseudo valide accepte", not err, err)
+out,err=sql(f"""update joueurs set vitrine='[{{"id":"goku","n":"<img src=x>","e":99,"v":"<b>"}},{{"x":1}},{{"id":"luffy","n":30,"e":3,"v":"holo"}}]' where id='{A}' returning vitrine::text;""", A)
+test("vitrine reconstruite (nombres bornes, ids et bordures connus)", out=='[{"e": 5, "n": 1, "id": "goku"}, {"e": 3, "n": 30, "v": "holo", "id": "luffy"}]', out+err)
+out,err=sql(f"update joueurs set tour=999999999, collection=-5 where id='{A}' returning tour, collection;", A); test("scores bornes", out=="100000|0", out+err)
+out,err=sql("""select objet_valide('{"objet":"baton-disciple","rarete":"commun","niveau":3,"lignes":[{}]}');""", A); test("objet avec une ligne vide refuse", out=="f", out+err)
+out,err=sql("""select objet_valide('{"objet":"baton-disciple","rarete":"commun","lignes":[{"stat":"atq","valeur":4}]}');""", A); test("objet sans niveau refuse", out=="f", out+err)
+out,err=sql("""select objet_valide('{"objet":"baton-disciple","rarete":"commun","niveau":3,"lignes":[{"stat":"atq","valeur":4.5}]}');""", A); test("ligne au-dessus du maximum refusee", out=="f", out+err)
+out,err=sql("""select objet_valide('{"objet":"baton-disciple","rarete":"commun","niveau":3,"sublime":0,"lignes":[{"stat":"atq","valeur":4.6}]}');""", A); test("ligne sublimee jusqu'a +15 % acceptee", out=="t", out+err)
+time.sleep(2.1)
+out,err=sql("insert into messages (canal,texte) values ('general','vrai message') returning id;", B); mid=out.splitlines()[0] if out else "0"
+out,err=sql(f"insert into signalements (message_id, texte, raison) values ({mid}, 'texte invente', 'test');", A)
+out,err=sql(f"select texte from signalements where message_id={mid};", C); test("le signalement recopie le vrai message", out=="vrai message", out+err)
+
 print(f"\n{ok} OK, {ko} echec(s)")

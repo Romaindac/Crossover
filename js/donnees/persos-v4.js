@@ -28,8 +28,9 @@ export const PERSOS_V4 = [
     id: "itachi", nom: "Itachi", serie: "Naruto", role: "controle", affinite: "chaos", rarete: "rare",
     mods: { atq: 1.03 },
     passif: { nom: "Mangekyō", description: "25 % de chance d'esquiver une attaque de base", type: "esquiveBase", chance: 0.25 },
-    ultime: { nom: "Tsukuyomi", description: "120 % et Étourdissement 2 s sur l'ennemi qui a le plus d'énergie", actions: [
-      { type: "degats", cible: "plus-energie", mult: 1.2, effet: { type: "etourdi", duree: 2 } },
+    ultime: { nom: "Tsukuyomi", description: "Vulnérabilité 4 s, 210 % et Étourdissement 2,5 s sur l'ennemi qui a le plus d'énergie", actions: [
+      { type: "effet", cible: "plus-energie", effet: "vulnerabilite", duree: 4 },
+      { type: "degats", cible: "plus-energie", mult: 2.1, effet: { type: "etourdi", duree: 2.5 } },
     ] },
   },
   {
@@ -54,9 +55,9 @@ export const PERSOS_V4 = [
   {
     id: "ace", nom: "Ace", serie: "One Piece", role: "attaquant", affinite: "puissance", rarete: "epique",
     mods: { atq: 1.04, pv: 0.98 },
-    passif: { nom: "Logia du feu", description: "Ses attaques de base appliquent Brûlure 2 s", type: "effetSurBase", effet: "brulure", duree: 2 },
-    ultime: { nom: "Hiken", description: "200 % à la ligne avant et Brûlure 3 s", actions: [
-      { type: "degats", cible: "ligne-avant", mult: 2.0, effet: { type: "brulure", duree: 3 } },
+    passif: { nom: "Logia du feu", description: "Ses attaques de base ont 50 % de chance d'appliquer Brûlure 2 s", type: "effetSurBase", effet: "brulure", duree: 2, chance: 0.5 },
+    ultime: { nom: "Hiken", description: "130 % à la ligne avant et Brûlure 3 s", actions: [
+      { type: "degats", cible: "ligne-avant", mult: 1.3, effet: { type: "brulure", duree: 3 } },
     ] },
   },
 
@@ -159,8 +160,8 @@ export const PERSOS_V4 = [
     id: "aizen", nom: "Aizen", serie: "Bleach", role: "controle", affinite: "esprit", rarete: "legendaire",
     mods: { atq: 1.03 },
     passif: { nom: "Hypnose totale", description: "Ignore la première attaque reçue toutes les 10 s", type: "annuleAttaquePeriodique", periode: 10 },
-    ultime: { nom: "Kurohitsugi", description: "250 % à l'ennemi à la plus forte ATQ et Étourdissement 2 s", actions: [
-      { type: "degats", cible: "plus-forte-atq", mult: 2.5, effet: { type: "etourdi", duree: 2 } },
+    ultime: { nom: "Kurohitsugi", description: "300 % à l'ennemi à la plus forte ATQ et Étourdissement 2,5 s", actions: [
+      { type: "degats", cible: "plus-forte-atq", mult: 3, effet: { type: "etourdi", duree: 2.5 } },
     ] },
   },
   {
@@ -213,9 +214,9 @@ export const PERSOS_V4 = [
     id: "erwin", nom: "Erwin", serie: "L'Attaque des Titans", role: "soutien", affinite: "esprit", rarete: "epique",
     mods: {},
     passif: { nom: "Commandant", description: "ATQ +15 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.15 },
-    ultime: { nom: "Dévouez vos cœurs", description: "Renforcement 5 s pour toute l'équipe et +25 d'énergie aux autres alliés", actions: [
-      { type: "effet", cible: "allies", effet: "renforcement", duree: 5 },
-      { type: "energie", cible: "allies-autres", montant: 25 },
+    ultime: { nom: "Dévouez vos cœurs", description: "Renforcement 6 s pour toute l'équipe et +35 d'énergie aux autres alliés", actions: [
+      { type: "effet", cible: "allies", effet: "renforcement", duree: 6 },
+      { type: "energie", cible: "allies-autres", montant: 35 },
     ] },
   },
   {
@@ -257,8 +258,8 @@ export const PERSOS_V4 = [
     id: "himeno", nom: "Himeno", serie: "Chainsaw Man", role: "controle", affinite: "esprit", rarete: "commun",
     mods: {},
     passif: { nom: "Démon fantôme", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
-    ultime: { nom: "Main fantôme", description: "100 % et Étourdissement 1,5 s sur un perso de la ligne arrière", actions: [
-      { type: "degats", cible: "arriere", mult: 1.0, effet: { type: "etourdi", duree: 1.5 } },
+    ultime: { nom: "Main fantôme", description: "190 % et Étourdissement 2 s sur un perso de la ligne arrière", actions: [
+      { type: "degats", cible: "arriere", mult: 1.9, effet: { type: "etourdi", duree: 2 } },
     ] },
   },
 
@@ -379,9 +380,9 @@ export const PERSOS_V4 = [
     id: "shun", nom: "Shun", serie: "Saint Seiya", role: "soutien", affinite: "esprit", rarete: "commun",
     mods: {},
     passif: { nom: "Défense circulaire", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
-    ultime: { nom: "Chaîne nébulaire", description: "Bouclier de 10 % des PV aux alliés de la ligne avant et Étourdissement 1 s en face", actions: [
-      { type: "effet", cible: "allies-avant", effet: "bouclier", duree: 6, pourcentPv: 0.1 },
-      { type: "degats", cible: "face", mult: 0.6, effet: { type: "etourdi", duree: 1 } },
+    ultime: { nom: "Chaîne nébulaire", description: "Bouclier de 16 % des PV aux alliés de la ligne avant, 90 % et Étourdissement 1,5 s en face", actions: [
+      { type: "effet", cible: "allies-avant", effet: "bouclier", duree: 6, pourcentPv: 0.16 },
+      { type: "degats", cible: "face", mult: 0.9, effet: { type: "etourdi", duree: 1.5 } },
     ] },
   },
 
@@ -423,8 +424,8 @@ export const PERSOS_V4 = [
     id: "noelle", nom: "Noelle", serie: "Black Clover", role: "soutien", affinite: "esprit", rarete: "peu_commun",
     mods: {},
     passif: { nom: "Sang royal", description: "Soins +20 % sur les alliés sous 30 % de PV", type: "soinsBonusBlesses", seuil: 0.3, bonus: 0.2 },
-    ultime: { nom: "Dôme aquatique", description: "Soigne tous les alliés de 12 % et leur donne Régénération 4 s", actions: [
-      { type: "soin", cible: "allies", pourcent: 0.12 },
+    ultime: { nom: "Dôme aquatique", description: "Soigne tous les alliés de 8 % et leur donne Régénération 4 s", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.08 },
       { type: "effet", cible: "allies", effet: "regeneration", duree: 4 },
     ] },
   },
@@ -449,8 +450,9 @@ export const PERSOS_V4 = [
     id: "finral", nom: "Finral", serie: "Black Clover", role: "soutien", affinite: "technique", rarete: "commun",
     mods: {},
     passif: { nom: "Portails", description: "Ignore la première attaque reçue toutes les 10 s", type: "annuleAttaquePeriodique", periode: 10 },
-    ultime: { nom: "Transport spatial", description: "+30 d'énergie aux autres alliés", actions: [
-      { type: "energie", cible: "allies-autres", montant: 30 },
+    ultime: { nom: "Transport spatial", description: "+45 d'énergie aux autres alliés et Bouclier de 10 % pour tous", actions: [
+      { type: "energie", cible: "allies-autres", montant: 45 },
+      { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.1 },
     ] },
   },
 
@@ -475,10 +477,11 @@ export const PERSOS_V4 = [
     id: "igris", nom: "Igris", serie: "Solo Leveling", role: "tank", affinite: "technique", rarete: "rare",
     mods: { def: 1.05 },
     passif: { nom: "Chevalier de sang", description: "Survit une fois par combat à un coup mortel avec 1 PV", type: "survieUneFois" },
-    ultime: { nom: "Serment écarlate", description: "180 % à la cible en face, puis Provocation et Renforcement 4 s", actions: [
-      { type: "degats", cible: "face", mult: 1.8 },
+    ultime: { nom: "Serment écarlate", description: "250 % à la cible en face, puis Provocation, Renforcement 6 s et Bouclier de 15 %", actions: [
+      { type: "degats", cible: "face", mult: 2.5 },
       { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
-      { type: "effet", cible: "soi", effet: "renforcement", duree: 4 },
+      { type: "effet", cible: "soi", effet: "renforcement", duree: 6 },
+      { type: "effet", cible: "soi", effet: "bouclier", duree: 6, pourcentPv: 0.15 },
     ] },
   },
   {
@@ -553,8 +556,9 @@ export const PERSOS_V4 = [
     id: "riza", nom: "Riza", serie: "Fullmetal Alchemist", role: "controle", affinite: "technique", rarete: "rare",
     mods: { atq: 1.03 },
     passif: { nom: "Œil de faucon", description: "Son premier coup du combat est un critique garanti", type: "premierCoupCritique" },
-    ultime: { nom: "Tir de couverture", description: "200 % et Étourdissement 1,5 s sur l'ennemi à la plus forte ATQ", actions: [
-      { type: "degats", cible: "plus-forte-atq", mult: 2.0, effet: { type: "etourdi", duree: 1.5 } },
+    ultime: { nom: "Tir de couverture", description: "Vulnérabilité 4 s, 310 % et Étourdissement 2 s sur l'ennemi à la plus forte ATQ", actions: [
+      { type: "effet", cible: "plus-forte-atq", effet: "vulnerabilite", duree: 4 },
+      { type: "degats", cible: "plus-forte-atq", mult: 3.1, effet: { type: "etourdi", duree: 2 } },
     ] },
   },
   {
@@ -629,7 +633,7 @@ export const PERSOS_V4 = [
   {
     id: "amon", nom: "Amon", serie: "Tokyo Ghoul", role: "tank", affinite: "puissance", rarete: "peu_commun",
     mods: { pv: 1.05 },
-    passif: { nom: "Justice", description: "30 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.3, duree: 1 },
+    passif: { nom: "Justice", description: "20 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.2, duree: 1 },
     ultime: { nom: "Doujima", description: "Bouclier de 20 % de ses PV et Provocation", actions: [
       { type: "effet", cible: "soi", effet: "bouclier", duree: 6, pourcentPv: 0.2 },
       { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
@@ -666,9 +670,9 @@ export const PERSOS_V4 = [
     id: "dio", nom: "DIO", serie: "JoJo", role: "controle", affinite: "chaos", rarete: "legendaire",
     mods: { atq: 1.04 },
     passif: { nom: "Vampire", description: "Récupère 3 % de ses PV max toutes les 3 s", type: "regenPeriodique", pourcent: 0.03, periode: 3 },
-    ultime: { nom: "The World", description: "Étourdissement 2 s à tous les ennemis, puis 100 % à tous", actions: [
-      { type: "degats", cible: "tous", mult: 0.3, effet: { type: "etourdi", duree: 2 } },
-      { type: "degats", cible: "tous", mult: 1.0 },
+    ultime: { nom: "The World", description: "Étourdissement 1,5 s à tous les ennemis, puis 70 % à tous", actions: [
+      { type: "degats", cible: "tous", mult: 0.3, effet: { type: "etourdi", duree: 1.5 } },
+      { type: "degats", cible: "tous", mult: 0.7 },
     ] },
   },
   {
@@ -682,17 +686,18 @@ export const PERSOS_V4 = [
   {
     id: "joseph", nom: "Joseph", serie: "JoJo", role: "controle", affinite: "technique", rarete: "rare",
     mods: {},
-    passif: { nom: "Ta prochaine réplique", description: "30 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.3, duree: 1 },
-    ultime: { nom: "Hermit Purple", description: "120 % et Étourdissement 1,5 s sur un perso de la ligne arrière", actions: [
-      { type: "degats", cible: "arriere", mult: 1.2, effet: { type: "etourdi", duree: 1.5 } },
+    passif: { nom: "Ta prochaine réplique", description: "35 % de chance d'étourdir 1 s l'ennemi qui le frappe", type: "etourdirAttaquant", chance: 0.35, duree: 1 },
+    ultime: { nom: "Hermit Purple", description: "Vulnérabilité 4 s, 280 % et Étourdissement 2,5 s sur un perso de la ligne arrière", actions: [
+      { type: "effet", cible: "arriere", effet: "vulnerabilite", duree: 4 },
+      { type: "degats", cible: "arriere", mult: 2.8, effet: { type: "etourdi", duree: 2.5 } },
     ] },
   },
   {
     id: "giorno", nom: "Giorno", serie: "JoJo", role: "soutien", affinite: "esprit", rarete: "rare",
     mods: {},
-    passif: { nom: "Gold Experience", description: "Soigne l'allié le plus blessé de 3 % toutes les 4 s", type: "soinPeriodiqueBlesse", pourcent: 0.03, periode: 4 },
-    ultime: { nom: "Souffle de vie", description: "Soigne tous les alliés de 15 % et leur donne Régénération 3 s", actions: [
-      { type: "soin", cible: "allies", pourcent: 0.15 },
+    passif: { nom: "Gold Experience", description: "Soigne l'allié le plus blessé de 2 % toutes les 5 s", type: "soinPeriodiqueBlesse", pourcent: 0.02, periode: 5 },
+    ultime: { nom: "Souffle de vie", description: "Soigne tous les alliés de 9 % et leur donne Régénération 3 s", actions: [
+      { type: "soin", cible: "allies", pourcent: 0.09 },
       { type: "effet", cible: "allies", effet: "regeneration", duree: 3 },
     ] },
   },
@@ -700,8 +705,8 @@ export const PERSOS_V4 = [
     id: "kakyoin", nom: "Kakyoin", serie: "JoJo", role: "controle", affinite: "technique", rarete: "peu_commun",
     mods: {},
     passif: { nom: "Hierophant Green", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
-    ultime: { nom: "Émeraude Splash", description: "5 frappes de 55 % sur des ennemis au hasard", actions: [
-      { type: "degats", cible: "aleatoire", mult: 0.55, coups: 5 },
+    ultime: { nom: "Émeraude Splash", description: "5 frappes de 90 % sur des ennemis au hasard, qui ralentissent 2 s", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.9, coups: 5, effet: { type: "ralenti", duree: 2 } },
     ] },
   },
   {

@@ -4,10 +4,14 @@
 // ==========================================================
 
 import { htmlDevenirFort } from "./aide.js";
+import { ENERGIE_MAX, MINUTES_PAR_ENERGIE } from "../donnees/evenements.js";
+import { INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, CHANCE_INVOCATION_VICTOIRE } from "../donnees/invocations.js";
+import { MINUTES_BOOSTER_GRATUIT, STOCK_GRATUIT_MAX } from "../donnees/boosters.js";
 import { nonLusEnMemoire, enLigneDisponible, connecte, pseudoConnecte } from "../services/enligne.js";
 import { ouvrirCompte } from "./compte.js";
 import { ouvrirTutoriel } from "./tutoriel.js";
 import { encre, quelqueChoseAReclamer, boostersDisponibles, etatEnergie, etatBoosters, eclats, ressources, etatInvocations, etatDonjon } from "../services/partie.js";
+import { signalEcran } from "./vie-ecran.js";
 const partie_cristaux = () => etatDonjon()?.cristaux ?? 0;
 
 // Le lexique des ressources : a quoi sert chaque monnaie et comment l'obtenir
@@ -17,11 +21,11 @@ function lignesLexique() {
   const r = ressources();
   const n = (x) => Number(x ?? 0).toLocaleString("fr-FR");
   return [
-    ["Énergie", `${e.valeur} / ${e.max}`, "Payée seulement quand tu gagnes un combat (campagne 6, Tour 4, chasse 3).", "+1 toutes les 3 min, missions, défi du jour, calendrier, recharge à l'encre. Première victoire d'une étape et nouveaux étages de la Tour : gratuits."],
+    ["Énergie", `${e.valeur} / ${e.max}`, "Payée seulement quand tu gagnes un combat (campagne 6, Tour 4, chasse 3).", `+1 toutes les ${n(MINUTES_PAR_ENERGIE)} min (${ENERGIE_MAX} max), missions, défi du jour, calendrier, recharge à l'encre. Première victoire d'une étape de campagne (édition normale) et étages de la Tour pas encore battus cette semaine : gratuits.`],
     ["Encre", n(encre()), "Acheter des boosters (100 l'un) et recharger l'énergie.", "Chaque victoire, l'expédition, les coffres, les missions."],
-    ["Invocations", `${n(etatInvocations()?.reserve)} / ${n(etatInvocations()?.max)}`, "Invoquer une carte à l'Autel (onglet Invocations).", "+1 toutes les 3 min (réserve de 120), +1 par combat gagné, bonus des missions du jour."],
+    ["Invocations", `${n(etatInvocations()?.reserve)} / ${n(etatInvocations()?.max)}`, "Invoquer une carte à l'Autel (onglet Invocations).", `+1 toutes les ${n(MINUTES_PAR_INVOCATION)} min (réserve de ${INVOCATIONS_MAX}), +1 sur ${Math.round(CHANCE_INVOCATION_VICTOIRE * 100)} % des combats gagnés, bonus des missions du jour, boss de l'Arène et de l'Encrier.`],
     ["Potions", ["chance", "bordure", "vitesse"].map((id) => n(etatInvocations()?.potions[id])).join(" / "), "Chance ×1,5, bordures ×3 ou invocations 2× plus rapides pendant 5 min.", "12 % des victoires, bonus des missions du jour, ou distillées avec la poussière à l'Autel."],
-    ["Tickets de booster", n(b.tickets), "Ouvrir un booster gratuitement.", "1 toutes les 30 min (réserve de 16), chapitres finis, missions, événements, guide."],
+    ["Tickets de booster", n(b.tickets), "Ouvrir un booster gratuitement.", `1 toutes les ${MINUTES_BOOSTER_GRATUIT} min (réserve de ${STOCK_GRATUIT_MAX}), chapitres finis, missions, événements, guide.`],
     ["Tickets dorés", n(b.dores), "Ouvrir un booster doré : 3 cartes Épiques ou Légendaires.", "Très rarement dans un booster (0,3 %). Ils ne s'obtiennent plus en récompense."],
     ["Poussière", n(b.poussiere), "Fabriquer à l'Atelier la carte de ton choix.", "Chaque booster ouvert, et surtout les doublons (plus la carte est rare, plus elle en donne)."],
     ["Cristaux du donjon", n(partie_cristaux()), "Acheter les maîtrises permanentes du Donjon d'encre.", "Chaque étage gagné dans le donjon (gardés en entier si tu sors, à moitié si tu tombes)."],
@@ -39,8 +43,8 @@ export function ouvrirLexique(onglet = "ressources") {
     <div class="resultat lexique" role="dialog" aria-modal="true" aria-labelledby="titre-lexique">
       <h2 class="resultat__titre" id="titre-lexique" tabindex="-1">Aide</h2>
       <div class="choix-segmente choix-segmente--gauche lexique__onglets" role="tablist" aria-label="Aide">
-        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="ressources" aria-selected="${onglet === "ressources"}" aria-checked="${onglet === "ressources"}">Tes ressources</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="fort" aria-selected="${onglet === "fort"}" aria-checked="${onglet === "fort"}">Devenir plus fort</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="ressources" aria-selected="${onglet === "ressources"}">Tes ressources</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-onglet-aide="fort" aria-selected="${onglet === "fort"}">Devenir plus fort</button>
         <button type="button" class="choix-segmente__option" data-ouvrir-tuto>Tutoriel</button>
       </div>
       <div class="lexique__page" data-page="fort" ${onglet === "fort" ? "" : "hidden"}>${htmlDevenirFort()}</div>
@@ -57,7 +61,7 @@ export function ouvrirLexique(onglet = "ressources") {
     if (ev.target.closest("[data-ouvrir-tuto]")) { voile.remove(); return ouvrirTutoriel(); }
     const tab = ev.target.closest("[data-onglet-aide]");
     if (tab) {
-      voile.querySelectorAll("[data-onglet-aide]").forEach((b) => { b.setAttribute("aria-selected", String(b === tab)); b.setAttribute("aria-checked", String(b === tab)); });
+      voile.querySelectorAll("[data-onglet-aide]").forEach((b) => { b.setAttribute("aria-selected", String(b === tab)); });
       voile.querySelectorAll(".lexique__page").forEach((pg) => { pg.hidden = pg.dataset.page !== tab.dataset.ongletAide; });
       voile.querySelector(".lexique").scrollTop = 0;
       return;
@@ -143,13 +147,13 @@ export function brancherNavigation(conteneur, naviguer, actif) {
   maj();
   // Les messages prives non lus arrivent en arriere-plan
   const surNonLus = () => { if (conteneur.isConnected) maj(); else window.removeEventListener("crossover:non-lus", surNonLus); };
-  window.addEventListener("crossover:non-lus", surNonLus);
+  window.addEventListener("crossover:non-lus", surNonLus, { signal: signalEcran() });
   // Connexion ou deconnexion : le bouton du compte change
   const surCompte = () => {
     if (!conteneur.isConnected) return window.removeEventListener("crossover:compte", surCompte);
     conteneur.querySelector("[data-ouvrir-compte]")?.replaceWith(Object.assign(document.createElement("template"), { innerHTML: htmlBoutonCompte() }).content);
     maj();
   };
-  window.addEventListener("crossover:compte", surCompte);
+  window.addEventListener("crossover:compte", surCompte, { signal: signalEcran() });
   return maj;
 }

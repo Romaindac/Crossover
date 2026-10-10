@@ -41,7 +41,7 @@ export const TAMPONS = [
   t("serie-complete", "collection", "Série complète", "Réunir tous les persos d'une série", (x) => x.serieComplete, { encre: 60 }),
   t("legendaires-3", "collection", "Trio légendaire", "Posséder 3 Légendaires", (x) => x.legendaires >= 3, { encre: 150, fragments: 3 }),
   t("legendaires-5", "collection", "Panthéon", "Posséder 6 Légendaires", (x) => x.legendaires >= 6, { encre: 250, fragments: 5 }),
-  t("legendaires-11", "collection", "Toutes les légendes", "Posséder les 11 Légendaires", (x) => x.legendaires >= 11, { encre: 500, fragments: 8 }),
+  t("legendaires-11", "collection", "Toutes les légendes", "Posséder 11 Légendaires", (x) => x.legendaires >= 11, { encre: 500, fragments: 8 }),
   t("tirages-100", "collection", "Gros lecteur", "Ouvrir 25 boosters", (x) => x.boosters >= 25, { encre: 100 }),
   t("boosters-100", "collection", "Collectionneur", "Ouvrir 100 boosters", (x) => x.boosters >= 100, { encre: 300, fragments: 3 }),
   t("secret-1", "collection", "Le secret", "Invoquer un perso Secret", (x) => x.secrets >= 1, { encre: 500, fragments: 10 }, true),
@@ -68,7 +68,7 @@ export const TAMPONS = [
   // (l'identifiant garde l'ancien seuil pour ne pas toucher aux sauvegardes)
   t("raid-1500k", "legendes", "Dévastateur", "Infliger 1 000 000 dégâts au boss de la semaine", (x) => x.raidRecord >= 1000000, { encre: 300, fragments: 6 }),
   t("liens-5", "legendes", "Amitiés", "Découvrir 5 liens", (x) => x.liens >= 5, { encre: 80 }),
-  t("liens-20", "legendes", "Tous liés", "Découvrir les 20 liens", (x) => x.liens >= 20, { encre: 300, fragments: 5 }),
+  t("liens-20", "legendes", "Tous liés", "Découvrir 20 liens", (x) => x.liens >= 20, { encre: 300, fragments: 5 }),
   t("lien-max", "legendes", "Inséparables", "Monter un lien au niveau 5", (x) => x.lienMax, { encre: 150 }),
   t("eveil-1", "legendes", "Premier éveil", "Éveiller un perso", (x) => x.eveils >= 1, { encre: 100 }),
   t("eveil-4", "legendes", "Éveil total", "Monter un perso en éveil IV", (x) => x.eveilIV, { encre: 300, fragments: 5 }),

@@ -35,6 +35,7 @@ import { serieDeLaSemaine, numeroDuMagazine, BONUS_HONNEUR, BUTIN_HONNEUR } from
 import { finDeSemaine } from "../donnees/tour.js";
 import { nomSaison } from "../donnees/saisons.js";
 import { ZONES } from "../donnees/zones.js";
+import { signalEcran } from "../ui/vie-ecran.js";
 
 const nombre = (n) => Math.round(n).toLocaleString("fr-FR");
 const echapperTexte = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -654,7 +655,7 @@ export function afficherQg(conteneur, { naviguer }) {
   rendrePasse();
   rendreMissions();
   const surCompte = () => { if (conteneur.isConnected) rendreBandeauCompte(); else window.removeEventListener("crossover:compte", surCompte); };
-  window.addEventListener("crossover:compte", surCompte);
+  window.addEventListener("crossover:compte", surCompte, { signal: signalEcran() });
   // Premiere visite au QG : le tutoriel de depart
   if (!tutorielVu()) setTimeout(() => { if (conteneur.isConnected) ouvrirTutoriel(); }, 400);
   rendreEvenements();

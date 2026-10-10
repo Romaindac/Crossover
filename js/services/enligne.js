@@ -46,7 +46,9 @@ export function deconnecter() {
 
 // Traduit les erreurs du serveur en phrases simples
 function messageErreur(corps, statut) {
-  const brutOriginal = `${corps?.msg ?? corps?.message ?? corps?.error_description ?? corps?.error ?? ""}`.slice(0, 160);
+  // (le texte du serveur finit dans l'affichage : on l'echappe)
+  const brutOriginal = `${corps?.msg ?? corps?.message ?? corps?.error_description ?? corps?.error ?? ""}`.slice(0, 160)
+    .replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const brut = brutOriginal.toLowerCase();
   if (brut.includes("already registered") || brut.includes("already exists") || brut.includes("duplicate")) return "Ce pseudo est déjà pris.";
   if (brut.includes("invalid login") || brut.includes("invalid_grant") || brut.includes("invalid credentials")) return "Pseudo ou mot de passe incorrect.";
@@ -94,6 +96,8 @@ async function appel(chemin, { methode = "GET", corps, entetes = {}, authentifie
         ...entetes,
       },
       body: corps === undefined ? undefined : JSON.stringify(corps),
+      // une requete bloquee ne doit pas figer le jeu (chat, hotel...)
+      signal: typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined,
     });
   } catch {
     throw new Error("Pas de connexion au serveur. Vérifie ton internet.");
@@ -101,7 +105,11 @@ async function appel(chemin, { methode = "GET", corps, entetes = {}, authentifie
   const texte = await reponse.text();
   let donnees = null;
   try { donnees = texte ? JSON.parse(texte) : null; } catch { donnees = null; }
-  if (!reponse.ok) throw new Error(messageErreur(donnees, reponse.status));
+  if (!reponse.ok) {
+    const e = new Error(messageErreur(donnees, reponse.status));
+    e.statut = reponse.status;
+    throw e;
+  }
   return donnees;
 }
 
@@ -112,9 +120,13 @@ async function jetonFrais() {
   try {
     const d = await appel("/auth/v1/token?grant_type=refresh_token", { methode: "POST", corps: { refresh_token: session.rafraichir } });
     garderSession(d);
-  } catch {
-    deconnecter();
-    throw new Error("Ta session a expiré : reconnecte-toi.");
+  } catch (e) {
+    // Seul un refus du serveur met fin a la session ; une coupure de reseau la garde
+    if (e.statut === 400 || e.statut === 401) {
+      deconnecter();
+      throw new Error("Ta session a expiré : reconnecte-toi.");
+    }
+    throw e;
   }
 }
 

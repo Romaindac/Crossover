@@ -11,7 +11,7 @@ import { RARETES, ORDRE_RARETES } from "../donnees/raretes.js";
 import { EDITIONS_PAR_ID } from "../donnees/boosters.js";
 import {
   MONDES, POTIONS, BORDURES, NIVEAUX_AUTEL, BRANCHES_AUTEL, POINTS_PAR_NIVEAU, COUT_REDISTRIBUTION, PHASES, MINUTES_PAR_PHASE,
-  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_VICTOIRE,
+  CHANCE_BOSS_ARENE, CHANCE_MONDE_FINI, INVOCATIONS_MAX, MINUTES_PAR_INVOCATION, INVOCATIONS_VICTOIRE, CHANCE_INVOCATION_VICTOIRE,
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, PITIE_INVOCATION, POUSSIERE_DOUBLON_INVOCATION, CHANCE_POTION_VICTOIRE,
 } from "../donnees/invocations.js";
 import { tableAvecChance } from "../moteur/invocations.js";
@@ -215,7 +215,7 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
         <p>Bordures (même force, autre cadre) : ${BORDURES.slice().reverse().map((b) => `${b.nom} ${pourcent(b.chance)}`).join(", ")}. La potion de bordure triple ces chances.</p>
         <p>L'Index rend chanceux pour toujours : +${pourcent(CHANCE_SERIE_COMPLETE)} par série complète, +${pourcent(CHANCE_EDITION_COMPLETE)} par édition complète, un peu pour chaque bordure, +${pourcent(CHANCE_BOSS_ARENE)} par boss de l'Arène vaincu, +${pourcent(CHANCE_MONDE_FINI)} par monde dont les 8 boss sont tombés, et des bonus pour le record de la Tour et les éveils.</p>
         <p>Phases de l'autel : toutes les ${MINUTES_PAR_PHASE} minutes, la même pour tous les joueurs. ${PHASES.map((x) => `<b>${x.nom}</b> (${x.texte.replace(/\.$/, "")})`).join(", ")}. La potion de lune relance la phase jusqu'au prochain changement.</p>
-        <p>Réserve : ${INVOCATIONS_MAX} invocations, +1 toutes les ${MINUTES_PAR_INVOCATION} min et +${INVOCATIONS_VICTOIRE} par combat gagné (${pourcent(CHANCE_POTION_VICTOIRE)} des victoires donnent aussi une potion). Un doublon d'un perso déjà à 5 étoiles donne de la poussière (${ORDRE_RARETES.slice().reverse().map((r) => `${RARETES[r].nom} ${POUSSIERE_DOUBLON_INVOCATION[r]}`).join(", ")}).</p>
+        <p>Réserve : ${INVOCATIONS_MAX} invocations, +1 toutes les ${String(MINUTES_PAR_INVOCATION).replace(".", ",")} min et +${INVOCATIONS_VICTOIRE} sur ${pourcent(CHANCE_INVOCATION_VICTOIRE)} des combats gagnés (${pourcent(CHANCE_POTION_VICTOIRE)} des victoires donnent aussi une potion). Un doublon d'un perso déjà à 5 étoiles donne de la poussière (${ORDRE_RARETES.slice().reverse().map((r) => `${RARETES[r].nom} ${POUSSIERE_DOUBLON_INVOCATION[r]}`).join(", ")}).</p>
       </details>`;
   }
 
@@ -378,12 +378,13 @@ export function afficherAutel(zone, { conteneur, majEncre, mouvementReduit = fal
 
   async function invoquer(nombreCartes = 1) {
     if (enCours) return false;
+    // (verrou pris avant l'attente : plusieurs clics pendant la recharge ne lancent qu'une invocation)
+    enCours = true;
     const attente = prochainPossible - Date.now();
     if (attente > 0) await pause(attente);
-    if (!zone.isConnected) return false;
+    if (!zone.isConnected) { enCours = false; return false; }
     const r = invoquerJoueur(nombreCartes);
-    if (!r) { rendreReserve(); return false; }
-    enCours = true;
+    if (!r) { enCours = false; rendreReserve(); return false; }
     const e = etatInvocations();
     prochainPossible = Date.now() + e.delai;
     const bouton = $("[data-autel='invoquer']");

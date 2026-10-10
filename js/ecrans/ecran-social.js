@@ -7,7 +7,7 @@ import { resumeJoueur } from "../services/partie.js";
 import {
   enLigneDisponible, connecte, pseudoConnecte, classement, CLASSEMENTS,
 } from "../services/enligne.js";
-import { idsVitrine, basculerVitrine, meilleuresCartes, vitrineCompacte, lienVitrine, TAILLE_VITRINE } from "../services/vitrine.js";
+import { idsVitrine, basculerVitrine, meilleuresCartes, vitrineCompacte, lienVitrine, TAILLE_VITRINE, carteVitrineSure } from "../services/vitrine.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
 import { numeroSemaine } from "../donnees/tour.js";
 import { chargerPortraits } from "../services/portraits.js";
@@ -18,18 +18,24 @@ import { brancherChat } from "../ui/chat.js";
 import { afficherHotel } from "../ui/hotel.js";
 import { afficherEchanges } from "../ui/echanges.js";
 import { ouvrirCompte } from "../ui/compte.js";
+import { signalEcran } from "../ui/vie-ecran.js";
 
 const echapper = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 // Une carte de vitrine compacte { id, n, e, v } en HTML
-export function htmlCarteVitrine(c) {
+// (les vitrines des autres joueurs viennent d'un lien ou du serveur : tout est revalide)
+export function htmlCarteVitrine(brute) {
+  const c = carteVitrineSure(brute);
+  if (!c) return "";
   const perso = PERSOS_PAR_ID[c.id];
-  if (!perso) return "";
-  return htmlCarte(perso, { progression: { niveau: c.n ?? 1, etoiles: c.e ?? 1, variantes: c.v ? [c.v] : [] } })
+  return htmlCarte(perso, { progression: { niveau: c.n, etoiles: c.e, ascension: c.a ?? 0, variantes: c.v ? [c.v] : [] } })
     .replace('data-action="choisir-perso"', 'data-action="voir-carte"').replace('draggable="true"', "");
 }
 
-export function htmlResume(r = {}) {
+export function htmlResume(brut = {}) {
+  // les chiffres d'un profil en ligne sont ramenes a des nombres (jamais de texte brut)
+  const n = (k) => Math.max(0, Math.floor(Number(brut?.[k]) || 0));
+  const r = { collection: n("collection"), etoiles: n("etoiles"), tour: n("tour"), raid: n("raid"), boss_semaine: n("boss_semaine"), semaine: n("semaine") };
   return `<ul class="vitrine-resume">
     <li><strong>${r.collection ?? 0}</strong> persos</li>
     <li><strong>${r.etoiles ?? 0}</strong> étoiles</li>
@@ -223,7 +229,6 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     ongletSocial = nom;
     conteneur.querySelectorAll("[data-action='onglet-social'][role='tab']").forEach((b) => {
       b.setAttribute("aria-selected", String(b.dataset.onglet === nom));
-      b.setAttribute("aria-checked", String(b.dataset.onglet === nom));
     });
     conteneur.querySelectorAll("[data-panneau]").forEach((s) => { s.hidden = s.dataset.panneau !== nom; });
     $(".social").classList.toggle("social--large", nom === "chat" || nom === "hotel" || nom === "echanges");
@@ -243,7 +248,7 @@ export function afficherSocial(conteneur, { naviguer, onglet = null }) {
     if (!conteneur.isConnected) return window.removeEventListener("crossover:compte", surCompte);
     rendreCompte(); rendreVitrine(); afficherOnglet(ongletSocial);
   };
-  window.addEventListener("crossover:compte", surCompte);
+  window.addEventListener("crossover:compte", surCompte, { signal: signalEcran() });
 
   rendreVitrine();
   rendreCompte();

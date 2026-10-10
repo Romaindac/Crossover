@@ -130,7 +130,14 @@ const ECLAIR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h
 export const nombreCourt = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".", ",")} M`
   : n >= 1e4 ? `${(n / 1e3).toFixed(1).replace(".", ",")} k` : Math.round(n).toLocaleString("fr-FR"));
 
-export function htmlCarte(perso, { dansEquipe = false, progression = null } = {}) {
+export function htmlCarte(perso, { dansEquipe = false, progression: brute = null } = {}) {
+  // Niveau, etoiles et ascension finissent dans le HTML : toujours des nombres
+  const progression = brute && {
+    ...brute,
+    niveau: Math.max(1, Math.floor(Number(brute.niveau) || 1)),
+    etoiles: Math.max(1, Math.min(5, Math.floor(Number(brute.etoiles) || 1))),
+    ascension: Math.max(0, Math.min(5, Math.floor(Number(brute.ascension) || 0))),
+  };
   const variante = meilleureVariante(progression);
   const meta = progression
     ? `<span class="carte__meta">Niv. ${progression.niveau}</span>${htmlEtoiles(progression.etoiles, progression.ascension ?? 0)}`

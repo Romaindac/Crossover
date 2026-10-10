@@ -90,9 +90,9 @@ export function afficherEchanges(zone, { apresChangement = () => {} } = {}) {
   function htmlOnglets() {
     return `
       <div class="choix-segmente choix-segmente--gauche" role="tablist" aria-label="Échanges">
-        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="offres" aria-checked="${vue === "offres"}">Offres des joueurs</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="proposer" aria-checked="${vue === "proposer"}">Proposer</button>
-        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="miennes" aria-checked="${vue === "miennes"}">Mes échanges</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="offres" aria-selected="${vue === "offres"}">Offres des joueurs</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="proposer" aria-selected="${vue === "proposer"}">Proposer</button>
+        <button type="button" role="tab" class="choix-segmente__option" data-ech="vue" data-vue="miennes" aria-selected="${vue === "miennes"}">Mes échanges</button>
       </div>`;
   }
 

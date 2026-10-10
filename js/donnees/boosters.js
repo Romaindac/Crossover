@@ -42,7 +42,7 @@ export const EDITIONS = [
 export const EDITIONS_PAR_ID = Object.fromEntries(EDITIONS.map((e) => [e.id, e]));
 export const editionDeSerie = (serie) => EDITIONS.find((e) => e.series.includes(serie)) ?? null;
 
-// Un booster gratuit toutes les 30 minutes (reserve de 8 h) : chaque booster est donc petit
+// Un booster gratuit toutes les 30 minutes (reserve de 8 tickets, soit 4 h) : chaque booster est donc petit
 // (3 cartes) et les grosses raretes sont rares. Simulation (200 joueurs) :
 // 36 persos apres 25 boosters, 56 apres 100, la collection complete vers
 // 1 000 boosters (environ 5 semaines pour un joueur regulier).
@@ -59,7 +59,7 @@ export const CASES_BOOSTER = [
 export const CHANCE_BOOSTER_DORE = 0.003;
 export const CASE_DOREE = { epique: 0.75, legendaire: 0.25 };
 
-// Pitie : un Legendaire garanti dans la derniere case au 100e booster sans Legendaire
+// Pitie : un Legendaire garanti dans la derniere case au 150e booster sans Legendaire
 export const PITIE_BOOSTER = 150;
 
 // Variantes cosmetiques (meme force, autre cadre) : par carte

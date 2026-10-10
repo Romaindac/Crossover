@@ -153,10 +153,12 @@ export function afficherDuels(zone, { naviguer, majNavigation }) {
     dire("");
     rendre();
     const graine = Math.floor(Math.random() * 2147483647);
-    await jouerCombatDirect({ config: configDuel(a.equipe, graine), titre: `Duel contre ${echapper(a.pseudo)}`, sousTitre: `${rangDuel(a.points).nom} · ${nombre(a.points)} points` });
+    // Le resultat part au serveur AVANT l'animation : recharger la page pendant le combat
+    // ne permet plus d'esquiver une defaite (le combat est deterministe, l'animation le rejoue).
     const r = jouerDuel(a.equipe, graine);
     try {
       const s = await resultatDuel(id, r.victoire, r.graine);
+      await jouerCombatDirect({ config: configDuel(a.equipe, graine), titre: `Duel contre ${echapper(a.pseudo)}`, sousTitre: `${rangDuel(a.points).nom} · ${nombre(a.points)} points` });
       const rec = recompenserDuel(r.victoire);
       dire(`${r.victoire ? "Victoire" : "Défaite"} contre ${echapper(a.pseudo)} en ${Math.round(r.duree)} s (${r.koB} KO infligés, ${r.koA} subis) : ${s.gain > 0 ? "+" : ""}${s.gain} points${rec ? `, +${rec.encre} encre, +${rec.invocations} invocations` : ""}.`, !r.victoire);
       r.victoire ? sonRarete("rare") : sonCarte();

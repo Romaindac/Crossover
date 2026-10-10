@@ -28,6 +28,7 @@ import { chargerPortraits } from "../services/portraits.js";
 import { htmlPortrait, rafraichirPortrait, COULEURS_AFFINITE } from "../ui/cartes.js";
 import { iconeEffet } from "../ui/icones-effets.js";
 import { htmlDecor } from "../ui/decors.js";
+import { signalEcran } from "../ui/vie-ecran.js";
 
 const DUREE_TIC = 100; // millisecondes par tic, a vitesse x1
 const ONOMATOPEES = ["ドン", "ドドド", "ゴゴゴ", "バキッ", "ズドン", "ドカッ", "BAM", "VLAN", "BOUM", "CRAC", "PAF", "SBAM"];
@@ -1086,7 +1087,7 @@ export function afficherCombat(conteneur, { naviguer, equipe, palier, chasse = n
       basculerPause();
     }
   }
-  document.addEventListener("keydown", clavier);
+  document.addEventListener("keydown", clavier, { signal: signalEcran() });
 
   // Au cas ou des portraits manquent encore
   chargerPortraits((id) => rafraichirPortrait(conteneur, id));

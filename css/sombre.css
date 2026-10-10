@@ -333,3 +333,87 @@
 
 /* (le halo d'une carte au bord ne doit pas faire defiler la page de cote) */
 .collection { overflow-x: clip; }
+
+/* Compte : le choix entre la partie de cet appareil et celle en ligne */
+.compte__choix { display: grid; gap: 0.5rem; margin: 0.6rem 0; }
+.compte__choix .encrier__option {
+  display: grid; gap: 0.15rem; padding: 0.75rem 0.9rem; font: inherit; text-align: left;
+  color: #e9e6f2; background: #1a1d3a; border: 1px solid rgb(255 255 255 / 0.16); border-radius: 10px; cursor: pointer;
+}
+.compte__choix .encrier__option b { color: #fff; }
+.compte__choix .encrier__option span { font-size: 0.84rem; color: #a9a8c4; }
+.compte__choix .encrier__option:hover { border-color: #f0b52a; background: #222648; }
+
+/* Onglets (role="tab") : l'onglet choisi est marque par aria-selected, comme un choix coche */
+.choix-segmente__option[role="tab"][aria-selected="true"]:not(#n) {
+  color: #1a1206;
+  background: var(--sb-or);
+  border-color: transparent;
+}
+
+/* Le tutoriel : son illustration reste une scene d'encre (la couche sombre inverse --encre dans les fenetres) */
+.tuto .tuto__scene:not(#n) {
+  color: #e9e6f2;
+  background:
+    radial-gradient(ellipse 70% 55% at 75% 30%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(circle at 20% 80%, rgb(110 90 220 / 0.25), transparent 60%),
+    #0e1022;
+}
+.tuto .tuto__scene :is(.aide__schema, .aide__formation):not(#n) { color: #17192d; background: #f2f0ea; }
+
+/* ==========================================================
+   SCENES D'HISTOIRE : une planche d'encre ; les bulles restent
+   blanches (comme dans un manga), la narration est un encart dore.
+   ========================================================== */
+.scene-histoire:not(#n) { background: rgb(8 9 22 / 0.82); backdrop-filter: blur(3px); }
+
+.scene-histoire__page:not(#n) {
+  --encre: #e9e6f2;
+  --encre-douce: #a9a8c4;
+  --papier: #1a1d3a;
+  color: #e9e6f2;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgb(120 110 220 / 0.16), transparent 70%),
+    radial-gradient(circle, rgb(255 255 255 / 0.035) 0 1px, transparent 1.4px) 0 0 / 12px 12px,
+    #12142b;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.65);
+}
+
+.scene-histoire__titre:not(#n) { color: #fff; border-bottom: 2px solid #f0b52a; }
+
+.case-scene:not(#n) {
+  background: #1a1d3a;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 12px;
+}
+
+.case-scene__visage:not(#n) { border: 2px solid rgb(255 255 255 / 0.25); border-radius: 10px; }
+
+/* La bulle : papier blanc, encre foncee, sa pointe aussi */
+.case-scene__bulle:not(#n),
+.case-scene--gauche .case-scene__bulle:not(#n)::before,
+.case-scene--droite .case-scene__bulle:not(#n)::before {
+  color: #17192d;
+  background: #fbfaf6;
+  border-color: #17192d;
+}
+
+.case-scene__nom:not(#n) { color: #a9a8c4; }
+
+/* La Rature parle en bulle d'encre */
+.case-scene--rature .case-scene__bulle:not(#n),
+.case-scene--rature .case-scene__bulle:not(#n)::before { color: #f2f0ea; background: #0a0b18; border-color: #ff7a6e; }
+.case-scene--rature .case-scene__nom:not(#n) { color: #ff8a80; }
+
+/* La narration : un encart dore, en italique */
+.case-scene--recit:not(#n) {
+  color: #f2e6c4;
+  background: radial-gradient(ellipse 90% 120% at 0% 0%, rgb(240 181 42 / 0.14), transparent 70%), #17192f;
+  border: 1px solid rgb(240 181 42 / 0.45);
+  border-left: 4px solid #f0b52a;
+}
+
+.scene-histoire__barre:not(#n) { color: #a9a8c4; border-top-color: rgb(255 255 255 / 0.12); }
+.scene-histoire__barre .bouton--principal:not(#n) { color: #1a1206; background: linear-gradient(180deg, #ffe07a, #f0b52a); }
