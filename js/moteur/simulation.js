@@ -23,7 +23,7 @@ function lireEntree(entree) {
 }
 
 function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
-  const { id, niveau, etoiles, equipement = [], eveil = 0, talents = [], bonusPct = 0, ascension = 0 } = lireEntree(entree);
+  const { id, niveau, etoiles, equipement = [], eveil = 0, talents = [], bonusPct = 0, ascension = 0, pvPart = 1 } = lireEntree(entree);
   const perso = PERSOS_PAR_ID[id];
   if (!perso) throw new Error(`Perso inconnu : ${id}`);
   const stats = calculerStatsFinales(perso, {
@@ -55,7 +55,8 @@ function creerUnite(entree, place, camp, idsEquipe, options, hasard) {
     place,
     stats,
     pvMax: stats.pv,
-    pv: stats.pv,
+    // pvPart : part des PV au depart (roguelite : les blessures restent d'un combat a l'autre ; 0 = deja KO)
+    pv: pvPart >= 1 ? stats.pv : Math.max(0, Math.round(stats.pv * Math.max(0, pvPart))) || (pvPart > 0 ? 1 : 0),
     energie: Math.min(ENERGIE_MAX, stats.energieDepart || 0),
     jauge: hasard.nombre() * 0.3,   // petit decalage de depart
     effets: [],
@@ -73,7 +74,7 @@ export function creerCombat({
   multiplicateurA = 1, multiplicateurB = 1, niveauB = null,
   avecRarete = true, autoA = true, journal = true,
   modificateurs = null,   // regles speciales (arcs de la Tour) : { critMult, soinsMult, energieDepart, esquive, atqEnnemis }
-  bonusA = null,          // bonus du camp A seulement (donjon) : { crit, esquive, volDeVie, energieDepart }
+  bonusA = null,          // bonus du camp A seulement (donjon, roguelite) : { crit, esquive, volDeVie, energieDepart, stats: { cle: valeur } }
 }) {
   const hasard = creerHasard(graine);
   const etat = {
@@ -108,12 +109,17 @@ export function creerCombat({
       if (bonusA.esquive) u.stats.esquive = (u.stats.esquive || 0) + bonusA.esquive;
       if (bonusA.volDeVie) u.stats.volDeVie = (u.stats.volDeVie || 0) + bonusA.volDeVie;
       if (bonusA.energieDepart) u.energie = Math.max(u.energie, Math.min(ENERGIE_MAX, bonusA.energieDepart));
+      // Effets de combat supplementaires (reliques du roguelite) : nombres ajoutes, booleens actives
+      for (const [cle, v] of Object.entries(bonusA.stats ?? {})) {
+        u.stats[cle] = typeof v === "boolean" ? (v || Boolean(u.stats[cle])) : (u.stats[cle] || 0) + v;
+      }
     }
   }
   emettre(etat, { type: "debut" });
 
   // Ensemble Garde de fer : un bouclier des le debut du combat
   for (const u of etat.unites) {
+    if (u.pv <= 0) continue;   // deja KO (roguelite) : pas d'effet de depart
     if (u.stats.bouclierDepart > 0) {
       appliquerEffet(etat, u, "bouclier", 15, u, { valeur: u.pvMax * u.stats.bouclierDepart });
     }

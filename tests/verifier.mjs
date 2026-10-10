@@ -118,5 +118,36 @@ verifier(readFileSync(new URL("../supabase/a-coller.sql", import.meta.url), "utf
   verifier(secrets > 15 && secrets < 70 && bonsMondes, `Secrets a l'autel : ${secrets} sur 200 000 invocations (environ 40 attendus), chacun dans son monde`);
 }
 
+// ---------- L'Encrier (roguelite) ----------
+{
+  const { genererCarte, offrePersos, adversaireCase, effetsReliques } = await import("../js/moteur/encrier.js");
+  const { RELIQUES, EVENEMENTS } = await import("../js/donnees/encrier.js");
+  let cartesOk = true;
+  for (let g = 1; g <= 200; g++) for (let a = 1; a <= 3; a++) {
+    const r = genererCarte(g, a).rangs;
+    if (r.at(-1).length !== 1 || r.at(-1)[0].type !== "boss" || r[0].some((x) => x.type !== "combat")) cartesOk = false;
+    for (let i = 0; i < r.length - 1; i++) {
+      if (r[i].some((x) => !x.liens.length || x.liens.some((l) => !r[i + 1].some((y) => y.id === l)))) cartesOk = false;
+      if (r[i + 1].some((y) => !r[i].some((x) => x.liens.includes(y.id)))) cartesOk = false;
+    }
+  }
+  verifier(cartesOk, "Encrier : chaque carte mene au boss, chaque case est atteignable et mene quelque part");
+  verifier(JSON.stringify(genererCarte(5, 2)) === JSON.stringify(genererCarte(5, 2)) && offrePersos(9, "x", 4, 1).join() === offrePersos(9, "x", 4, 1).join(), "Encrier : cartes et offres reproductibles (meme graine)");
+  let departOk = true;
+  for (let g = 1; g <= 100; g++) {
+    const o = offrePersos(g, "depart", 6, 0, { garantir: ["tank", "soutien", "attaquant"] });
+    if (o.length !== 6 || new Set(o).size !== 6 || !["tank", "soutien", "attaquant"].every((r) => o.some((id) => PERSOS_PAR_ID[id].role === r)) || o.some((id) => !PERSOS.includes(PERSOS_PAR_ID[id]))) departOk = false;
+  }
+  verifier(departOk, "Encrier : le draft de depart propose 6 persos differents (hors Secrets), avec tank, soutien et attaquant");
+  verifier(adversaireCase(1, 3, 7, "boss", "b").multiplicateur > adversaireCase(1, 2, 7, "boss", "b").multiplicateur && adversaireCase(1, 2, 7, "boss", "b").multiplicateur > adversaireCase(1, 1, 0, "combat", "c").multiplicateur, "Encrier : les ennemis se renforcent d'acte en acte");
+  verifier(effetsReliques(["pacte", "encre-chine", "talisman"]).pct === 35 && effetsReliques(["talisman"]).stats.survie === true && new Set(RELIQUES.map((r) => r.id)).size === RELIQUES.length, "Encrier : les reliques se cumulent (ids uniques)");
+  verifier(EVENEMENTS.every((e) => e.choix.length >= 2 && e.choix.every((c) => c.texte && c.detail && c.effets)), "Encrier : chaque evenement a au moins deux choix complets");
+  const { jouerParties } = await import("../js/outils/robot-encrier.mjs");
+  const st = jouerParties(40);
+  const fins = st.actes.reduce((a, b) => a + b, 0);
+  verifier(fins === 40 && st.sansBilan.length === 0, `Encrier : 40 parties completes jouees par le robot sans blocage (victoires du robot : ${st.victoires})`);
+  verifier(st.victoires >= 1 && st.victoires <= 20, "Encrier : ni impossible ni trop facile pour le robot (1 a 20 victoires sur 40)");
+}
+
 console.log(erreurs ? `\n${erreurs} verification(s) en echec.` : "\nTout est bon.");
 process.exit(erreurs ? 1 : 0);
