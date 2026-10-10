@@ -114,7 +114,7 @@ export function gagnerEnergie(u, quantite) {
 // ---------- Effets (avec message dans le journal) ----------
 
 export function appliquerEffet(etat, cible, type, dureeSecondes, source, { valeur = 0, force = false } = {}) {
-  if (cible.pv <= 0) return false;
+  if (cible.pv <= 0 || (source && source !== cible && source.pv <= 0)) return false;
   if (type === "etourdi" && !force && cible.stats.immuniteEtourdi && !cible.compteurs.immuniteUtilisee) {
     cible.compteurs.immuniteUtilisee = true;
     emettre(etat, { type: "resiste", cible: cible.uid, source: source?.uid ?? null, effet: type, duree: dureeSecondes, valeur: 0 });
@@ -251,7 +251,8 @@ export function perteDirecte(etat, cible, montant, source, origine) {
 // ---------- Degats d'une attaque ----------
 
 export function infligerDegats(etat, source, cible, { mult = 1, base = false, critGaranti = false, multCrit = null, ultime = false } = {}) {
-  if (cible.pv <= 0) return { touche: false };
+  // (un perso tombe en pleine action, par exemple sous les Epines, ne frappe plus)
+  if (cible.pv <= 0 || (source && source.pv <= 0)) return { touche: false };
   const h = etat.hasard;
 
   // Infini de Gojo : annule la premiere attaque toutes les X secondes
@@ -356,6 +357,7 @@ export function attaqueDeBase(etat, u) {
   }
 
   const p = u.passif;
+  if (u.pv <= 0) return;   // tombe sur la riposte (Epines) : la suite de l'attaque n'a pas lieu
   if (p.type === "doubleFrappe") infligerDegats(etat, u, cible, { mult: p.mult });
   if (p.type === "effetSurBase" && cible.pv > 0 && (!p.chance || etat.hasard.chance(p.chance))) {
     appliquerEffet(etat, cible, p.effet, p.duree, u);

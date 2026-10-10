@@ -1,0 +1,60 @@
+/* ==========================================================
+   FLUIDITE : les animations continues ne font plus redessiner
+   la page a chaque image (mesure : la Collection au repos
+   prenait 650 ms de calcul par seconde, la campagne 330 ms).
+   Seules l'opacite et la transformation sont animees : le
+   navigateur les fait sans repeindre. Charge en tout dernier.
+   ========================================================== */
+
+/* Halos des cartes Epiques, Legendaires et Secrets : l'anneau est fixe,
+   la lueur est un calque dont seule l'opacite respire */
+.carte--epique,
+.carte--legendaire,
+.carte--secret,
+.tome--epique:not(.etagere__tome--manquant) .etagere__couverture,
+.tome--legendaire:not(.etagere__tome--manquant) .etagere__couverture,
+.tome--secret:not(.etagere__tome--manquant) .etagere__couverture {
+  animation: none;
+  box-shadow: 0 0 0 1px var(--encre), 0 0 8px -2px var(--halo);
+}
+
+.carte--secret,
+.tome--secret:not(.etagere__tome--manquant) .etagere__couverture { box-shadow: 0 0 0 2px #000, 0 0 10px -2px var(--halo); }
+
+/* (un calque anime serait coupe par le bord de la carte : le halo reste fixe, plus marque) */
+.carte--legendaire,
+.tome--legendaire:not(.etagere__tome--manquant) .etagere__couverture { box-shadow: 0 0 0 1px var(--encre), 0 0 14px 0 var(--halo); }
+.carte--secret,
+.tome--secret:not(.etagere__tome--manquant) .etagere__couverture { box-shadow: 0 0 0 2px #000, 0 0 18px 2px var(--halo); }
+
+/* Les braises du decor : de petits points HTML qui montent (transform + opacite) */
+.decor__braises {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.braise {
+  position: absolute;
+  bottom: 2%;
+  width: var(--taille);
+  height: var(--taille);
+  background: #f08a3c;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #f08a3c;
+  animation: braise-monte var(--duree) linear var(--depart) infinite;
+}
+
+@keyframes braise-monte {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-70cqh); opacity: 0; }
+}
+
+.decor { container-type: size; }
+
+/* Respect du reglage « reduire les animations » du systeme */
+@media (prefers-reduced-motion: reduce) {
+  .braise { animation: none; }
+  .braise { opacity: 0.5; }
+}

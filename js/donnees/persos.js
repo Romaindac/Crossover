@@ -133,7 +133,7 @@ const PERSOS_BASE = [
     id: "griffith", nom: "Griffith", serie: "Berserk", role: "soutien", affinite: "esprit", rarete: "rare",
     mods: { vit: 1.08 },
     passif: { nom: "Charisme", description: "ATQ +15 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.15 },
-    ultime: { nom: "Aube du Faucon", description: "Renforcement et +30 d'énergie pour tous les alliés", actions: [
+    ultime: { nom: "Aube du Faucon", description: "Renforcement pour tous les alliés et +30 d'énergie pour les autres alliés", actions: [
       { type: "effet", cible: "allies", effet: "renforcement", duree: 6 },
       { type: "energie", cible: "allies-autres", montant: 30 },
     ] },
@@ -295,7 +295,7 @@ const PERSOS_BASE = [
     id: "hisoka", nom: "Hisoka", serie: "Hunter x Hunter", role: "controle", affinite: "chaos", rarete: "epique",
     mods: { atq: 1.2, pv: 1.05 },
     passif: { nom: "Texture surprise", description: "30 % de chance d'esquiver les attaques de base", type: "esquiveBase", chance: 0.3 },
-    ultime: { nom: "Bungee Gum", description: "320 % et Étourdissement 2,5 s sur l'ennemi qui a le plus d'énergie (il coupe son ultime)", actions: [
+    ultime: { nom: "Bungee Gum", description: "320 % et Étourdissement 2,5 s sur l'ennemi qui a le plus d'énergie (son ultime est retardé)", actions: [
       { type: "degats", cible: "plus-energie", mult: 3.2, effet: { type: "etourdi", duree: 2.5 } },
     ] },
   },
@@ -472,7 +472,7 @@ const PERSOS_BASE = [
   {
     id: "kenpachi", nom: "Kenpachi", serie: "Bleach", role: "tank", affinite: "chaos", rarete: "peu_commun",
     mods: { atq: 1.15 },
-    passif: { nom: "Soif de combat", description: "ATQ +1 % par % de PV perdu (moitié de l'effet)", type: "atqSelonPvPerdus", ratio: 0.5 },
+    passif: { nom: "Soif de combat", description: "ATQ +1 % par tranche de 2 % de PV perdus", type: "atqSelonPvPerdus", ratio: 0.5 },
     ultime: { nom: "Coup de sabre sauvage", description: "250 % à la cible en face, puis Provocation", actions: [
       { type: "degats", cible: "face", mult: 2.5 },
       { type: "effet", cible: "soi", effet: "provocation", duree: 4 },
@@ -510,8 +510,8 @@ const PERSOS_BASE = [
     id: "uraraka", nom: "Uraraka", serie: "My Hero Academia", role: "controle", affinite: "esprit", rarete: "commun",
     mods: {},
     passif: { nom: "Zéro gravité", description: "20 % de chance d'étourdir 1 s l'ennemi qui la frappe", type: "etourdirAttaquant", chance: 0.2, duree: 1 },
-    ultime: { nom: "Pluie de météores", description: "5 débris de 60 % sur des ennemis au hasard et Ralentissement", actions: [
-      { type: "degats", cible: "aleatoire", mult: 0.6, coups: 5, effet: { type: "ralenti", duree: 3 } },
+    ultime: { nom: "Pluie de météores", description: "5 débris de 75 % sur des ennemis au hasard et Ralentissement", actions: [
+      { type: "degats", cible: "aleatoire", mult: 0.75, coups: 5, effet: { type: "ralenti", duree: 3 } },
     ] },
   },
   {
@@ -555,7 +555,7 @@ const PERSOS_BASE = [
     id: "armin", nom: "Armin", serie: "L'Attaque des Titans", role: "soutien", affinite: "esprit", rarete: "commun",
     mods: {},
     passif: { nom: "Stratège", description: "ATQ +8 % pour les alliés de la ligne avant", type: "auraAtqAvant", bonus: 0.08 },
-    ultime: { nom: "Plan d'Armin", description: "Renforcement 6 s, Bouclier de 10 % et +30 d'énergie pour tous les alliés", actions: [
+    ultime: { nom: "Plan d'Armin", description: "Renforcement 6 s et Bouclier de 10 % pour tous les alliés, +30 d'énergie pour les autres", actions: [
       { type: "effet", cible: "allies", effet: "renforcement", duree: 6 },
       { type: "effet", cible: "allies", effet: "bouclier", duree: 6, pourcentPv: 0.1 },
       { type: "energie", cible: "allies-autres", montant: 30 },
@@ -692,8 +692,8 @@ const PERSOS_BASE = [
     id: "gray", nom: "Gray", serie: "Fairy Tail", role: "controle", affinite: "technique", rarete: "peu_commun",
     mods: {},
     passif: { nom: "Ice Make", description: "Ses attaques de base appliquent Ralentissement 2 s", type: "effetSurBase", effet: "ralenti", duree: 2 },
-    ultime: { nom: "Ice Make : Lance", description: "200 % et Étourdissement 1,5 s sur l'ennemi à la plus forte ATQ", actions: [
-      { type: "degats", cible: "plus-forte-atq", mult: 2.0, effet: { type: "etourdi", duree: 1.5 } },
+    ultime: { nom: "Ice Make : Lance", description: "240 % et Étourdissement 2 s sur l'ennemi à la plus forte ATQ", actions: [
+      { type: "degats", cible: "plus-forte-atq", mult: 2.4, effet: { type: "etourdi", duree: 2 } },
     ] },
   },
   {

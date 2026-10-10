@@ -117,7 +117,7 @@ export function afficherHotel(zone, { naviguer, apresChangement = () => {}, vend
           <p class="hotel__encre"><span class="compteur-encre__goutte" aria-hidden="true"></span><strong>${nombre(encre())}</strong> d'encre</p>
         </div>
         <div class="choix-segmente choix-segmente--gauche" role="tablist" aria-label="Hôtel des ventes">
-          ${[["acheter", "Acheter"], ["vendre", "Vendre"], ["miennes", `Mes ventes${gains ? " (!)" : ""}`]].map(([k, t]) => `<button type="button" role="tab" class="choix-segmente__option" data-hv="vue" data-valeur="${k}" aria-selected="${vue === k}" aria-checked="${vue === k}">${t}</button>`).join("")}
+          ${[["acheter", "Acheter"], ["vendre", "Vendre"], ["miennes", `Mes ventes${gains ? " (!)" : ""}`]].map(([k, t]) => `<button type="button" role="tab" class="choix-segmente__option" data-hv="vue" data-valeur="${k}" aria-selected="${vue === k}">${t}</button>`).join("")}
         </div>
         <p class="case__message ${erreur ? "case__message--erreur" : ""}" role="status" aria-live="polite">${message}</p>
         ${corps}

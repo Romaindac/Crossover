@@ -202,8 +202,20 @@ function migrerIdsSecrets(p) {
   return JSON.parse(texte);
 }
 
+// Une sauvegarde abimee ne doit jamais empecher le jeu de demarrer : si la lecture plante,
+// on garde une copie de secours (rien n'est perdu) et on repart comme sans sauvegarde.
 function valider(p) {
-  if (!p || p.version !== VERSION || typeof p.encre !== "number" || typeof p.collection !== "object") return null;
+  try {
+    return validerSansFilet(p);
+  } catch (erreur) {
+    console.warn("Sauvegarde illisible, copie gardee sous crossover:partie-secours", erreur);
+    try { if (p) ecrire(`${CLE}-secours`, p); } catch { /* rien */ }
+    return null;
+  }
+}
+
+function validerSansFilet(p) {
+  if (!p || p.version !== VERSION || typeof p.encre !== "number" || !p.collection || typeof p.collection !== "object") return null;
   p = migrerIdsSecrets(p);
   const collection = {};
   for (const [id, prog] of Object.entries(p.collection)) {
@@ -231,25 +243,27 @@ function valider(p) {
       maj: Number(p.energie?.maj) || Date.now(),
       achats: p.energie?.achats ?? null,
     },
-    evenements: p.evenements ?? {},
+    evenements: p.evenements && typeof p.evenements === "object" ? p.evenements : {},
     paliersBattus,
     equipe: equipe.map((id, i) => (collection[id] && equipe.indexOf(id) === i ? id : null)),
     palier: Number(p.palier) || 1,
     heros: p.heros ?? null,
     vedette: collection[p.vedette] ? p.vedette : collection[p.heros] ? p.heros : Object.keys(collection)[0] ?? null,
     stats: { combats: 0, victoires: 0, tirages: 0, legendaires: 0, ...(p.stats ?? {}) },
-    missions: p.missions ?? null,
+    missions: p.missions && Array.isArray(p.missions.liste) ? p.missions : null,
     missionsSemaine: p.missionsSemaine ?? null,
     saison: p.saison ?? null,
     expeditionsCiblees: Array.isArray(p.expeditionsCiblees) ? p.expeditionsCiblees : [null, null],
-    equipesEnregistrees: Array.isArray(p.equipesEnregistrees) ? p.equipesEnregistrees : [null, null, null],
+    equipesEnregistrees: Array.isArray(p.equipesEnregistrees)
+      ? [0, 1, 2].map((i) => { const e = p.equipesEnregistrees[i]; return e && Array.isArray(e.equipe) ? e : null; })
+      : [null, null, null],
     saisonPrecedente: p.saisonPrecedente ?? null,
     cosmetiques: { cadres: Array.isArray(p.cosmetiques?.cadres) ? p.cosmetiques.cadres : ["encre"], cadre: p.cosmetiques?.cadre ?? "encre" },
     equipement: validerEquipement(p.equipement, collection),
     campagne: validerCampagne(p.campagne, paliersBattus),
     histoire: { vues: Array.isArray(p.histoire?.vues) ? p.histoire.vues : [] },
     ressources: { fragments: Number(p.ressources?.fragments) || 0, encreSacree: Number(p.ressources?.encreSacree) || 0 },
-    raid: p.raid ?? null,
+    raid: p.raid && typeof p.raid === "object" ? { ...p.raid, records: p.raid.records && typeof p.raid.records === "object" ? p.raid.records : {}, paliers: Array.isArray(p.raid.paliers) ? p.raid.paliers : [] } : null,
     liens: p.liens && typeof p.liens === "object" ? p.liens : {},
     tampons: Array.isArray(p.tampons) ? p.tampons : [],
     guide: Array.isArray(p.guide) ? p.guide : [],
@@ -287,7 +301,7 @@ const ECLATS_RECYCLAGE = { commun: 5, peu_commun: 10, rare: 20, epique: 40, lege
 // les etapes de difficulte equivalente (dans l'ordre, avec une etoile).
 function validerCampagne(c, paliersBattus) {
   if (c && typeof c.etoiles === "object") {
-    return { etoiles: { ...c.etoiles }, coffres: Array.isArray(c.coffres) ? c.coffres : [] };
+    return { etoiles: { ...c.etoiles }, coffres: Array.isArray(c.coffres) ? c.coffres : [], deluxe: deluxeValide(c.deluxe) };
   }
   const etoiles = {};
   if (paliersBattus.length) {
@@ -297,7 +311,14 @@ function validerCampagne(c, paliersBattus) {
       etoiles[`${et.chapitre}-${et.numero}`] = ETOILE_VICTOIRE;
     }
   }
-  return { etoiles, coffres: [] };
+  return { etoiles, coffres: [], deluxe: deluxeValide(c?.deluxe) };
+}
+
+// L'Edition deluxe : { "chapitre-numero": masque d'etoiles } (elle etait perdue a chaque rechargement)
+function deluxeValide(d) {
+  const r = {};
+  if (d && typeof d === "object") for (const [k, v] of Object.entries(d)) if (/^\d+-\d+$/.test(k) && Number.isInteger(v) && v >= 0 && v < 64) r[k] = v;
+  return r;
 }
 
 // Garde les pieces valides. Les pieces de l'ancien systeme (generees au hasard,
@@ -808,7 +829,7 @@ function tirerMissions(jour) {
   let graine = 0;
   for (const c of jour) graine = (graine * 31 + c.charCodeAt(0)) >>> 0;
   const h = creerHasard(graine);
-  const modeOuvert = { chasse: true, tour: tourOuverte(), raid: raidOuvert(), deluxe: deluxeOuverte() };
+  const modeOuvert = { chasse: chapitreTermine(1), tour: tourOuverte(), raid: raidOuvert(), deluxe: deluxeOuverte() };
   const ids = MISSIONS.filter((m) => !m.mode || modeOuvert[m.mode]).map((m) => m.id);
   for (let i = ids.length - 1; i > 0; i--) {
     const j = Math.floor(h.nombre() * (i + 1));
@@ -1603,7 +1624,6 @@ export function tenterRaid() {
   partie.stats.raids = (partie.stats.raids ?? 0) + 1;
   signaler("raid");
   signalerSemaine("raid");
-  signaler("raid");
   sauver();
   return { ok: true, resultats, score, nouveauMeilleur };
 }
@@ -2113,15 +2133,23 @@ export function enleverPiece(uid) {
 export function recevoirPiece(objet) {
   const o = OBJETS_PAR_ID[objet?.objet];
   if (!o || !Array.isArray(objet.lignes)) return null;
+  // Un objet venu du serveur (hotel, echange) est ramene aux lignes et aux bornes de son modele :
+  // une stat inconnue, une valeur absente ou trop forte ne peuvent pas entrer dans l'inventaire.
+  const sublime = Number.isInteger(objet.sublime) && objet.sublime >= 0 && objet.sublime < o.lignes.length ? objet.sublime : undefined;
   const piece = {
     uid: `e${partie.equipement.prochainUid++}`,
     objet: o.id, emplacement: o.emplacement, rarete: o.rarete, panoplie: o.panoplie,
-    niveau: Math.max(0, Math.min(NIVEAU_MAX_PIECE, Number(objet.niveau) || 0)),
-    lignes: objet.lignes.map((l) => ({ stat: l.stat, valeur: Number(l.valeur) || 0 })),
+    niveau: Math.max(0, Math.min(NIVEAU_MAX_PIECE, Math.floor(Number(objet.niveau) || 0))),
+    lignes: o.lignes.map(([stat, min, max], i) => {
+      const brute = objet.lignes[i];
+      const v = brute?.stat === stat ? Number(brute.valeur) : NaN;
+      const plafond = sublime === i ? Math.round(max * (1 + BONUS_SUBLIMAGE) * 10) / 10 : max;
+      return { stat, valeur: Number.isFinite(v) ? Math.max(min, Math.min(plafond, v)) : min };
+    }),
     verrou: false, porteur: null,
   };
-  if (Number.isInteger(objet.sublime)) piece.sublime = objet.sublime;
-  if (objet.retouches) piece.retouches = Number(objet.retouches) || 0;
+  if (sublime !== undefined) piece.sublime = sublime;
+  if (objet.retouches) piece.retouches = Math.max(0, Math.min(999, Math.floor(Number(objet.retouches) || 0)));
   partie.equipement.pieces.push(piece);
   if (!partie.chasse.decouverts.includes(o.id)) partie.chasse.decouverts.push(o.id);
   sauver();
@@ -2178,7 +2206,7 @@ export const completionFaite = (cle) => Boolean(partie?.completions.includes(cle
 // ==========================================================
 // AUTEL D'INVOCATION
 // Une carte a la fois, tant qu'il reste des invocations en reserve.
-// La reserve remonte avec le temps (+1 toutes les 2 min, 120 max)
+// La reserve remonte avec le temps (MINUTES_PAR_INVOCATION, INVOCATIONS_MAX dans invocations.js)
 // et avec les victoires. Chance = (1 + niveau d'autel + Index) x potion.
 // ==========================================================
 
@@ -2524,7 +2552,8 @@ export function appliquerResultatArene({ bossId, difficulte = "normal", victoire
   const r = { premier, encre: 0, invocations: 0, potion: null, carte: null, xp: [] };
   // XP : comme une etape de campagne du meme niveau
   const niveau = b.niveau + d.niveau;
-  const gain = victoire ? 45 + 12 * niveau : 15 + 3 * niveau;
+  // (une defaite ne donne qu'un peu d'XP, comme en campagne : sinon perdre en boucle, gratuitement, faisait monter l'equipe)
+  const gain = victoire ? 45 + 12 * niveau : 8;
   r.xp = ids.filter(possede).map((id) => donnerXp(id, gain));
   for (const id of idsPossedes()) if (!ids.includes(id)) donnerXp(id, Math.round(gain * PART_XP_RESERVE));
   partie.stats.combats += 1;
@@ -2650,6 +2679,8 @@ export function copiesEnTrop(id) {
   const prog = partie?.collection[id];
   if (!prog || estSecret(id)) return 0;   // un Secret ne s'echange pas
   let n = (prog.surplus ?? 0) + (prog.doublons ?? 0);
+  // Un perso ascensionne garde ses 5 etoiles (l'Ascension les exige) : seules ses copies en reserve s'echangent
+  if ((prog.ascension ?? 0) > 0) return n;
   for (let e = 1; e < (prog.etoiles ?? 1); e++) n += doublonsPourEtoile(e);
   return n;
 }

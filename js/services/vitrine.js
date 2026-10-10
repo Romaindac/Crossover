@@ -12,6 +12,18 @@ import { lire, ecrire } from "./sauvegarde.js";
 export const TAILLE_VITRINE = 6;
 const CLE = "vitrine";
 
+// Une carte de vitrine venue d'ailleurs (lien, profil en ligne) : on ne garde que des valeurs sures
+const VARIANTES_VITRINE = ["boss", "neant", "arcenciel", "eveille", "doree", "holo"];
+const borne = (x, min, max) => Math.max(min, Math.min(max, Math.floor(Number(x) || min)));
+export function carteVitrineSure(x) {
+  if (!PERSOS_PAR_ID[x?.id]) return null;
+  return {
+    id: x.id, n: borne(x.n, 1, 100), e: borne(x.e, 1, 5),
+    ...(Number(x.a) > 0 ? { a: borne(x.a, 0, 5) } : {}),
+    ...(VARIANTES_VITRINE.includes(x.v) ? { v: x.v } : {}),
+  };
+}
+
 const varianteDe = (prog) => ["boss", "neant", "arcenciel", "doree", "holo"].find((v) => prog.variantes?.includes(v)) ?? null;
 
 // Note d'une carte pour le choix automatique : rarete, variante, etoiles, niveau
@@ -62,7 +74,7 @@ export function vitrineDuLien(hash = location.hash) {
     const c = JSON.parse(decodeURIComponent(escape(atob(brut + "=".repeat((4 - brut.length % 4) % 4)))));
     return {
       pseudo: String(c.p ?? "Un joueur").slice(0, 20),
-      cartes: (Array.isArray(c.c) ? c.c : []).filter((x) => PERSOS_PAR_ID[x?.id]).slice(0, TAILLE_VITRINE),
+      cartes: (Array.isArray(c.c) ? c.c : []).map(carteVitrineSure).filter(Boolean).slice(0, TAILLE_VITRINE),
       resume: Object.fromEntries(["collection", "etoiles", "tour", "raid", "boss_semaine", "semaine"]
         .map((k) => [k, Math.max(0, Math.floor(Number(c.s?.[k]) || 0))])),
     };

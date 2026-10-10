@@ -122,6 +122,8 @@ alter table public.signalements enable row level security;
 create or replace function public.avant_message() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
+  -- un seul envoi a la fois par joueur : des envois en rafale ne passent plus les limites
+  perform pg_advisory_xact_lock(hashtext(coalesce(auth.uid()::text, '')));
   new.auteur := auth.uid();
   select pseudo into new.pseudo from public.joueurs where id = auth.uid();
   if new.pseudo is null then raise exception 'profil introuvable'; end if;
@@ -137,6 +139,8 @@ create trigger avant_message before insert on public.messages for each row execu
 create or replace function public.avant_prive() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
+  -- un seul envoi a la fois par joueur : des envois en rafale ne passent plus les limites
+  perform pg_advisory_xact_lock(hashtext(coalesce(auth.uid()::text, '')));
   new.de := auth.uid();
   new.lu := false;
   new.cree := now();
@@ -231,16 +235,29 @@ declare
   n integer;
   i integer;
   v numeric;
+  mini numeric;
+  maxi numeric;
+  sublime integer;
 begin
   select * into c from public.objets_catalogue where id = o->>'objet';
-  if not found or o->>'rarete' <> c.rarete then return false; end if;
-  if (o->>'niveau')::integer not between 0 and 12 then return false; end if;
+  if not found or o->>'rarete' is distinct from c.rarete then return false; end if;
+  -- toutes les valeurs doivent etre presentes (une ligne vide cassait l'hotel pour tout le monde)
+  if o->>'niveau' is null or (o->>'niveau')::integer not between 0 and 12 then return false; end if;
+  if jsonb_typeof(o->'lignes') <> 'array' then return false; end if;
+  sublime := case when o ? 'sublime' and jsonb_typeof(o->'sublime') = 'number' then (o->>'sublime')::integer else null end;
+  if o ? 'retouches' and coalesce((o->>'retouches')::integer, -1) not between 0 and 999 then return false; end if;
   n := jsonb_array_length(o->'lignes');
   if n <> jsonb_array_length(c.lignes) then return false; end if;
+  if sublime is not null and sublime not between 0 and n - 1 then return false; end if;
   for i in 0 .. n - 1 loop
-    if o->'lignes'->i->>'stat' <> c.lignes->i->>0 then return false; end if;
+    if o->'lignes'->i->>'stat' is null or o->'lignes'->i->>'stat' <> c.lignes->i->>0 then return false; end if;
     v := (o->'lignes'->i->>'valeur')::numeric;
-    if v < (c.lignes->i->>1)::numeric - 1 or v > (c.lignes->i->>2)::numeric * 1.15 + 1 then return false; end if;
+    if v is null then return false; end if;
+    mini := (c.lignes->i->>1)::numeric;
+    maxi := (c.lignes->i->>2)::numeric;
+    -- dans la fourchette du modele ; seule la ligne sublimee peut depasser, de 15 % au plus
+    if v < mini - 0.051 then return false; end if;
+    if v > (case when i = sublime then round(maxi * 1.15, 1) else maxi end) + 0.051 then return false; end if;
   end loop;
   return true;
 exception when others then
@@ -250,6 +267,8 @@ end $$;
 create or replace function public.avant_vente() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
+  -- un seul envoi a la fois par joueur : des envois en rafale ne passent plus les limites
+  perform pg_advisory_xact_lock(hashtext(coalesce(auth.uid()::text, '')));
   new.vendeur := auth.uid();
   select pseudo into new.pseudo from public.joueurs where id = auth.uid();
   if new.pseudo is null then raise exception 'profil introuvable'; end if;
@@ -410,6 +429,8 @@ create or replace function public.avant_echange() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare r1 text; r2 text;
 begin
+  -- un seul envoi a la fois par joueur : des envois en rafale ne passent plus les limites
+  perform pg_advisory_xact_lock(hashtext(coalesce(auth.uid()::text, '')));
   new.auteur := auth.uid();
   select pseudo into new.pseudo from public.joueurs where id = auth.uid();
   if new.pseudo is null then raise exception 'profil introuvable'; end if;
@@ -594,6 +615,8 @@ declare
 begin
   if auth.uid() is null then raise exception 'connexion requise'; end if;
   if p_cible = auth.uid() then raise exception 'cible refusee'; end if;
+  -- les deux lignes sont verrouillees dans l'ordre des identifiants : deux duels croises ne se bloquent plus
+  perform 1 from public.defenses where joueur in (auth.uid(), p_cible) order by joueur for update;
   select * into moi from public.defenses where joueur = auth.uid() for update;
   if not found then raise exception 'defense requise'; end if;
   select * into lui from public.defenses where joueur = p_cible for update;
@@ -626,6 +649,79 @@ end $$;
 
 grant execute on function public.resultat_duel(uuid, boolean, bigint) to authenticated;
 grant execute on function public.saison_serveur() to authenticated, anon;
+
+
+-- ==========================================================
+-- DURCISSEMENT (a recoller avec le reste : sans risque)
+-- Pseudo fixe et sans sosie, scores bornes, vitrine validee,
+-- signalements fideles au message signale.
+-- ==========================================================
+
+-- Le profil public : pseudo choisi une fois (lettres, chiffres, - et _), scores bornes,
+-- vitrine reconstruite (6 cartes au plus, que des nombres et des ids)
+create or replace function public.avant_joueur() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  carte jsonb;
+  propre jsonb := '[]'::jsonb;
+  bordures text[] := array['boss', 'neant', 'arcenciel', 'eveille', 'doree', 'holo'];
+begin
+  if tg_op = 'UPDATE' then
+    new.id := old.id;
+    new.pseudo := old.pseudo;
+  elsif new.pseudo !~ '^[A-Za-z0-9_-]{3,20}$' then
+    raise exception 'pseudo refuse';
+  end if;
+  new.tour := least(greatest(coalesce(new.tour, 0), 0), 100000);
+  new.raid := least(greatest(coalesce(new.raid, 0), 0), 2000000000);
+  new.collection := least(greatest(coalesce(new.collection, 0), 0), 1000);
+  new.etoiles := least(greatest(coalesce(new.etoiles, 0), 0), 20000);
+  new.boss_semaine := least(greatest(coalesce(new.boss_semaine, 0), 0), 2000000000);
+  if jsonb_typeof(new.vitrine) = 'array' then
+    for carte in select value from jsonb_array_elements(new.vitrine) limit 6 loop
+      if jsonb_typeof(carte) = 'object' and carte->>'id' ~ '^[a-z0-9_-]{1,30}$' then
+        propre := propre || jsonb_build_array(jsonb_strip_nulls(jsonb_build_object(
+          'id', carte->>'id',
+          'n', least(greatest(coalesce(case when jsonb_typeof(carte->'n') = 'number' then (carte->>'n')::numeric end, 1), 1), 100)::integer,
+          'e', least(greatest(coalesce(case when jsonb_typeof(carte->'e') = 'number' then (carte->>'e')::numeric end, 1), 1), 5)::integer,
+          'a', case when jsonb_typeof(carte->'a') = 'number' then least(greatest((carte->>'a')::numeric, 0), 5)::integer end,
+          'v', case when carte->>'v' = any (bordures) then carte->>'v' end)));
+      end if;
+    end loop;
+  end if;
+  new.vitrine := propre;
+  return new;
+end $$;
+drop trigger if exists avant_joueur on public.joueurs;
+create trigger avant_joueur before insert or update on public.joueurs for each row execute function public.avant_joueur();
+
+-- Deux pseudos qui ne different que par les majuscules sont refuses
+-- (si la base en contient deja, l'index n'est pas cree : rien ne casse)
+do $$ begin
+  create unique index if not exists joueurs_pseudo_minuscules on public.joueurs (lower(pseudo));
+exception when unique_violation then
+  raise notice 'pseudos en double (majuscules) : index non cree';
+end $$;
+
+-- Un signalement recopie le vrai texte du message (impossible d'en inventer un),
+-- 300 caracteres pour la raison, et 10 signalements par heure au plus
+create or replace function public.avant_signalement() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  perform pg_advisory_xact_lock(hashtext(coalesce(auth.uid()::text, '')));
+  new.auteur := auth.uid();
+  new.cree := now();
+  new.texte := null;
+  if new.message_id is not null then
+    select texte, auteur into new.texte, new.cible from public.messages where id = new.message_id;
+  end if;
+  if (select count(*) from public.signalements where auteur = auth.uid() and cree > now() - interval '1 hour') >= 10 then
+    raise exception 'trop rapide';
+  end if;
+  return new;
+end $$;
+drop trigger if exists avant_signalement on public.signalements;
+create trigger avant_signalement before insert on public.signalements for each row execute function public.avant_signalement();
 
 -- Fichier genere par node js/outils/catalogue-sql.mjs : ne pas modifier a la main.
 -- A coller dans Supabase (SQL Editor) apres schema.sql.

@@ -67,7 +67,7 @@ export function texteStat(stat, valeur) {
   return /Pct$|butin/.test(stat) ? `+${nombre} %` : `+${nombre}`;
 }
 
-const nomCourt = (stat) => NOMS_STATS[stat].replace(" %", "");
+const nomCourt = (stat) => (NOMS_STATS[stat] ?? "").replace(" %", "");
 export const ligneTexte = (piece, l) => `${texteStat(l.stat, valeurLigne(piece, l))} ${nomCourt(l.stat)}`;
 
 // Les bonus de panoplie actifs pour une liste de pieces
@@ -146,7 +146,7 @@ export function htmlDetailsPiece(piece, { comparaison = null, objet = null } = {
           }
           const parfaite = piece && ligneParfaite(piece, k);
           const sublimee = piece && piece.sublime === k;
-          return `<li class="${k === 0 ? "principale" : ""} ${parfaite ? "ligne-parfaite" : ""}"><span>${NOMS_STATS[l.stat]}${sublimee ? ' <span class="marque-parfaite marque-sublimee" title="Sublimée à l\'encre sacrée">Sublimée</span>' : parfaite ? ' <span class="marque-parfaite" title="Jet parfait">Max</span>' : ""}</span><span>${l.texte}${diff}</span></li>`;
+          return `<li class="${k === 0 ? "principale" : ""} ${parfaite ? "ligne-parfaite" : ""}"><span>${NOMS_STATS[l.stat] ?? ""}${sublimee ? ' <span class="marque-parfaite marque-sublimee" title="Sublimée à l\'encre sacrée">Sublimée</span>' : parfaite ? ' <span class="marque-parfaite" title="Jet parfait">Max</span>' : ""}</span><span>${l.texte}${diff}</span></li>`;
         }).join("")}
       </ul>
       ${o.effet ? `<p class="piece-details__effet">${o.effet.texte}</p>` : ""}

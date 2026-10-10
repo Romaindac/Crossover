@@ -2,7 +2,7 @@
 // L'ARENE DES BOSS : un deck (ton equipe de 5) contre un boss
 // geant. Chaque monde (un par edition, comme les autels) a 8 boss,
 // des plus faibles aux Legendaires. Le premier KO d'un boss donne
-// sa CARTE BOSS : le perso, avec la bordure Boss (seulement ici).
+// la BORDURE BOSS du perso (seulement ici), jamais le perso lui-meme.
 // Tous les chiffres a regler sont ici.
 // ==========================================================
 

@@ -77,6 +77,7 @@ export function executerUltime(etat, u, { manuel = false } = {}) {
     : { type: "ultime", source: u.uid, nom: u.ultime.nom });
 
   for (const action of u.ultime.actions) {
+    if (u.pv <= 0) break;   // tombe pendant son ultime (Epines) : le reste n'a pas lieu
     switch (action.type) {
       case "degats":
         actionDegats(etat, u, action);
@@ -95,8 +96,10 @@ export function executerUltime(etat, u, { manuel = false } = {}) {
 
       case "energie":
         for (const c of selectionner(etat, u, action.cible)) {
+          const avant = c.energie;
           gagnerEnergie(c, action.montant);
-          emettre(etat, { type: "energie", source: u.uid, cible: c.uid, montant: action.montant });
+          // (un etourdi ne recoit rien : on n'annonce que l'energie vraiment donnee)
+          if (c.energie > avant) emettre(etat, { type: "energie", source: u.uid, cible: c.uid, montant: Math.round(c.energie - avant) });
         }
         break;
 
@@ -116,6 +119,7 @@ export function executerUltime(etat, u, { manuel = false } = {}) {
 function actionDegats(etat, u, action) {
   const coups = action.coups ?? 1;
   for (let i = 0; i < coups; i++) {
+    if (u.pv <= 0) return;
     const cibles = selectionner(etat, u, action.cible).filter((c) => c && c.pv > 0);
     if (!cibles.length) return;
     for (const c of cibles) {

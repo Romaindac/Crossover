@@ -110,7 +110,7 @@ export function afficherTirages(conteneur, { naviguer }) {
     return `
       <article class="booster" style="--p1: ${edition.couleurs[0]}; --p3: ${edition.couleurs[2]}">
         <button type="button" class="booster__bouton-sachet" data-action="ouvrir" data-edition="${edition.id}" ${peutOuvrir ? "" : "disabled"}
-          aria-label="Ouvrir un booster ${edition.nom} (${b.tickets > 0 ? "1 ticket" : `${nombre(b.prix)} d'encre`})">
+          aria-label="Ouvrir un booster ${edition.nom} (${b.dores > 0 ? "booster doré" : b.tickets > 0 ? "1 ticket" : `${nombre(b.prix)} d'encre`})">
           ${htmlSachet(edition)}
         </button>
         <div class="booster__texte">
@@ -400,10 +400,14 @@ export function afficherTirages(conteneur, { naviguer }) {
     const b = etatBoosters();
     const encore = $("#revelation [data-action='ouvrir']");
     const dispo = b.dores + b.tickets;
-    if (etat.nombre > 1) {
+    // Ce que coute le prochain booster, ecrit sur le bouton (avant, l'encre partait sans prevenir)
+    const cout = b.dores > 0 ? "booster doré" : b.tickets > 0 ? "1 ticket" : `${nombre(b.prix)} d'encre`;
+    if (etat.nombre > 1 && dispo >= 2) {
       encore.dataset.nombre = String(Math.min(etat.nombre, dispo));
-      encore.textContent = dispo >= 2 ? `Encore ×${Math.min(etat.nombre, dispo)}` : "Encore un booster";
-      if (dispo < 2) encore.dataset.nombre = "1";
+      encore.textContent = `Encore ×${Math.min(etat.nombre, dispo)} · ${b.dores > 0 ? "dorés et tickets" : "tickets"}`;
+    } else {
+      encore.dataset.nombre = "1";
+      encore.textContent = `Encore un booster · ${cout}`;
     }
     encore.disabled = !(b.dores > 0 || b.tickets > 0 || encre() >= b.prix);
     annoncerTampons(verifierTampons());

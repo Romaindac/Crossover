@@ -11,14 +11,15 @@ import {
 } from "../services/enligne.js";
 import { lire, ecrire } from "../services/sauvegarde.js";
 import { chargerPortraits } from "../services/portraits.js";
-import { brancherChat } from "./chat.js";
+import { brancherChat, estAnnonceAutel } from "./chat.js";
 import { ouvrirCompte } from "./compte.js";
 import { rafraichirPortrait } from "./cartes.js";
 import { htmlCarteVitrine, htmlResume } from "../ecrans/ecran-social.js";
 
 const CLE_VU = "chat-general-vu";     // dernier message du General deja vu
 const ATTENTE_FERMEE = 30000;         // fermee : un coup d'oeil au General toutes les 30 s
-const ECRANS_SANS_BULLE = ["combat", "debut", "vitrine"];
+// (sur l'ecran Social, l'onglet Chat est deja la : pas de seconde fenetre de chat qui interroge le serveur)
+const ECRANS_SANS_BULLE = ["combat", "debut", "vitrine", "social"];
 const echapper = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const ICONE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H9l-5 4v-4a2 2 0 01-2-2V6a2 2 0 012-2z" fill="currentColor"/><circle cx="8" cy="11" r="1.4" fill="var(--encre)"/><circle cx="12" cy="11" r="1.4" fill="var(--encre)"/><circle cx="16" cy="11" r="1.4" fill="var(--encre)"/></svg>`;
@@ -61,8 +62,8 @@ function majPastille() {
 // Un apercu du dernier message, au-dessus de la bulle, quelques secondes
 function apercu(m) {
   const zone = racine.querySelector(".bulle-chat__apercu");
-  const texte = m.texte.startsWith("[Autel] ") ? m.texte.slice(8) : m.texte;
-  zone.innerHTML = `<b>${echapper(m.pseudo)}</b> ${echapper(texte).slice(0, 90)}${texte.length > 90 ? "…" : ""}`;
+  const texte = estAnnonceAutel(m.texte) ? m.texte.slice(8) : m.texte;
+  zone.innerHTML = `<b>${echapper(m.pseudo)}</b> ${echapper(texte.slice(0, 90))}${texte.length > 90 ? "…" : ""}`;
   zone.hidden = false;
   zone.classList.remove("bulle-chat__apercu--sort");
   void zone.offsetWidth;

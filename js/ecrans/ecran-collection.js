@@ -40,6 +40,7 @@ import { ouvrirChoixPiece, htmlDetailsPiece, iconeEmplacement, ligneTexte, texte
 import { htmlEntete, htmlOnglet } from "../ui/entete.js";
 import { htmlNavigation, brancherNavigation } from "../ui/navigation.js";
 import { afficherHotel } from "../ui/hotel.js";
+import { signalEcran } from "../ui/vie-ecran.js";
 
 export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
   const series = [...new Set(PERSOS.map((p) => p.serie))];
@@ -672,7 +673,7 @@ export function afficherCollection(conteneur, { naviguer, onglet = "persos" }) {
       if (onglet === "equipement") rendreEquipement();
     }
   };
-  document.addEventListener("keydown", clavier);
+  document.addEventListener("keydown", clavier, { signal: signalEcran() });
 
   afficherOnglet(onglet);
   majNavigation();
