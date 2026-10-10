@@ -63,6 +63,7 @@ import {
   CHANCE_SERIE_COMPLETE, CHANCE_EDITION_COMPLETE, CHANCE_PAR_BORDURE, CHANCE_PAR_SECRET,
   POTIONS_PAR_ID, MULT_POTION_CHANCE, MULT_POTION_BORDURE, MINUTES_POTION_MAX, POTIONS_DEPART, CHANCE_POTION_VICTOIRE,
   POUSSIERE_DOUBLON_INVOCATION, MONDES, PITIE_INVOCATION, ORDRE_BORDURES, DELAI_TIRAGE_MS, DELAI_RAPIDE_MS, FACTEUR_POTION_VITESSE,
+  BONUS_STATS_BORDURE,
 } from "../donnees/invocations.js";
 import {
   BOSS_ARENE, BOSS_ARENE_PAR_ID, recompensePremierKo, recompenseKo, CHANCE_CARTE_BOSS_REJOUE, CHANCE_POTION_REJOUE, INVOCATIONS_SANS_PERSO_BOSS,
@@ -488,7 +489,7 @@ export function appliquerResultatCombat({ palier, victoire, ids, duree = 90, ult
 
 // Ajoute un perso tire a la collection, ou le compte comme doublon
 // Une carte obtenue : nouveau perso, ou doublon (etoiles, puis poussiere au-dela de 5 etoiles).
-// Une variante holo ou doree s'ajoute a la collection du perso (purement cosmetique).
+// Une variante holo ou doree s'ajoute a la collection du perso (la plus belle donne un petit bonus de stats).
 function ajouterCarte({ id, rarete, variante = null }, tablePoussiere = POUSSIERE_DOUBLON) {
   let resultat;
   if (!partie.collection[id]) {
@@ -974,14 +975,19 @@ export function piecesDe(id) {
 }
 
 // ---------- Puissance : un seul chiffre pour comparer les cartes (comme un jeu de cartes) ----------
-// ATQ x 4 + PV / 3 + DEF x 5, avec les stats finales (niveau, etoiles, eveil, rarete, equipement).
+// Base : ATQ x 4 + PV / 3 + DEF x 5, avec les stats finales (niveau, etoiles, eveil, rarete, equipement, bordure).
+// Le chiffre affiche monte plus vite que les stats (base^1,5) : chaque progres se voit,
+// de quelques milliers au debut a des centaines de milliers. Purement affiche : les combats n'en dependent pas.
 // Sans bonus d'equipe : la meme carte affiche la meme puissance partout.
-export const formulePuissance = (s) => Math.round(s.atq * 4 + s.pv / 3 + s.def * 5);
+export const formulePuissance = (s) => Math.round(100 * Math.pow(Math.max(0, s.atq * 4 + s.pv / 3 + s.def * 5) / 100, 1.5));
+
+// Bonus de la plus belle bordure du perso (en %, sur PV et ATQ)
+export const bonusBordure = (prog) => Math.max(0, ...(prog?.variantes ?? []).map((v) => BONUS_STATS_BORDURE[v] ?? 0));
 
 export function statsCarte(perso, prog = progressionDe(perso.id)) {
   const s = calculerStatsFinales(perso, {
     niveau: prog?.niveau ?? 1, etoiles: prog?.etoiles ?? 1, eveil: prog?.eveil ?? 0, talents: prog?.talents ?? [], ascension: prog?.ascension ?? 0,
-    equipement: possede(perso.id) ? piecesDe(perso.id) : [],
+    equipement: possede(perso.id) ? piecesDe(perso.id) : [], bonusPct: bonusBordure(prog),
   });
   return { puissance: formulePuissance(s), pv: s.pv, atq: s.atq, def: s.def, vit: s.vit };
 }
@@ -989,7 +995,7 @@ export const puissancePerso = (id) => (PERSOS_PAR_ID[id] ? statsCarte(PERSOS_PAR
 export const puissanceDeMonEquipe = (ids = equipeSauvee()) => ids.filter(Boolean).reduce((t, id) => t + puissancePerso(id), 0);
 
 // Ce que le moteur de combat doit savoir d'un de tes persos
-export const entreeCombat = (id, _index, equipe = []) => ({ id, ...progressionDe(id), equipement: piecesDe(id), bonusPct: bonusCombat(id, equipe) });
+export const entreeCombat = (id, _index, equipe = []) => ({ id, ...progressionDe(id), equipement: piecesDe(id), bonusPct: bonusCombat(id, equipe) + bonusBordure(progressionDe(id)) });
 
 // Bonus en % (PV et ATQ) : liens actifs avec les coequipiers, et serie a l'honneur cette semaine
 function bonusCombat(id, equipe) {

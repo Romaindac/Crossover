@@ -13,7 +13,7 @@ import { htmlCarteStatique, htmlEtoiles, iconeRole, COULEURS_AFFINITE } from "./
 import { RARETES } from "../donnees/raretes.js";
 import { varsSerie } from "../donnees/series.js";
 import { htmlEmplacements } from "./equipement-ui.js";
-import { piecesDe, etatQuete, reclamerQuete, formulePuissance, prochaineAscension } from "../services/partie.js";
+import { piecesDe, etatQuete, reclamerQuete, formulePuissance, prochaineAscension, bonusBordure } from "../services/partie.js";
 import { ETAPES_QUETE } from "../donnees/quetes.js";
 import { PERSOS_PAR_ID } from "../donnees/persos.js";
 
@@ -33,7 +33,8 @@ export function texteAffinite(affinite) {
 // le panneau de l'Equipe, deux colonnes dans la grande fiche de la Collection.
 export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = true } = {}) {
   const equipement = avecEquipement ? piecesDe(perso.id) : [];
-  const stats = calculerStatsFinales(perso, { niveau: prog.niveau, etoiles: prog.etoiles, equipement, eveil: prog.eveil ?? 0, talents: prog.talents ?? [], ascension: prog.ascension ?? 0 });
+  const stats = calculerStatsFinales(perso, { niveau: prog.niveau, etoiles: prog.etoiles, equipement, eveil: prog.eveil ?? 0, talents: prog.talents ?? [], ascension: prog.ascension ?? 0, bonusPct: bonusBordure(prog) });
+  const bordure = bonusBordure(prog);
   const auMax = prog.niveau >= niveauMaxDe(prog);
   const besoin = xpPourNiveau(prog.niveau);
   const etoilesMax = prog.etoiles >= ETOILES_MAX;
@@ -58,8 +59,9 @@ export function htmlFiche(perso, prog, { avecDoublons = false, avecEquipement = 
             <span class="puce-fiche">${iconeRole(perso.role)}${ROLES[perso.role].nom}</span>
             <span class="puce-fiche puce-fiche--affinite"><span class="pastille"></span>${AFFINITES[perso.affinite]}</span>
             ${prog.eveil ? `<span class="puce-fiche puce-fiche--eveil">覚醒 ${CHIFFRES_ROMAINS[prog.eveil]}</span>` : ""}
+            ${bordure ? `<span class="puce-fiche puce-fiche--bordure" title="Bonus de sa plus belle bordure">Bordure +${bordure} % PV et ATQ</span>` : ""}
           </p>
-          <p class="pfiche__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5"><span>Puissance</span><b>${nombre(formulePuissance(stats))}</b></p>
+          <p class="pfiche__puissance" title="Puissance : calculée à partir des PV, de l'ATQ et de la DEF ; elle grimpe plus vite que les stats"><span>Puissance</span><b>${nombre(formulePuissance(stats))}</b></p>
           <dl class="pfiche__stats">
             ${tuile("pv", "PV", nombre(stats.pv))}${tuile("atq", "ATQ", nombre(stats.atq))}${tuile("def", "DEF", nombre(stats.def))}${tuile("vit", "VIT", nombre(stats.vit))}
           </dl>

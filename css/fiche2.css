@@ -121,6 +121,7 @@
 .puce-fiche--legendaire { color: #ffd45e; border-color: rgb(255 212 94 / 0.6); background: rgb(255 212 94 / 0.12); }
 .puce-fiche--secret { color: #fff; border-color: rgb(255 255 255 / 0.6); background: linear-gradient(90deg, rgb(255 80 160 / 0.35), rgb(90 160 255 / 0.35)); }
 .puce-fiche--eveil { color: #ffd45e; font-family: var(--police-mincho); }
+.puce-fiche--bordure { color: #9fe3ff; }
 
 .pfiche__puissance {
   display: inline-flex;
