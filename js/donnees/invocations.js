@@ -26,7 +26,7 @@ export const RARETES_CHANCEUSES = ["rare", "epique", "legendaire", "secret"];
 export const PITIE_INVOCATION = 500;           // un Legendaire garanti a la 500e invocation sans Legendaire (un Secret remet aussi le compteur a zero)
 // Secret : 0,02 % (environ 1 invocation sur 5 000), multiplie par la chance comme les Rares et au-dessus ; jamais garanti
 
-// ---------- Bordures (meme force, autre cadre ; elles comptent dans l'Index) ----------
+// ---------- Bordures (autre cadre, un petit bonus de stats ; elles comptent dans l'Index) ----------
 // Du plus rare au plus courant : on tire dans cet ordre
 export const BORDURES = [
   { id: "neant", nom: "Néant", chance: 0.0001 },
@@ -40,6 +40,9 @@ export const BORDURE_BOSS = { id: "boss", nom: "Boss", chance: 0 };
 export const BORDURE_EVEILLE = { id: "eveille", nom: "Éveillé", chance: 0 };
 export const BORDURES_PAR_ID = Object.fromEntries([...BORDURES, BORDURE_BOSS, BORDURE_EVEILLE].map((b) => [b.id, b]));
 export const ORDRE_BORDURES = ["holo", "doree", "arcenciel", "eveille", "neant", "boss"];   // de la plus courante a la plus prestigieuse
+// Bonus de PV et d'ATQ (en %) d'un perso selon sa plus belle bordure (on garde la meilleure, sans cumul).
+// Petit expres : une bordure se fete, mais ne decide pas d'un combat.
+export const BONUS_STATS_BORDURE = { holo: 5, boss: 8, eveille: 10, doree: 12, arcenciel: 15, neant: 18 };
 
 // ---------- Niveau d'autel : il monte avec le nombre d'invocations ----------
 // Chaque niveau donne des points d'autel a repartir ; certains debloquent un pouvoir.

@@ -62,7 +62,7 @@ export const CASE_DOREE = { epique: 0.75, legendaire: 0.25 };
 // Pitie : un Legendaire garanti dans la derniere case au 150e booster sans Legendaire
 export const PITIE_BOOSTER = 150;
 
-// Variantes cosmetiques (meme force, autre cadre) : par carte
+// Variantes (autre cadre, petit bonus de stats : BONUS_STATS_BORDURE dans invocations.js) : par carte
 export const CHANCE_HOLO = 0.02;
 export const CHANCE_DOREE = 0.0025;
 export const VARIANTES = {

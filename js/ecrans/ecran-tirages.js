@@ -139,7 +139,7 @@ export function afficherTirages(conteneur, { naviguer }) {
             </tbody>
           </table>
         </div>
-        <p>Chaque carte a ${pourcent(CHANCE_HOLO)} de chances d'être Holo et ${pourcent(CHANCE_DOREE)} d'être Dorée : même force, autre cadre, à collectionner. Un booster sur ${Math.round(1 / CHANCE_BOOSTER_DORE)} est un booster doré (${CARTES_PAR_BOOSTER} cartes Épiques ou Légendaires). Un Légendaire est garanti au ${PITIE_BOOSTER}e booster sans Légendaire. Chaque booster donne ${POUSSIERE_PAR_BOOSTER} poussière. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en poussière.</p>
+        <p>Chaque carte a ${pourcent(CHANCE_HOLO)} de chances d'être Holo et ${pourcent(CHANCE_DOREE)} d'être Dorée : autre cadre, et +5 % (Holo) ou +12 % (Dorée) de PV et d'ATQ pour ce perso. Un booster sur ${Math.round(1 / CHANCE_BOOSTER_DORE)} est un booster doré (${CARTES_PAR_BOOSTER} cartes Épiques ou Légendaires). Un Légendaire est garanti au ${PITIE_BOOSTER}e booster sans Légendaire. Chaque booster donne ${POUSSIERE_PAR_BOOSTER} poussière. Un doublon fait monter les étoiles du perso ; au-delà de ${ETOILES_MAX} étoiles, il se change en poussière.</p>
       </details>`;
   }
 

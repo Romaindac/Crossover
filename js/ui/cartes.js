@@ -144,7 +144,7 @@ export function htmlCarte(perso, { dansEquipe = false, progression: brute = null
     : `<span class="carte__meta">${ROLES[perso.role].nom}</span>`;
   // La puissance et les stats, comme sur une carte a collectionner
   const st = statsCarte(perso, progression ?? { niveau: 1, etoiles: 1 });
-  const puissance = `<span class="carte__puissance" title="Puissance : ATQ x 4 + PV / 3 + DEF x 5">${ECLAIR}<b>${nombreCourt(st.puissance)}</b></span>`;
+  const puissance = `<span class="carte__puissance" title="Puissance : calculée à partir des PV, de l'ATQ et de la DEF">${ECLAIR}<b>${nombreCourt(st.puissance)}</b></span>`;
   const stats = `<span class="carte__stats"><span><i>PV</i>${nombreCourt(st.pv)}</span><span><i>ATQ</i>${nombreCourt(st.atq)}</span></span>`;
   return `
     <button type="button" class="carte carte--${perso.rarete} ${variante ? `carte--${variante}` : ""} ${progression?.ascension ? `carte--ascension carte--ascension-${progression.ascension}` : ""} ${dansEquipe ? "carte--prise" : ""}"
